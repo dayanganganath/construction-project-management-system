@@ -1,0 +1,308 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f4f6f8;
+  color: #1f2937;
+}
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  background: #111827;
+  color: white;
+  padding: 24px 18px;
+}
+
+.brand {
+  margin-bottom: 35px;
+}
+
+.brand h2 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.brand p {
+  margin-top: 5px;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-menu a {
+  color: #d1d5db;
+  text-decoration: none;
+  padding: 12px 14px;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+
+.nav-menu a:hover {
+  background: #1f2937;
+  color: white;
+}
+
+.nav-menu a.active {
+  background: #2563eb;
+  color: white;
+}
+
+.main-content {
+  flex: 1;
+  padding: 32px;
+}
+
+.dashboard-header {
+  margin-bottom: 30px;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+.dashboard-header p {
+  margin-top: 6px;
+  color: #6b7280;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.dashboard-card {
+  background: rgb(0, 0, 0);
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-card p {
+  margin: 0 0 10px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.dashboard-card h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.page-header p {
+  margin-top: 5px;
+  color: #6b7280;
+}
+
+.table-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 16px;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 14px;
+}
+
+.data-table td {
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.data-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.dashboard-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 5px;
+  height: 100%;
+}
+
+.dashboard-card.blue::before {
+  background: #2563eb;
+}
+
+.dashboard-card.purple::before {
+  background: #7c3aed;
+}
+
+.dashboard-card.orange::before {
+  background: #f59e0b;
+}
+
+.dashboard-card.cyan::before {
+  background: #0891b2;
+}
+
+.dashboard-card.green::before {
+  background: #16a34a;
+}
+
+.dashboard-card.red::before {
+  background: #dc2626;
+}
+
+.dashboard-card.navy::before {
+  background: #0f172a;
+}
+
+.dashboard-card.green h2 {
+  color: #15803d;
+}
+
+.dashboard-card.red h2 {
+  color: #b91c1c;
+}
+
+.dashboard-card.navy h2 {
+  color: #1d4ed8;
+}
+
+.form-card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.form-card h2 {
+  margin-top: 0;
+  color: #0f0f0f;
+}
+
+.client-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.client-form input {
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.client-form input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.primary-button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-button:hover {
+  background: #1d4ed8;
+}
+
+.edit-button,
+.delete-button,
+.cancel-button {
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.edit-button {
+  background: #f59e0b;
+  color: white;
+}
+
+.edit-button:hover {
+  background: #d97706;
+}
+
+.delete-button {
+  background: #dc2626;
+  color: white;
+}
+
+.delete-button:hover {
+  background: #b91c1c;
+}
+
+.cancel-button {
+  background: #64748b;
+  color: white;
+}
+
+.cancel-button:hover {
+  background: #475569;
+}
+
+.project-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.project-form input,
+.project-form select {
+  padding: 12px 14px;
+  border: 1px solid #f0eeee;
+  border-radius: 8px;
+  font-size: 14px;
+  background: rgb(14, 13, 13);
+}
+
+.project-form input:focus,
+.project-form select:focus {
+  outline: none;
+  border-color: #2563eb;
+}
