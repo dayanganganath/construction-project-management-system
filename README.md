@@ -44,10 +44,18 @@ The main goal is to create a scalable system that can support construction proje
 The application follows a layered backend architecture:
 
 ```text
-Controller
-    ↓
-Service
-    ↓
-Repository
-    ↓
-Database
+construction-project-management-system/
+│
+├── backend/
+│   ├── .mvn/
+│   │   └── wrapper/
+│   ├── src/
+│   │   ├── main/
+│   │   └── test/
+│   ├── .gitattributes
+│   ├── .gitignore
+│   ├── mvnw
+│   ├── mvnw.cmd
+│   └── pom.xml
+│
+└── README.md
