@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
+      - 'feature/**'
 
   pull_request:
     branches:
       - main
+      - improve-project-readme-and-config
 
 jobs:
 

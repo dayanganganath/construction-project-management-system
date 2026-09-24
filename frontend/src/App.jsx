@@ -1,6 +1,9 @@
-import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
+import { useState } from "react";
+import { BrowserRouter, Routes, Route, NavLink, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import "./App.css";
+import Login from "./pages/Login";
+import { clearCredentials } from "./services/api";
 import Clients from "./pages/Clients";
 import Projects from "./pages/Projects";
 import Boq from "./pages/Boq";
@@ -10,6 +13,12 @@ import DailyProgress from "./pages/DailyProgress";
 
 
 function App() {
+  const [user, setUser] = useState(null);
+
+  if (!user) return <Login onLogin={setUser} />;
+
+  const isAdmin = user.role === "ADMIN";
+
   return (
     <BrowserRouter>
       <div className="app-layout">
@@ -19,34 +28,41 @@ function App() {
             <p>Construction Management</p>
           </div>
 
+          <div className="account-panel">
+            <span>{user.username} · {user.role}</span>
+            <button type="button" onClick={() => { clearCredentials(); setUser(null); }}>
+              Sign out
+            </button>
+          </div>
+
           <nav className="nav-menu">
             <NavLink to="/" end>
               Dashboard
             </NavLink>
 
-            <NavLink to="/clients">
+            {isAdmin && <NavLink to="/clients">
               Clients
-            </NavLink>
+            </NavLink>}
 
-            <NavLink to="/projects">
+            {isAdmin && <NavLink to="/projects">
               Projects
-            </NavLink>
+            </NavLink>}
 
-            <NavLink to="/boq">
+            {isAdmin && <NavLink to="/boq">
               BOQ
-            </NavLink>
+            </NavLink>}
 
-            <NavLink to="/expenses">
+            {isAdmin && <NavLink to="/expenses">
               Expenses
-            </NavLink>
+            </NavLink>}
 
-            <NavLink to="/payments">
+            {isAdmin && <NavLink to="/payments">
               Payments
-            </NavLink>
+            </NavLink>}
 
-            <NavLink to="/progress">
+            {isAdmin && <NavLink to="/progress">
               Daily Progress
-            </NavLink>
+            </NavLink>}
           </nav>
         </aside>
 
@@ -54,17 +70,18 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
 
-            <Route path="/clients" element={<Clients />} />
+            {isAdmin && <Route path="/clients" element={<Clients />} />}
 
-            <Route path="/projects" element={<Projects />} />
+            {isAdmin && <Route path="/projects" element={<Projects />} />}
 
-            <Route path="/boq" element={<Boq />} />
+            {isAdmin && <Route path="/boq" element={<Boq />} />}
 
-            <Route path="/expenses" element={<Expenses />} />
+            {isAdmin && <Route path="/expenses" element={<Expenses />} />}
 
-            <Route path="/payments" element={<Payments />} />
+            {isAdmin && <Route path="/payments" element={<Payments />} />}
 
-            <Route path="/progress" element={<DailyProgress />} />
+            {isAdmin && <Route path="/progress" element={<DailyProgress />} />}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
       </div>
