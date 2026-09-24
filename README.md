@@ -25,6 +25,18 @@ A full-stack application for tracking construction clients, projects, BOQ items,
 
 Prerequisites: Java 17, Node.js with npm, and a running MySQL server.
 
+### Docker Compose (recommended for local practice)
+
+1. Install Docker Desktop and open it.
+2. Copy `.env.example` to `.env` in the project root. Replace the example passwords with different passwords of your own. Never commit `.env`.
+3. From the project root run `docker compose up --build -d`.
+4. Open `http://localhost:5173` and sign in with the Admin or Viewer account from your `.env`.
+5. Check container output with `docker compose logs -f backend`. Stop with `docker compose down`.
+
+The MySQL database is stored in the `mysql_data` Docker volume, so `docker compose down` keeps your records. `docker compose down -v` **deletes the volume and its data**. To use MySQL Workbench, connect to `127.0.0.1:3307` with your `DB_USER` and `DB_PASSWORD`. The app's API is available locally on port 8080.
+
+### Manual setup
+
 1. Create a MySQL database named `construction_management` (or point `DB_URL` to a database you have created).
 2. Set these environment variables in your terminal before starting the backend:
    - `DB_USER` — your local MySQL username
