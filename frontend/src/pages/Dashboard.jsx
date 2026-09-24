@@ -4,6 +4,8 @@ import api from "../services/api";
 function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState("");
+  const [projectInfo, setProjectInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [summary, setSummary] = useState({
     totalClients: 0,
@@ -24,19 +26,20 @@ function Dashboard() {
     endDate: "",
   });
 
-  const [projectInfo, setProjectInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     loadInitialData();
   }, []);
 
   const loadInitialData = async () => {
     try {
+      setLoading(true);
+
       await Promise.all([
         loadProjects(),
         loadOverallDashboard(),
       ]);
+    } catch (error) {
+      console.error("Initial dashboard load error:", error);
     } finally {
       setLoading(false);
     }
@@ -76,7 +79,7 @@ function Dashboard() {
 
       setProjectInfo(null);
     } catch (error) {
-      console.error("Dashboard load error:", error);
+      console.error("Overall dashboard load error:", error);
     }
   };
 
@@ -135,9 +138,12 @@ function Dashboard() {
     setSelectedProject(projectId);
 
     if (projectId === "") {
-      setLoading(true);
-      await loadOverallDashboard();
-      setLoading(false);
+      try {
+        setLoading(true);
+        await loadOverallDashboard();
+      } finally {
+        setLoading(false);
+      }
     } else {
       await loadProjectDashboard(projectId);
     }
@@ -185,68 +191,71 @@ function Dashboard() {
       </div>
 
       {selectedProject === "" ? (
-        <>
-          <div className="dashboard-grid">
-            <div className="dashboard-card blue">
-              <p>Total Clients</p>
-              <h2>{summary.totalClients}</h2>
-            </div>
+        <div className="dashboard-grid">
 
-            <div className="dashboard-card purple">
-              <p>Total Projects</p>
-              <h2>{summary.totalProjects}</h2>
-            </div>
-
-            <div className="dashboard-card orange">
-              <p>Ongoing Projects</p>
-              <h2>{summary.ongoingProjects}</h2>
-            </div>
-
-            <div className="dashboard-card cyan">
-              <p>Total Project Value</p>
-              <h2>
-                {money(summary.totalProjectValue)}
-              </h2>
-            </div>
-
-            <div className="dashboard-card green">
-              <p>Total Payments</p>
-              <h2>
-                {money(summary.totalPayments)}
-              </h2>
-            </div>
-
-            <div className="dashboard-card red">
-              <p>Total Expenses</p>
-              <h2>
-                {money(summary.totalExpenses)}
-              </h2>
-            </div>
-
-            <div className="dashboard-card navy">
-              <p>Cash Balance</p>
-              <h2>
-                {money(summary.cashBalance)}
-              </h2>
-            </div>
+          <div className="dashboard-card blue">
+            <p>Total Clients</p>
+            <h2>{summary.totalClients}</h2>
           </div>
-        </>
+
+          <div className="dashboard-card purple">
+            <p>Total Projects</p>
+            <h2>{summary.totalProjects}</h2>
+          </div>
+
+          <div className="dashboard-card orange">
+            <p>Ongoing Projects</p>
+            <h2>{summary.ongoingProjects}</h2>
+          </div>
+
+          <div className="dashboard-card cyan">
+            <p>Total Project Value</p>
+            <h2>
+              {money(summary.totalProjectValue)}
+            </h2>
+          </div>
+
+          <div className="dashboard-card green">
+            <p>Total Payments</p>
+            <h2>
+              {money(summary.totalPayments)}
+            </h2>
+          </div>
+
+          <div className="dashboard-card red">
+            <p>Total Expenses</p>
+            <h2>
+              {money(summary.totalExpenses)}
+            </h2>
+          </div>
+
+          <div className="dashboard-card navy">
+            <p>Cash Balance</p>
+            <h2>
+              {money(summary.cashBalance)}
+            </h2>
+          </div>
+
+        </div>
       ) : (
         <>
           {projectInfo && (
             <div className="selected-project-info">
+
               <div>
                 <h2>
                   {projectInfo.projectName}
                 </h2>
 
-                <p>
-                  {projectInfo.description ||
-                    "No project description"}
-                </p>
+                {projectInfo.description && (
+                  <p>
+                    {projectInfo.description}
+                  </p>
+                )}
               </div>
 
               <div className="project-info-details">
+
                 <p>
                   <strong>Client:</strong>{" "}
                   {projectInfo.client?.name || "-"}
@@ -261,11 +270,14 @@ function Dashboard() {
                   <strong>Status:</strong>{" "}
                   {projectInfo.status || "-"}
                 </p>
+
               </div>
+
             </div>
           )}
 
           <div className="dashboard-grid">
+
             <div className="dashboard-card cyan">
               <p>Project Budget</p>
               <h2>
@@ -328,6 +340,7 @@ function Dashboard() {
                 {summary.endDate || "-"}
               </h2>
             </div>
+
           </div>
         </>
       )}
