@@ -5,6 +5,8 @@ import Clients from "./pages/Clients";
 import Projects from "./pages/Projects";
 import Boq from "./pages/Boq";
 import Expenses from "./pages/Expenses";
+import Payments from "./pages/Payments";
+import DailyProgress from "./pages/DailyProgress";
 
 
 function App() {
@@ -60,15 +62,9 @@ function App() {
 
             <Route path="/expenses" element={<Expenses />} />
 
-            <Route
-              path="/payments"
-              element={<h1>Payments Page</h1>}
-            />
+            <Route path="/payments" element={<Payments />} />
 
-            <Route
-              path="/progress"
-              element={<h1>Daily Progress Page</h1>}
-            />
+            <Route path="/progress" element={<DailyProgress />} />
           </Routes>
         </main>
       </div>
