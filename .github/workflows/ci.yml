@@ -2,9 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
+
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
 
@@ -27,8 +30,12 @@ jobs:
           java-version: "17"
           cache: maven
 
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
+
       - name: Build backend
         run: ./mvnw clean package -DskipTests
+
 
   frontend:
     name: Frontend Build
