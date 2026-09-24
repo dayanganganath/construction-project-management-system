@@ -9,7 +9,7 @@ A full-stack application for tracking construction clients, projects, BOQ items,
 - React pages for dashboard, clients, projects, BOQ, expenses, payments, and daily progress
 - Spring Boot controllers, services, repositories, and MySQL-backed models for the same workflows
 - Client and project management, including project create/edit/delete forms
-- GitHub Actions builds the backend and frontend on push and pull requests; backend tests are currently skipped in CI
+- GitHub Actions runs backend tests, frontend lint, and both builds on pushes and pull requests
 
 ## Tech stack
 
@@ -47,10 +47,10 @@ cd backend
 
 ## Roadmap
 
-- Add meaningful backend and frontend tests, then enable tests in CI
+- Expand backend unit tests and add frontend interaction tests
 - Add authentication and role-based access
 - Make API origin and URL configurable for deployment
 - Add project screenshots and a live demo
-- Remove previously committed dependency folders from Git history after checking they contain no useful source files
+- Keep generated dependency folders out of future commits (previously tracked node_modules files have been removed from the current branch)
 
 > If a real database password was previously committed, change that password in MySQL. Editing the config does not erase it from Git history.
