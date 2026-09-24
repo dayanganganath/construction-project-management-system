@@ -4,7 +4,6 @@ import com.skyward.projectmanagement.service.ProjectFinancialService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.Map;
 
 @RestController
@@ -14,21 +13,28 @@ public class ProjectFinancialController {
 
     private final ProjectFinancialService projectFinancialService;
 
-    public ProjectFinancialController(ProjectFinancialService projectFinancialService) {
+    public ProjectFinancialController(
+            ProjectFinancialService projectFinancialService
+    ) {
         this.projectFinancialService = projectFinancialService;
     }
 
     @GetMapping("/{projectId}/financial-summary")
-    public ResponseEntity<?> getFinancialSummary(@PathVariable Long projectId) {
+    public ResponseEntity<?> getFinancialSummary(
+            @PathVariable Long projectId
+    ) {
 
         try {
-            Map<String, BigDecimal> summary =
-                    projectFinancialService.getProjectFinancialSummary(projectId);
+            Map<String, Object> summary =
+                    projectFinancialService
+                            .getProjectFinancialSummary(projectId);
 
             return ResponseEntity.ok(summary);
 
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity
+                    .badRequest()
+                    .body(e.getMessage());
         }
     }
 }

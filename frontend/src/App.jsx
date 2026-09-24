@@ -3,6 +3,9 @@ import Dashboard from "./pages/Dashboard";
 import "./App.css";
 import Clients from "./pages/Clients";
 import Projects from "./pages/Projects";
+import Boq from "./pages/Boq";
+import Expenses from "./pages/Expenses";
+
 
 function App() {
   return (
@@ -53,15 +56,9 @@ function App() {
 
             <Route path="/projects" element={<Projects />} />
 
-            <Route
-              path="/boq"
-              element={<h1>BOQ Page</h1>}
-            />
+            <Route path="/boq" element={<Boq />} />
 
-            <Route
-              path="/expenses"
-              element={<h1>Expenses Page</h1>}
-            />
+            <Route path="/expenses" element={<Expenses />} />
 
             <Route
               path="/payments"

@@ -306,3 +306,138 @@ body {
   outline: none;
   border-color: #2563eb;
 }
+
+.boq-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 15px;
+}
+
+.boq-form input,
+.boq-form select {
+  padding: 12px 14px;
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.boq-form input:focus,
+.boq-form select:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.boq-total-preview {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #eff6ff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.boq-total-preview span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.boq-total-preview strong {
+  margin-top: 4px;
+  color: #1d4ed8;
+  font-size: 18px;
+}
+
+.expense-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 15px;
+}
+
+.expense-form input,
+.expense-form select {
+  padding: 12px 14px;
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.expense-form input:focus,
+.expense-form select:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.project-filter {
+  min-width: 260px;
+  padding: 12px 14px;
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.project-filter:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.selected-project-info {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.selected-project-info h2 {
+  margin-top: 0;
+  color: #0f172a;
+}
+
+.selected-project-info p {
+  display: inline-block;
+  margin: 5px 30px 5px 0;
+  color: #64748b;
+}
+
+.project-info-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 12px;
+}
+
+.project-info-details p {
+  margin: 0;
+}
+
+.date-value {
+  font-size: 20px !important;
+}
+
+.dashboard-loading {
+  padding: 30px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #475569;
+}
