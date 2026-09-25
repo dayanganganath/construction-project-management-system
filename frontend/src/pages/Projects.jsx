@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import Alert from "../components/Alert";
 
 function Projects() {
   const [projects, setProjects] = useState([]);
   const [clients, setClients] = useState([]);
   const [editingId, setEditingId] = useState(null);
+
+  const [alert, setAlert] = useState({
+    type: "",
+    message: "",
+  });
 
   const [form, setForm] = useState({
     projectName: "",
@@ -12,7 +18,7 @@ function Projects() {
     description: "",
     startDate: "",
     endDate: "",
-    status: "ONGOING",
+    status: "PLANNED",
     budget: "",
     clientId: "",
   });
@@ -22,12 +28,24 @@ function Projects() {
     loadClients();
   }, []);
 
+  const showAlert = (type, message) => {
+    setAlert({ type, message });
+
+    setTimeout(() => {
+      setAlert({
+        type: "",
+        message: "",
+      });
+    }, 3000);
+  };
+
   const loadProjects = async () => {
     try {
       const response = await api.get("/projects");
       setProjects(response.data);
     } catch (error) {
       console.error("Error loading projects:", error);
+      showAlert("error", "Unable to load projects.");
     }
   };
 
@@ -47,6 +65,43 @@ function Projects() {
     });
   };
 
+  const validateForm = () => {
+    if (!form.projectName.trim()) {
+      showAlert("error", "Project name is required.");
+      return false;
+    }
+
+    if (!form.clientId) {
+      showAlert("error", "Please select a client.");
+      return false;
+    }
+
+    if (!form.startDate) {
+      showAlert("error", "Start date is required.");
+      return false;
+    }
+
+    if (form.endDate && form.endDate < form.startDate) {
+      showAlert(
+        "error",
+        "End date cannot be earlier than the start date."
+      );
+      return false;
+    }
+
+    if (form.budget === "") {
+      showAlert("error", "Project budget is required.");
+      return false;
+    }
+
+    if (Number(form.budget) < 0) {
+      showAlert("error", "Project budget cannot be negative.");
+      return false;
+    }
+
+    return true;
+  };
+
   const resetForm = () => {
     setForm({
       projectName: "",
@@ -54,7 +109,7 @@ function Projects() {
       description: "",
       startDate: "",
       endDate: "",
-      status: "ONGOING",
+      status: "PLANNED",
       budget: "",
       clientId: "",
     });
@@ -65,12 +120,16 @@ function Projects() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!validateForm()) {
+      return;
+    }
+
     const projectData = {
-      projectName: form.projectName,
-      location: form.location,
-      description: form.description,
+      projectName: form.projectName.trim(),
+      location: form.location.trim(),
+      description: form.description.trim(),
       startDate: form.startDate,
-      endDate: form.endDate,
+      endDate: form.endDate || null,
       status: form.status,
       budget: Number(form.budget),
       client: {
@@ -81,14 +140,17 @@ function Projects() {
     try {
       if (editingId) {
         await api.put(`/projects/${editingId}`, projectData);
+        showAlert("success", "Project updated successfully.");
       } else {
         await api.post("/projects", projectData);
+        showAlert("success", "Project added successfully.");
       }
 
       resetForm();
       loadProjects();
     } catch (error) {
       console.error("Error saving project:", error);
+      showAlert("error", "Unable to save project. Please try again.");
     }
   };
 
@@ -101,7 +163,7 @@ function Projects() {
       description: project.description || "",
       startDate: project.startDate || "",
       endDate: project.endDate || "",
-      status: project.status || "ONGOING",
+      status: project.status || "PLANNED",
       budget: project.budget || "",
       clientId: project.client?.id || "",
     });
@@ -113,17 +175,28 @@ function Projects() {
   };
 
   const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
+    const confirmed = window.confirm(
       "Are you sure you want to delete this project?"
     );
 
-    if (!confirmDelete) return;
+    if (!confirmed) return;
 
     try {
       await api.delete(`/projects/${id}`);
+
+      showAlert("success", "Project deleted successfully.");
       loadProjects();
+
+      if (editingId === id) {
+        resetForm();
+      }
     } catch (error) {
       console.error("Error deleting project:", error);
+
+      showAlert(
+        "error",
+        "Unable to delete this project. It may contain BOQ, payment, expense, or progress records."
+      );
     }
   };
 
@@ -143,17 +216,28 @@ function Projects() {
         </div>
       </div>
 
+      <Alert
+        type={alert.type}
+        message={alert.message}
+        onClose={() =>
+          setAlert({
+            type: "",
+            message: "",
+          })
+        }
+      />
+
       <div className="form-card">
-        <h2>{editingId ? "Edit Project" : "Add Project"}</h2>
+        <h2>{editingId ? "Edit Project" : "Add New Project"}</h2>
 
         <form className="project-form" onSubmit={handleSubmit}>
           <input
             type="text"
             name="projectName"
-            placeholder="Project Name"
+            placeholder="Project Name *"
             value={form.projectName}
             onChange={handleChange}
-            required
+            maxLength="150"
           />
 
           <input
@@ -162,6 +246,7 @@ function Projects() {
             placeholder="Location"
             value={form.location}
             onChange={handleChange}
+            maxLength="150"
           />
 
           <input
@@ -170,6 +255,7 @@ function Projects() {
             placeholder="Description"
             value={form.description}
             onChange={handleChange}
+            maxLength="250"
           />
 
           <input
@@ -191,8 +277,8 @@ function Projects() {
             value={form.status}
             onChange={handleChange}
           >
-            <option value="ONGOING">Ongoing</option>
             <option value="PLANNED">Planned</option>
+            <option value="ONGOING">Ongoing</option>
             <option value="COMPLETED">Completed</option>
             <option value="ON_HOLD">On Hold</option>
           </select>
@@ -200,19 +286,19 @@ function Projects() {
           <input
             type="number"
             name="budget"
-            placeholder="Budget"
+            placeholder="Project Budget *"
+            min="0"
+            step="0.01"
             value={form.budget}
             onChange={handleChange}
-            required
           />
 
           <select
             name="clientId"
             value={form.clientId}
             onChange={handleChange}
-            required
           >
-            <option value="">Select Client</option>
+            <option value="">Select Client *</option>
 
             {clients.map((client) => (
               <option key={client.id} value={client.id}>
@@ -247,6 +333,8 @@ function Projects() {
               <th>Location</th>
               <th>Status</th>
               <th>Budget</th>
+              <th>Start Date</th>
+              <th>End Date</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -254,17 +342,19 @@ function Projects() {
           <tbody>
             {projects.length === 0 ? (
               <tr>
-                <td colSpan="7">No projects found.</td>
+                <td colSpan="9">No projects found.</td>
               </tr>
             ) : (
               projects.map((project) => (
                 <tr key={project.id}>
                   <td>{project.id}</td>
                   <td>{project.projectName}</td>
-                  <td>{project.client?.name}</td>
-                  <td>{project.location}</td>
+                  <td>{project.client?.name || "-"}</td>
+                  <td>{project.location || "-"}</td>
                   <td>{project.status}</td>
                   <td>{money(project.budget)}</td>
+                  <td>{project.startDate || "-"}</td>
+                  <td>{project.endDate || "-"}</td>
 
                   <td>
                     <button
