@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import Alert from "../components/Alert";
 
 function Expenses() {
   const [expenses, setExpenses] = useState([]);
   const [projects, setProjects] = useState([]);
   const [editingId, setEditingId] = useState(null);
+
+  const [alert, setAlert] = useState({
+    type: "",
+    message: "",
+  });
 
   const [form, setForm] = useState({
     expenseType: "MATERIAL",
@@ -19,12 +25,24 @@ function Expenses() {
     loadProjects();
   }, []);
 
+  const showAlert = (type, message) => {
+    setAlert({ type, message });
+
+    setTimeout(() => {
+      setAlert({
+        type: "",
+        message: "",
+      });
+    }, 3000);
+  };
+
   const loadExpenses = async () => {
     try {
       const response = await api.get("/expenses");
       setExpenses(response.data);
     } catch (error) {
       console.error("Error loading expenses:", error);
+      showAlert("error", "Unable to load expenses.");
     }
   };
 
@@ -44,6 +62,30 @@ function Expenses() {
     });
   };
 
+  const validateForm = () => {
+    if (!form.projectId) {
+      showAlert("error", "Please select a project.");
+      return false;
+    }
+
+    if (!form.description.trim()) {
+      showAlert("error", "Expense description is required.");
+      return false;
+    }
+
+    if (form.amount === "" || Number(form.amount) <= 0) {
+      showAlert("error", "Expense amount must be greater than 0.");
+      return false;
+    }
+
+    if (!form.date) {
+      showAlert("error", "Expense date is required.");
+      return false;
+    }
+
+    return true;
+  };
+
   const resetForm = () => {
     setForm({
       expenseType: "MATERIAL",
@@ -59,9 +101,13 @@ function Expenses() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!validateForm()) {
+      return;
+    }
+
     const expenseData = {
       expenseType: form.expenseType,
-      description: form.description,
+      description: form.description.trim(),
       amount: Number(form.amount),
       date: form.date,
       project: {
@@ -72,14 +118,17 @@ function Expenses() {
     try {
       if (editingId) {
         await api.put(`/expenses/${editingId}`, expenseData);
+        showAlert("success", "Expense updated successfully.");
       } else {
         await api.post("/expenses", expenseData);
+        showAlert("success", "Expense added successfully.");
       }
 
       resetForm();
       loadExpenses();
     } catch (error) {
       console.error("Error saving expense:", error);
+      showAlert("error", "Unable to save expense. Please try again.");
     }
   };
 
@@ -109,9 +158,15 @@ function Expenses() {
 
     try {
       await api.delete(`/expenses/${id}`);
+      showAlert("success", "Expense deleted successfully.");
       loadExpenses();
+
+      if (editingId === id) {
+        resetForm();
+      }
     } catch (error) {
       console.error("Error deleting expense:", error);
+      showAlert("error", "Unable to delete expense.");
     }
   };
 
@@ -127,9 +182,20 @@ function Expenses() {
       <div className="page-header">
         <div>
           <h1>Expenses</h1>
-          <p>Track project costs and site expenses</p>
+          <p>Track project expenses and site costs</p>
         </div>
       </div>
+
+      <Alert
+        type={alert.type}
+        message={alert.message}
+        onClose={() =>
+          setAlert({
+            type: "",
+            message: "",
+          })
+        }
+      />
 
       <div className="form-card">
         <h2>{editingId ? "Edit Expense" : "Add Expense"}</h2>
@@ -139,7 +205,6 @@ function Expenses() {
             name="expenseType"
             value={form.expenseType}
             onChange={handleChange}
-            required
           >
             <option value="MATERIAL">Material</option>
             <option value="LABOUR">Labour</option>
@@ -151,19 +216,20 @@ function Expenses() {
           <input
             type="text"
             name="description"
-            placeholder="Description"
+            placeholder="Expense Description *"
             value={form.description}
             onChange={handleChange}
-            required
+            maxLength="200"
           />
 
           <input
             type="number"
             name="amount"
-            placeholder="Amount"
+            placeholder="Amount *"
+            min="0"
+            step="0.01"
             value={form.amount}
             onChange={handleChange}
-            required
           />
 
           <input
@@ -171,16 +237,14 @@ function Expenses() {
             name="date"
             value={form.date}
             onChange={handleChange}
-            required
           />
 
           <select
             name="projectId"
             value={form.projectId}
             onChange={handleChange}
-            required
           >
-            <option value="">Select Project</option>
+            <option value="">Select Project *</option>
 
             {projects.map((project) => (
               <option key={project.id} value={project.id}>
@@ -230,9 +294,10 @@ function Expenses() {
                   <td>{expense.id}</td>
                   <td>{expense.expenseType}</td>
                   <td>{expense.description}</td>
-                  <td>{expense.project?.projectName}</td>
-                  <td>{expense.date}</td>
+                  <td>{expense.project?.projectName || "-"}</td>
+                  <td>{expense.date || "-"}</td>
                   <td>{money(expense.amount)}</td>
+
                   <td>
                     <button
                       className="edit-button"
