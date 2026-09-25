@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../services/api";
+import Alert from "../components/Alert";
 
 function Boq() {
   const [items, setItems] = useState([]);
   const [projects, setProjects] = useState([]);
   const [editingId, setEditingId] = useState(null);
+
+  const [alert, setAlert] = useState({
+    type: "",
+    message: "",
+  });
 
   const [form, setForm] = useState({
     itemDescription: "",
@@ -20,12 +26,24 @@ function Boq() {
     loadProjects();
   }, []);
 
+  const showAlert = (type, message) => {
+    setAlert({ type, message });
+
+    setTimeout(() => {
+      setAlert({
+        type: "",
+        message: "",
+      });
+    }, 3000);
+  };
+
   const loadItems = async () => {
     try {
       const response = await api.get("/boq-items");
       setItems(response.data);
     } catch (error) {
       console.error("Error loading BOQ items:", error);
+      showAlert("error", "Unable to load BOQ items.");
     }
   };
 
@@ -46,11 +64,40 @@ function Boq() {
   };
 
   const calculatedTotal = useMemo(() => {
-    const quantity = Number(form.quantity || 0);
-    const rate = Number(form.rate || 0);
+    const quantity = Number(form.quantity) || 0;
+    const rate = Number(form.rate) || 0;
 
     return quantity * rate;
   }, [form.quantity, form.rate]);
+
+  const validateForm = () => {
+    if (!form.projectId) {
+      showAlert("error", "Please select a project.");
+      return false;
+    }
+
+    if (!form.itemDescription.trim()) {
+      showAlert("error", "Item description is required.");
+      return false;
+    }
+
+    if (form.quantity === "" || Number(form.quantity) <= 0) {
+      showAlert("error", "Quantity must be greater than 0.");
+      return false;
+    }
+
+    if (!form.unit.trim()) {
+      showAlert("error", "Unit is required.");
+      return false;
+    }
+
+    if (form.rate === "" || Number(form.rate) < 0) {
+      showAlert("error", "Please enter a valid rate.");
+      return false;
+    }
+
+    return true;
+  };
 
   const resetForm = () => {
     setForm({
@@ -68,11 +115,15 @@ function Boq() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const data = {
-      itemDescription: form.itemDescription,
-      specification: form.specification,
+    if (!validateForm()) {
+      return;
+    }
+
+    const boqData = {
+      itemDescription: form.itemDescription.trim(),
+      specification: form.specification.trim(),
       quantity: Number(form.quantity),
-      unit: form.unit,
+      unit: form.unit.trim(),
       rate: Number(form.rate),
       project: {
         id: Number(form.projectId),
@@ -81,15 +132,18 @@ function Boq() {
 
     try {
       if (editingId) {
-        await api.put(`/boq-items/${editingId}`, data);
+        await api.put(`/boq-items/${editingId}`, boqData);
+        showAlert("success", "BOQ item updated successfully.");
       } else {
-        await api.post("/boq-items", data);
+        await api.post("/boq-items", boqData);
+        showAlert("success", "BOQ item added successfully.");
       }
 
       resetForm();
       loadItems();
     } catch (error) {
       console.error("Error saving BOQ item:", error);
+      showAlert("error", "Unable to save BOQ item. Please try again.");
     }
   };
 
@@ -120,9 +174,15 @@ function Boq() {
 
     try {
       await api.delete(`/boq-items/${id}`);
+      showAlert("success", "BOQ item deleted successfully.");
       loadItems();
+
+      if (editingId === id) {
+        resetForm();
+      }
     } catch (error) {
       console.error("Error deleting BOQ item:", error);
+      showAlert("error", "Unable to delete BOQ item.");
     }
   };
 
@@ -130,7 +190,7 @@ function Boq() {
     new Intl.NumberFormat("en-LK", {
       style: "currency",
       currency: "LKR",
-      maximumFractionDigits: 2,
+      maximumFractionDigits: 0,
     }).format(value || 0);
 
   return (
@@ -138,21 +198,46 @@ function Boq() {
       <div className="page-header">
         <div>
           <h1>BOQ</h1>
-          <p>Manage project BOQ items</p>
+          <p>Manage project Bill of Quantities</p>
         </div>
       </div>
+
+      <Alert
+        type={alert.type}
+        message={alert.message}
+        onClose={() =>
+          setAlert({
+            type: "",
+            message: "",
+          })
+        }
+      />
 
       <div className="form-card">
         <h2>{editingId ? "Edit BOQ Item" : "Add BOQ Item"}</h2>
 
         <form className="boq-form" onSubmit={handleSubmit}>
+          <select
+            name="projectId"
+            value={form.projectId}
+            onChange={handleChange}
+          >
+            <option value="">Select Project *</option>
+
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.projectName}
+              </option>
+            ))}
+          </select>
+
           <input
             type="text"
             name="itemDescription"
-            placeholder="Item Description"
+            placeholder="Item Description *"
             value={form.itemDescription}
             onChange={handleChange}
-            required
+            maxLength="200"
           />
 
           <input
@@ -161,51 +246,37 @@ function Boq() {
             placeholder="Specification"
             value={form.specification}
             onChange={handleChange}
+            maxLength="250"
           />
 
           <input
             type="number"
-            step="0.01"
             name="quantity"
-            placeholder="Quantity"
+            placeholder="Quantity *"
+            min="0"
+            step="0.01"
             value={form.quantity}
             onChange={handleChange}
-            required
           />
 
           <input
             type="text"
             name="unit"
-            placeholder="Unit - sqft / m2 / No."
+            placeholder="Unit *"
             value={form.unit}
             onChange={handleChange}
-            required
+            maxLength="20"
           />
 
           <input
             type="number"
-            step="0.01"
             name="rate"
-            placeholder="Rate"
+            placeholder="Rate *"
+            min="0"
+            step="0.01"
             value={form.rate}
             onChange={handleChange}
-            required
           />
-
-          <select
-            name="projectId"
-            value={form.projectId}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select Project</option>
-
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.projectName}
-              </option>
-            ))}
-          </select>
 
           <div className="boq-total-preview">
             <span>Calculated Total</span>
@@ -252,12 +323,8 @@ function Boq() {
               items.map((item) => (
                 <tr key={item.id}>
                   <td>{item.id}</td>
-                  <td>
-                    <strong>{item.itemDescription}</strong>
-                    <br />
-                    <small>{item.specification}</small>
-                  </td>
-                  <td>{item.project?.projectName}</td>
+                  <td>{item.itemDescription}</td>
+                  <td>{item.project?.projectName || "-"}</td>
                   <td>{item.quantity}</td>
                   <td>{item.unit}</td>
                   <td>{money(item.rate)}</td>
