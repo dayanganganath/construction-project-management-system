@@ -597,3 +597,127 @@ body {
   cursor: pointer;
   color: inherit;
 }
+
+/* =========================
+   RESPONSIVE UI
+   ========================= */
+
+@media (max-width: 1100px) {
+  .sidebar {
+    width: 210px;
+  }
+
+  .main-content {
+    padding: 24px;
+  }
+
+  .dashboard-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .project-filter {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-height: auto;
+    padding: 18px;
+  }
+
+  .brand {
+    margin-bottom: 15px;
+  }
+
+  .nav-menu {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+
+  .nav-menu a {
+    white-space: nowrap;
+    min-width: max-content;
+  }
+
+  .main-content {
+    padding: 18px;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .project-form,
+  .client-form,
+  .boq-form,
+  .expense-form,
+  .payment-form,
+  .progress-form {
+    grid-template-columns: 1fr;
+  }
+
+  .project-info-details {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .table-card {
+    overflow-x: auto;
+  }
+
+  .data-table {
+    min-width: 850px;
+  }
+
+  .form-card {
+    padding: 18px;
+  }
+
+  .page-header h1 {
+    font-size: 26px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 12px;
+  }
+
+  .sidebar {
+    padding: 14px;
+  }
+
+  .dashboard-card {
+    padding: 18px;
+  }
+
+  .dashboard-card h2 {
+    font-size: 22px;
+  }
+
+  .form-card,
+  .table-card,
+  .selected-project-info {
+    border-radius: 8px;
+  }
+
+  .primary-button,
+  .cancel-button {
+    width: 100%;
+  }
+
+  .edit-button,
+  .delete-button {
+    margin-bottom: 5px;
+  }
+}
