@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import Alert from "../components/Alert";
 
 function DailyProgress() {
   const [progressList, setProgressList] = useState([]);
   const [projects, setProjects] = useState([]);
   const [editingId, setEditingId] = useState(null);
+
+  const [alert, setAlert] = useState({
+    type: "",
+    message: "",
+  });
 
   const [form, setForm] = useState({
     date: "",
@@ -20,12 +26,24 @@ function DailyProgress() {
     loadProjects();
   }, []);
 
+  const showAlert = (type, message) => {
+    setAlert({ type, message });
+
+    setTimeout(() => {
+      setAlert({
+        type: "",
+        message: "",
+      });
+    }, 3000);
+  };
+
   const loadProgress = async () => {
     try {
       const response = await api.get("/progress");
       setProgressList(response.data);
     } catch (error) {
       console.error("Error loading progress:", error);
+      showAlert("error", "Unable to load daily progress records.");
     }
   };
 
@@ -45,6 +63,42 @@ function DailyProgress() {
     });
   };
 
+  const validateForm = () => {
+    if (!form.projectId) {
+      showAlert("error", "Please select a project.");
+      return false;
+    }
+
+    if (!form.date) {
+      showAlert("error", "Progress date is required.");
+      return false;
+    }
+
+    if (!form.workDescription.trim()) {
+      showAlert("error", "Work description is required.");
+      return false;
+    }
+
+    if (
+      form.progressPercentage === "" ||
+      Number(form.progressPercentage) < 0 ||
+      Number(form.progressPercentage) > 100
+    ) {
+      showAlert("error", "Progress percentage must be between 0 and 100.");
+      return false;
+    }
+
+    if (
+      form.workersCount !== "" &&
+      Number(form.workersCount) < 0
+    ) {
+      showAlert("error", "Workers count cannot be negative.");
+      return false;
+    }
+
+    return true;
+  };
+
   const resetForm = () => {
     setForm({
       date: "",
@@ -61,12 +115,17 @@ function DailyProgress() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!validateForm()) {
+      return;
+    }
+
     const progressData = {
       date: form.date,
-      workDescription: form.workDescription,
+      workDescription: form.workDescription.trim(),
       progressPercentage: Number(form.progressPercentage),
-      workersCount: Number(form.workersCount),
-      remarks: form.remarks,
+      workersCount:
+        form.workersCount === "" ? 0 : Number(form.workersCount),
+      remarks: form.remarks.trim(),
       project: {
         id: Number(form.projectId),
       },
@@ -75,14 +134,17 @@ function DailyProgress() {
     try {
       if (editingId) {
         await api.put(`/progress/${editingId}`, progressData);
+        showAlert("success", "Daily progress updated successfully.");
       } else {
         await api.post("/progress", progressData);
+        showAlert("success", "Daily progress added successfully.");
       }
 
       resetForm();
       loadProgress();
     } catch (error) {
       console.error("Error saving progress:", error);
+      showAlert("error", "Unable to save daily progress. Please try again.");
     }
   };
 
@@ -92,8 +154,8 @@ function DailyProgress() {
     setForm({
       date: progress.date || "",
       workDescription: progress.workDescription || "",
-      progressPercentage: progress.progressPercentage || "",
-      workersCount: progress.workersCount || "",
+      progressPercentage: progress.progressPercentage ?? "",
+      workersCount: progress.workersCount ?? "",
       remarks: progress.remarks || "",
       projectId: progress.project?.id || "",
     });
@@ -113,9 +175,15 @@ function DailyProgress() {
 
     try {
       await api.delete(`/progress/${id}`);
+      showAlert("success", "Daily progress deleted successfully.");
       loadProgress();
+
+      if (editingId === id) {
+        resetForm();
+      }
     } catch (error) {
       console.error("Error deleting progress:", error);
+      showAlert("error", "Unable to delete daily progress.");
     }
   };
 
@@ -128,36 +196,59 @@ function DailyProgress() {
         </div>
       </div>
 
+      <Alert
+        type={alert.type}
+        message={alert.message}
+        onClose={() =>
+          setAlert({
+            type: "",
+            message: "",
+          })
+        }
+      />
+
       <div className="form-card">
         <h2>{editingId ? "Edit Progress" : "Add Daily Progress"}</h2>
 
         <form className="progress-form" onSubmit={handleSubmit}>
+          <select
+            name="projectId"
+            value={form.projectId}
+            onChange={handleChange}
+          >
+            <option value="">Select Project *</option>
+
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.projectName}
+              </option>
+            ))}
+          </select>
+
           <input
             type="date"
             name="date"
             value={form.date}
             onChange={handleChange}
-            required
           />
 
           <input
             type="text"
             name="workDescription"
-            placeholder="Work Description"
+            placeholder="Work Description *"
             value={form.workDescription}
             onChange={handleChange}
-            required
+            maxLength="250"
           />
 
           <input
             type="number"
             name="progressPercentage"
-            placeholder="Progress %"
+            placeholder="Progress % *"
             min="0"
             max="100"
             value={form.progressPercentage}
             onChange={handleChange}
-            required
           />
 
           <input
@@ -175,22 +266,8 @@ function DailyProgress() {
             placeholder="Remarks"
             value={form.remarks}
             onChange={handleChange}
+            maxLength="250"
           />
-
-          <select
-            name="projectId"
-            value={form.projectId}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select Project</option>
-
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.projectName}
-              </option>
-            ))}
-          </select>
 
           <button type="submit" className="primary-button">
             {editingId ? "Update Progress" : "Add Progress"}
@@ -232,11 +309,11 @@ function DailyProgress() {
               progressList.map((progress) => (
                 <tr key={progress.id}>
                   <td>{progress.id}</td>
-                  <td>{progress.date}</td>
-                  <td>{progress.project?.projectName}</td>
+                  <td>{progress.date || "-"}</td>
+                  <td>{progress.project?.projectName || "-"}</td>
                   <td>{progress.workDescription}</td>
                   <td>{progress.progressPercentage}%</td>
-                  <td>{progress.workersCount}</td>
+                  <td>{progress.workersCount ?? 0}</td>
                   <td>{progress.remarks || "-"}</td>
 
                   <td>
