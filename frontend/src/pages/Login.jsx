@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 function Login() {
   const navigate = useNavigate();
@@ -10,15 +11,18 @@ function Login() {
   });
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value,
     });
+
+    setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!form.username.trim() || !form.password.trim()) {
@@ -26,14 +30,33 @@ function Login() {
       return;
     }
 
-    // Temporary local login
-    if (form.username === "admin" && form.password === "admin123") {
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("username", form.username);
+    try {
+      setLoading(true);
 
-      navigate("/");
-    } else {
-      setError("Invalid username or password.");
+      const response = await api.post("/auth/login", {
+        username: form.username.trim(),
+        password: form.password,
+      });
+
+      if (response.data.success) {
+        localStorage.setItem("isAuthenticated", "true");
+        localStorage.setItem(
+          "username",
+          response.data.username
+        );
+
+        navigate("/");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+
+      if (error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else {
+        setError("Unable to login. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,15 +70,23 @@ function Login() {
 
         <h2>Login</h2>
 
-        {error && <div className="login-error">{error}</div>}
+        {error && (
+          <div className="login-error">
+            {error}
+          </div>
+        )}
 
-        <form className="login-form" onSubmit={handleSubmit}>
+        <form
+          className="login-form"
+          onSubmit={handleSubmit}
+        >
           <input
             type="text"
             name="username"
             placeholder="Username"
             value={form.username}
             onChange={handleChange}
+            autoComplete="username"
           />
 
           <input
@@ -64,16 +95,17 @@ function Login() {
             placeholder="Password"
             value={form.password}
             onChange={handleChange}
+            autoComplete="current-password"
           />
 
-          <button type="submit" className="login-button">
-            Login
+          <button
+            type="submit"
+            className="login-button"
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-
-        <p className="login-demo">
-          Demo Login: admin / admin123
-        </p>
       </div>
     </div>
   );
