@@ -13,6 +13,7 @@ import Boq from "./pages/Boq";
 import Expenses from "./pages/Expenses";
 import Payments from "./pages/Payments";
 import DailyProgress from "./pages/DailyProgress";
+import Users from "./pages/Users";
 import Login from "./pages/Login";
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -65,6 +66,10 @@ function ProtectedLayout() {
           <NavLink to="/progress">
             Daily Progress
           </NavLink>
+
+          <NavLink to="/users">
+            Users
+          </NavLink>
         </nav>
 
         <div className="sidebar-footer">
@@ -113,6 +118,11 @@ function ProtectedLayout() {
           <Route
             path="/progress"
             element={<DailyProgress />}
+          />
+
+          <Route
+            path="/users"
+            element={<Users />}
           />
         </Routes>
       </main>
