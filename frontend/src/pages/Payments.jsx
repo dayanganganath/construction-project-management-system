@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import Alert from "../components/Alert";
 
 function Payments() {
   const [payments, setPayments] = useState([]);
   const [projects, setProjects] = useState([]);
   const [editingId, setEditingId] = useState(null);
+
+  const [alert, setAlert] = useState({
+    type: "",
+    message: "",
+  });
 
   const [form, setForm] = useState({
     amount: "",
@@ -20,12 +26,24 @@ function Payments() {
     loadProjects();
   }, []);
 
+  const showAlert = (type, message) => {
+    setAlert({ type, message });
+
+    setTimeout(() => {
+      setAlert({
+        type: "",
+        message: "",
+      });
+    }, 3000);
+  };
+
   const loadPayments = async () => {
     try {
       const response = await api.get("/payments");
       setPayments(response.data);
     } catch (error) {
       console.error("Error loading payments:", error);
+      showAlert("error", "Unable to load payments.");
     }
   };
 
@@ -45,6 +63,30 @@ function Payments() {
     });
   };
 
+  const validateForm = () => {
+    if (!form.projectId) {
+      showAlert("error", "Please select a project.");
+      return false;
+    }
+
+    if (form.amount === "" || Number(form.amount) <= 0) {
+      showAlert("error", "Payment amount must be greater than 0.");
+      return false;
+    }
+
+    if (!form.paymentDate) {
+      showAlert("error", "Payment date is required.");
+      return false;
+    }
+
+    if (!form.paymentMethod) {
+      showAlert("error", "Please select a payment method.");
+      return false;
+    }
+
+    return true;
+  };
+
   const resetForm = () => {
     setForm({
       amount: "",
@@ -61,12 +103,16 @@ function Payments() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!validateForm()) {
+      return;
+    }
+
     const paymentData = {
       amount: Number(form.amount),
       paymentDate: form.paymentDate,
       paymentMethod: form.paymentMethod,
-      referenceNumber: form.referenceNumber,
-      notes: form.notes,
+      referenceNumber: form.referenceNumber.trim(),
+      notes: form.notes.trim(),
       project: {
         id: Number(form.projectId),
       },
@@ -75,14 +121,17 @@ function Payments() {
     try {
       if (editingId) {
         await api.put(`/payments/${editingId}`, paymentData);
+        showAlert("success", "Payment updated successfully.");
       } else {
         await api.post("/payments", paymentData);
+        showAlert("success", "Payment added successfully.");
       }
 
       resetForm();
       loadPayments();
     } catch (error) {
       console.error("Error saving payment:", error);
+      showAlert("error", "Unable to save payment. Please try again.");
     }
   };
 
@@ -113,9 +162,15 @@ function Payments() {
 
     try {
       await api.delete(`/payments/${id}`);
+      showAlert("success", "Payment deleted successfully.");
       loadPayments();
+
+      if (editingId === id) {
+        resetForm();
+      }
     } catch (error) {
       console.error("Error deleting payment:", error);
+      showAlert("error", "Unable to delete payment.");
     }
   };
 
@@ -135,17 +190,43 @@ function Payments() {
         </div>
       </div>
 
+      <Alert
+        type={alert.type}
+        message={alert.message}
+        onClose={() =>
+          setAlert({
+            type: "",
+            message: "",
+          })
+        }
+      />
+
       <div className="form-card">
         <h2>{editingId ? "Edit Payment" : "Add Payment"}</h2>
 
         <form className="payment-form" onSubmit={handleSubmit}>
+          <select
+            name="projectId"
+            value={form.projectId}
+            onChange={handleChange}
+          >
+            <option value="">Select Project *</option>
+
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.projectName}
+              </option>
+            ))}
+          </select>
+
           <input
             type="number"
             name="amount"
-            placeholder="Amount"
+            placeholder="Amount *"
+            min="0"
+            step="0.01"
             value={form.amount}
             onChange={handleChange}
-            required
           />
 
           <input
@@ -153,7 +234,6 @@ function Payments() {
             name="paymentDate"
             value={form.paymentDate}
             onChange={handleChange}
-            required
           />
 
           <select
@@ -174,6 +254,7 @@ function Payments() {
             placeholder="Reference Number"
             value={form.referenceNumber}
             onChange={handleChange}
+            maxLength="100"
           />
 
           <input
@@ -182,22 +263,8 @@ function Payments() {
             placeholder="Notes"
             value={form.notes}
             onChange={handleChange}
+            maxLength="250"
           />
-
-          <select
-            name="projectId"
-            value={form.projectId}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select Project</option>
-
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.projectName}
-              </option>
-            ))}
-          </select>
 
           <button type="submit" className="primary-button">
             {editingId ? "Update Payment" : "Add Payment"}
@@ -238,11 +305,12 @@ function Payments() {
               payments.map((payment) => (
                 <tr key={payment.id}>
                   <td>{payment.id}</td>
-                  <td>{payment.project?.projectName}</td>
-                  <td>{payment.paymentDate}</td>
-                  <td>{payment.paymentMethod}</td>
+                  <td>{payment.project?.projectName || "-"}</td>
+                  <td>{payment.paymentDate || "-"}</td>
+                  <td>{payment.paymentMethod || "-"}</td>
                   <td>{payment.referenceNumber || "-"}</td>
                   <td>{money(payment.amount)}</td>
+
                   <td>
                     <button
                       className="edit-button"
