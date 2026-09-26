@@ -1,5 +1,6 @@
 package com.skyward.projectmanagement.service;
 
+import com.skyward.projectmanagement.dto.UserResponse;
 import com.skyward.projectmanagement.entity.User;
 import com.skyward.projectmanagement.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,11 +22,19 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(user -> new UserResponse(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getRole(),
+                        user.getActive()
+                ))
+                .toList();
     }
 
-    public User createUser(User user) {
+    public UserResponse createUser(User user) {
 
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new RuntimeException("Username already exists.");
@@ -43,10 +52,17 @@ public class UserService {
             user.setActive(true);
         }
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        return new UserResponse(
+                savedUser.getId(),
+                savedUser.getUsername(),
+                savedUser.getRole(),
+                savedUser.getActive()
+        );
     }
 
-    public User updateUser(Long id, User updatedUser) {
+    public UserResponse updateUser(Long id, User updatedUser) {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
@@ -73,7 +89,14 @@ public class UserService {
             );
         }
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        return new UserResponse(
+                savedUser.getId(),
+                savedUser.getUsername(),
+                savedUser.getRole(),
+                savedUser.getActive()
+        );
     }
 
     public void deleteUser(Long id) {

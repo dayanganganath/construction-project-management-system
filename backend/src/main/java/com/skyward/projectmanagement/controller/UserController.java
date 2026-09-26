@@ -1,9 +1,11 @@
 package com.skyward.projectmanagement.controller;
 
+import com.skyward.projectmanagement.dto.UserResponse;
 import com.skyward.projectmanagement.entity.User;
 import com.skyward.projectmanagement.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.skyward.projectmanagement.dto.UserResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -20,10 +22,9 @@ public class UserController {
     }
 
     @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
-    }
-
+public List<UserResponse> getAllUsers() {
+    return userService.getAllUsers();
+}
     @PostMapping
     public ResponseEntity<?> createUser(
             @RequestBody User user
