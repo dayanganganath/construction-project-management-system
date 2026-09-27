@@ -40,14 +40,9 @@ function Login() {
 
       if (response.data.success) {
         localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem(
-          "username",
-          response.data.username
-        );
-        localStorage.setItem(
-          "role",
-          response.data.role
-        );
+        localStorage.setItem("username", response.data.username);
+        localStorage.setItem("role", response.data.role);
+        localStorage.setItem("token", response.data.token);
 
         navigate("/");
       }

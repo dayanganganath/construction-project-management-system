@@ -25,11 +25,13 @@ function ProtectedLayout() {
   const navigate = useNavigate();
 
   const role = localStorage.getItem("role");
+  const username = localStorage.getItem("username");
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("username");
     localStorage.removeItem("role");
+    localStorage.removeItem("token");
 
     navigate("/login");
   };
@@ -79,6 +81,13 @@ function ProtectedLayout() {
         </nav>
 
         <div className="sidebar-footer">
+          {username && (
+            <div className="logged-user">
+              <p>{username}</p>
+              <span>{role}</span>
+            </div>
+          )}
+
           <button
             type="button"
             className="logout-button"
@@ -135,6 +144,11 @@ function ProtectedLayout() {
                 <Navigate to="/" replace />
               )
             }
+          />
+
+          <Route
+            path="*"
+            element={<Navigate to="/" replace />}
           />
         </Routes>
       </main>

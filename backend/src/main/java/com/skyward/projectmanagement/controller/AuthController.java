@@ -2,6 +2,7 @@ package com.skyward.projectmanagement.controller;
 
 import com.skyward.projectmanagement.entity.User;
 import com.skyward.projectmanagement.repository.UserRepository;
+import com.skyward.projectmanagement.security.JwtService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -17,13 +18,16 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public AuthController(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     @PostMapping("/login")
@@ -35,11 +39,21 @@ public class AuthController {
 
         Map<String, Object> response = new HashMap<>();
 
-        if (username == null || password == null) {
+        if (
+                username == null ||
+                username.isBlank() ||
+                password == null ||
+                password.isBlank()
+        ) {
             response.put("success", false);
-            response.put("message", "Username and password are required.");
+            response.put(
+                    "message",
+                    "Username and password are required."
+            );
 
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity
+                    .badRequest()
+                    .body(response);
         }
 
         Optional<User> userOptional =
@@ -47,31 +61,67 @@ public class AuthController {
 
         if (userOptional.isEmpty()) {
             response.put("success", false);
-            response.put("message", "Invalid username or password.");
+            response.put(
+                    "message",
+                    "Invalid username or password."
+            );
 
-            return ResponseEntity.status(401).body(response);
+            return ResponseEntity
+                    .status(401)
+                    .body(response);
         }
 
         User user = userOptional.get();
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
+        if (!passwordEncoder.matches(
+                password,
+                user.getPassword()
+        )) {
             response.put("success", false);
-            response.put("message", "Invalid username or password.");
+            response.put(
+                    "message",
+                    "Invalid username or password."
+            );
 
-            return ResponseEntity.status(401).body(response);
+            return ResponseEntity
+                    .status(401)
+                    .body(response);
         }
 
         if (Boolean.FALSE.equals(user.getActive())) {
-           response.put("success", false);
-           response.put("message", "This user account is inactive.");
+            response.put("success", false);
+            response.put(
+                    "message",
+                    "This user account is inactive."
+            );
 
-           return ResponseEntity.status(403).body(response);
-      }
+            return ResponseEntity
+                    .status(403)
+                    .body(response);
+        }
+
+        String token = jwtService.generateToken(
+                user.getUsername(),
+                user.getRole()
+        );
 
         response.put("success", true);
-        response.put("message", "Login successful.");
-        response.put("username", user.getUsername());
-        response.put("role", user.getRole());
+        response.put(
+                "message",
+                "Login successful."
+        );
+        response.put(
+                "username",
+                user.getUsername()
+        );
+        response.put(
+                "role",
+                user.getRole()
+        );
+        response.put(
+                "token",
+                token
+        );
 
         return ResponseEntity.ok(response);
     }
