@@ -4,6 +4,7 @@ import {
   Route,
   NavLink,
   useNavigate,
+  Navigate,
 } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
@@ -23,9 +24,12 @@ import "./App.css";
 function ProtectedLayout() {
   const navigate = useNavigate();
 
+  const role = localStorage.getItem("role");
+
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("username");
+    localStorage.removeItem("role");
 
     navigate("/login");
   };
@@ -67,9 +71,11 @@ function ProtectedLayout() {
             Daily Progress
           </NavLink>
 
-          <NavLink to="/users">
-            Users
-          </NavLink>
+          {role === "ADMIN" && (
+            <NavLink to="/users">
+              Users
+            </NavLink>
+          )}
         </nav>
 
         <div className="sidebar-footer">
@@ -122,7 +128,13 @@ function ProtectedLayout() {
 
           <Route
             path="/users"
-            element={<Users />}
+            element={
+              role === "ADMIN" ? (
+                <Users />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
           />
         </Routes>
       </main>
