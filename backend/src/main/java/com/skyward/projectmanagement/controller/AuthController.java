@@ -61,9 +61,17 @@ public class AuthController {
             return ResponseEntity.status(401).body(response);
         }
 
+        if (Boolean.FALSE.equals(user.getActive())) {
+           response.put("success", false);
+           response.put("message", "This user account is inactive.");
+
+           return ResponseEntity.status(403).body(response);
+      }
+
         response.put("success", true);
         response.put("message", "Login successful.");
         response.put("username", user.getUsername());
+        response.put("role", user.getRole());
 
         return ResponseEntity.ok(response);
     }
