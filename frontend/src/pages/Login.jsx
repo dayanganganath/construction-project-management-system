@@ -44,6 +44,10 @@ function Login() {
           "username",
           response.data.username
         );
+        localStorage.setItem(
+          "role",
+          response.data.role
+        );
 
         navigate("/");
       }
