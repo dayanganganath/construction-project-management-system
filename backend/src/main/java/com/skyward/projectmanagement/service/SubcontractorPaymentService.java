@@ -38,18 +38,57 @@ public class SubcontractorPaymentService {
         return paymentRepository.findAll();
     }
 
-    public List<SubcontractorPayment> getPaymentsByProject(Long projectId) {
+    public SubcontractorPayment getPaymentById(Long id) {
+        return paymentRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Payment not found.")
+                );
+    }
+
+    public List<SubcontractorPayment> getPaymentsByProject(
+            Long projectId
+    ) {
         return paymentRepository.findByProjectId(projectId);
     }
 
-    public List<SubcontractorPayment> getPaymentsByContractor(Long contractorId) {
+    public List<SubcontractorPayment> getPaymentsByContractor(
+            Long contractorId
+    ) {
         return paymentRepository.findByContractorId(contractorId);
+    }
+
+    public List<SubcontractorPayment> getPaymentsByBill(
+            Long billId
+    ) {
+        return paymentRepository.findByContractorBillId(billId);
     }
 
     @Transactional
     public SubcontractorPayment createPayment(
             SubcontractorPayment payment
     ) {
+
+        if (payment.getAmount() == null ||
+                payment.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException(
+                    "Payment amount must be greater than zero."
+            );
+        }
+
+        if (payment.getProject() == null ||
+                payment.getProject().getId() == null) {
+            throw new RuntimeException(
+                    "Project is required."
+            );
+        }
+
+        if (payment.getContractor() == null ||
+                payment.getContractor().getId() == null) {
+            throw new RuntimeException(
+                    "Contractor is required."
+            );
+        }
+
         Project project = projectRepository.findById(
                 payment.getProject().getId()
         ).orElseThrow(() ->
@@ -65,21 +104,29 @@ public class SubcontractorPaymentService {
         payment.setProject(project);
         payment.setContractor(contractor);
 
-        if (payment.getContractorBill() != null) {
+        if (
+                payment.getContractorBill() != null &&
+                payment.getContractorBill().getId() != null
+        ) {
 
-            ContractorBill bill = contractorBillRepository.findById(
-                    payment.getContractorBill().getId()
-            ).orElseThrow(() ->
-                    new RuntimeException("Contractor bill not found.")
-            );
+            ContractorBill bill =
+                    contractorBillRepository.findById(
+                            payment.getContractorBill().getId()
+                    ).orElseThrow(() ->
+                            new RuntimeException(
+                                    "Contractor bill not found."
+                            )
+                    );
 
-            if (!bill.getProject().getId().equals(project.getId())) {
+            if (!bill.getProject().getId()
+                    .equals(project.getId())) {
                 throw new RuntimeException(
                         "Selected bill does not belong to this project."
                 );
             }
 
-            if (!bill.getContractor().getId().equals(contractor.getId())) {
+            if (!bill.getContractor().getId()
+                    .equals(contractor.getId())) {
                 throw new RuntimeException(
                         "Selected bill does not belong to this contractor."
                 );
@@ -90,14 +137,10 @@ public class SubcontractorPaymentService {
                             ? bill.getPaidAmount()
                             : BigDecimal.ZERO;
 
-            BigDecimal paymentAmount =
-                    payment.getAmount() != null
-                            ? payment.getAmount()
-                            : BigDecimal.ZERO;
+            BigDecimal newPaidAmount =
+                    currentPaid.add(payment.getAmount());
 
-            bill.setPaidAmount(
-                    currentPaid.add(paymentAmount)
-            );
+            bill.setPaidAmount(newPaidAmount);
 
             contractorBillRepository.save(bill);
 
@@ -105,5 +148,36 @@ public class SubcontractorPaymentService {
         }
 
         return paymentRepository.save(payment);
+    }
+
+    public SubcontractorPayment attachSlip(
+            Long paymentId,
+            String originalFileName,
+            String filePath
+    ) {
+
+        SubcontractorPayment payment =
+                paymentRepository.findById(paymentId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Payment not found."
+                                )
+                        );
+
+        payment.setSlipFileName(originalFileName);
+        payment.setSlipFilePath(filePath);
+
+        return paymentRepository.save(payment);
+    }
+
+    public void deletePayment(Long id) {
+
+        if (!paymentRepository.existsById(id)) {
+            throw new RuntimeException(
+                    "Payment not found."
+            );
+        }
+
+        paymentRepository.deleteById(id);
     }
 }
