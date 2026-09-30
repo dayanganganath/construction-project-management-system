@@ -19,6 +19,7 @@ import Login from "./pages/Login";
 
 import Contractors from "./pages/Contractors";
 import SubcontractorPayments from "./pages/SubcontractorPayments";
+import Accounts from "./pages/Accounts";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -80,6 +81,10 @@ function ProtectedLayout() {
             Subcontractor Payments
           </NavLink>
 
+          <NavLink to="/accounts">
+            Accounts / Payment Register
+          </NavLink>
+
           <NavLink to="/progress">
             Daily Progress
           </NavLink>
@@ -111,17 +116,35 @@ function ProtectedLayout() {
 
       <main className="main-content">
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route
+            path="/"
+            element={<Dashboard />}
+          />
 
-          <Route path="/clients" element={<Clients />} />
+          <Route
+            path="/clients"
+            element={<Clients />}
+          />
 
-          <Route path="/projects" element={<Projects />} />
+          <Route
+            path="/projects"
+            element={<Projects />}
+          />
 
-          <Route path="/boq" element={<Boq />} />
+          <Route
+            path="/boq"
+            element={<Boq />}
+          />
 
-          <Route path="/expenses" element={<Expenses />} />
+          <Route
+            path="/expenses"
+            element={<Expenses />}
+          />
 
-          <Route path="/payments" element={<Payments />} />
+          <Route
+            path="/payments"
+            element={<Payments />}
+          />
 
           <Route
             path="/contractors"
@@ -131,6 +154,11 @@ function ProtectedLayout() {
           <Route
             path="/subcontractor-payments"
             element={<SubcontractorPayments />}
+          />
+
+          <Route
+            path="/accounts"
+            element={<Accounts />}
           />
 
           <Route
