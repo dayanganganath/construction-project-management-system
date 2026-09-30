@@ -2,7 +2,9 @@ package com.skyward.projectmanagement.controller;
 
 import com.skyward.projectmanagement.entity.SubcontractorPayment;
 import com.skyward.projectmanagement.service.PaymentSlipExtractionService;
+import com.skyward.projectmanagement.service.PaymentSlipMatchingService;
 import com.skyward.projectmanagement.service.SubcontractorPaymentService;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,6 +14,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -22,16 +26,19 @@ public class SubcontractorPaymentController {
 
     private final SubcontractorPaymentService paymentService;
     private final PaymentSlipExtractionService extractionService;
+    private final PaymentSlipMatchingService matchingService;
 
     private static final String UPLOAD_DIR =
             "uploads/payment-slips/";
 
     public SubcontractorPaymentController(
             SubcontractorPaymentService paymentService,
-            PaymentSlipExtractionService extractionService
+            PaymentSlipExtractionService extractionService,
+            PaymentSlipMatchingService matchingService
     ) {
         this.paymentService = paymentService;
         this.extractionService = extractionService;
+        this.matchingService = matchingService;
     }
 
     @GetMapping
@@ -77,11 +84,134 @@ public class SubcontractorPaymentController {
         );
     }
 
+    /*
+     * NEW:
+     * Upload PDF first -> extract details -> auto match subcontractor.
+     * Payment is NOT saved yet.
+     */
+    @PostMapping("/analyze-upload")
+    public ResponseEntity<?> analyzeUploadedSlip(
+            @RequestParam("file") MultipartFile file
+    ) {
+
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body(
+                    Map.of(
+                            "success", false,
+                            "message", "Please select a payment slip PDF."
+                    )
+            );
+        }
+
+        String contentType = file.getContentType();
+        String originalFileName = file.getOriginalFilename();
+
+        boolean isPdf =
+                "application/pdf".equalsIgnoreCase(contentType)
+                        ||
+                        (
+                                originalFileName != null
+                                        &&
+                                        originalFileName
+                                                .toLowerCase()
+                                                .endsWith(".pdf")
+                        );
+
+        if (!isPdf) {
+            return ResponseEntity.badRequest().body(
+                    Map.of(
+                            "success", false,
+                            "message",
+                            "Automatic payment slip analysis currently supports PDF files only."
+                    )
+            );
+        }
+
+        Path tempFile = null;
+
+        try {
+
+            tempFile = Files.createTempFile(
+                    "payment-slip-",
+                    ".pdf"
+            );
+
+            Files.copy(
+                    file.getInputStream(),
+                    tempFile,
+                    StandardCopyOption.REPLACE_EXISTING
+            );
+
+            Map<String, Object> extractedData =
+                    extractionService.extractFromPdf(
+                            tempFile.toString()
+                    );
+
+            Map<String, Object> contractorMatch =
+                    matchingService.matchContractor(
+                            extractedData
+                    );
+
+            Map<String, Object> response =
+                    new LinkedHashMap<>();
+
+            response.put("success", true);
+            response.put(
+                    "fileName",
+                    originalFileName
+            );
+
+            response.put(
+                    "extractedData",
+                    extractedData
+            );
+
+            response.put(
+                    "contractorMatch",
+                    contractorMatch
+            );
+
+            return ResponseEntity.ok(response);
+
+        } catch (IOException e) {
+
+            return ResponseEntity.internalServerError().body(
+                    Map.of(
+                            "success", false,
+                            "message",
+                            "Unable to analyze payment slip PDF."
+                    )
+            );
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity.badRequest().body(
+                    Map.of(
+                            "success", false,
+                            "message",
+                            e.getMessage() != null
+                                    ? e.getMessage()
+                                    : "Unable to analyze payment slip."
+                    )
+            );
+
+        } finally {
+
+            if (tempFile != null) {
+                try {
+                    Files.deleteIfExists(tempFile);
+                } catch (IOException ignored) {
+                }
+            }
+        }
+    }
+
     @PostMapping
     public ResponseEntity<?> createPayment(
             @RequestBody SubcontractorPayment payment
     ) {
         try {
+
             SubcontractorPayment saved =
                     paymentService.createPayment(payment);
 
@@ -92,7 +222,10 @@ public class SubcontractorPaymentController {
             return ResponseEntity.badRequest().body(
                     Map.of(
                             "success", false,
-                            "message", e.getMessage()
+                            "message",
+                            e.getMessage() != null
+                                    ? e.getMessage()
+                                    : "Unable to create payment."
                     )
             );
         }
@@ -108,19 +241,27 @@ public class SubcontractorPaymentController {
             return ResponseEntity.badRequest().body(
                     Map.of(
                             "success", false,
-                            "message", "Please select a payment slip file."
+                            "message",
+                            "Please select a payment slip file."
                     )
             );
         }
 
-        String contentType = file.getContentType();
+        String contentType =
+                file.getContentType();
 
         boolean validFile =
-                "application/pdf".equalsIgnoreCase(contentType)
-                        || (
-                        contentType != null
-                                && contentType.startsWith("image/")
-                );
+                "application/pdf".equalsIgnoreCase(
+                        contentType
+                )
+                        ||
+                        (
+                                contentType != null
+                                        &&
+                                        contentType.startsWith(
+                                                "image/"
+                                        )
+                        );
 
         if (!validFile) {
             return ResponseEntity.badRequest().body(
@@ -138,18 +279,25 @@ public class SubcontractorPaymentController {
                     file.getOriginalFilename();
 
             String extension =
-                    getExtension(originalFileName);
+                    getExtension(
+                            originalFileName
+                    );
 
             String savedFileName =
-                    UUID.randomUUID() + extension;
+                    UUID.randomUUID()
+                            + extension;
 
             Path uploadDirectory =
                     Paths.get(UPLOAD_DIR);
 
-            Files.createDirectories(uploadDirectory);
+            Files.createDirectories(
+                    uploadDirectory
+            );
 
             Path destination =
-                    uploadDirectory.resolve(savedFileName);
+                    uploadDirectory.resolve(
+                            savedFileName
+                    );
 
             Files.copy(
                     file.getInputStream(),
@@ -164,7 +312,9 @@ public class SubcontractorPaymentController {
                             destination.toString()
                     );
 
-            return ResponseEntity.ok(updatedPayment);
+            return ResponseEntity.ok(
+                    updatedPayment
+            );
 
         } catch (IOException e) {
 
@@ -181,7 +331,10 @@ public class SubcontractorPaymentController {
             return ResponseEntity.badRequest().body(
                     Map.of(
                             "success", false,
-                            "message", e.getMessage()
+                            "message",
+                            e.getMessage() != null
+                                    ? e.getMessage()
+                                    : "Unable to upload payment slip."
                     )
             );
         }
@@ -199,7 +352,8 @@ public class SubcontractorPaymentController {
 
             if (
                     payment.getSlipFilePath() == null
-                            || payment.getSlipFilePath().isBlank()
+                            ||
+                            payment.getSlipFilePath().isBlank()
             ) {
                 return ResponseEntity.badRequest().body(
                         Map.of(
@@ -215,29 +369,53 @@ public class SubcontractorPaymentController {
 
             if (
                     fileName == null
-                            || !fileName.toLowerCase().endsWith(".pdf")
+                            ||
+                            !fileName
+                                    .toLowerCase()
+                                    .endsWith(".pdf")
             ) {
                 return ResponseEntity.badRequest().body(
                         Map.of(
                                 "success", false,
                                 "message",
-                                "Automatic extraction currently supports text-based PDF slips only."
+                                "Automatic extraction currently supports PDF slips only."
                         )
                 );
             }
 
-            Map<String, Object> extracted =
+            Map<String, Object> extractedData =
                     extractionService.extractFromPdf(
                             payment.getSlipFilePath()
                     );
 
+            Map<String, Object> contractorMatch =
+                    matchingService.matchContractor(
+                            extractedData
+                    );
+
+            Map<String, Object> response =
+                    new LinkedHashMap<>();
+
+            response.put("success", true);
+            response.put(
+                    "paymentId",
+                    payment.getId()
+            );
+            response.put(
+                    "fileName",
+                    payment.getSlipFileName()
+            );
+            response.put(
+                    "extractedData",
+                    extractedData
+            );
+            response.put(
+                    "contractorMatch",
+                    contractorMatch
+            );
+
             return ResponseEntity.ok(
-                    Map.of(
-                            "success", true,
-                            "paymentId", payment.getId(),
-                            "fileName", payment.getSlipFileName(),
-                            "extractedData", extracted
-                    )
+                    response
             );
 
         } catch (IOException e) {
@@ -255,7 +433,10 @@ public class SubcontractorPaymentController {
             return ResponseEntity.badRequest().body(
                     Map.of(
                             "success", false,
-                            "message", e.getMessage()
+                            "message",
+                            e.getMessage() != null
+                                    ? e.getMessage()
+                                    : "Unable to analyze payment slip."
                     )
             );
         }
@@ -283,7 +464,10 @@ public class SubcontractorPaymentController {
             return ResponseEntity.badRequest().body(
                     Map.of(
                             "success", false,
-                            "message", e.getMessage()
+                            "message",
+                            e.getMessage() != null
+                                    ? e.getMessage()
+                                    : "Unable to delete payment."
                     )
             );
         }
@@ -295,7 +479,8 @@ public class SubcontractorPaymentController {
 
         if (
                 fileName == null
-                        || !fileName.contains(".")
+                        ||
+                        !fileName.contains(".")
         ) {
             return "";
         }
