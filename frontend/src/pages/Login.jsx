@@ -32,6 +32,7 @@ function Login() {
 
     try {
       setLoading(true);
+      setError("");
 
       const response = await api.post("/auth/login", {
         username: form.username.trim(),
@@ -45,6 +46,8 @@ function Login() {
         localStorage.setItem("token", response.data.token);
 
         navigate("/");
+      } else {
+        setError(response.data.message || "Login failed.");
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -69,16 +72,9 @@ function Login() {
 
         <h2>Login</h2>
 
-        {error && (
-          <div className="login-error">
-            {error}
-          </div>
-        )}
+        {error && <div className="login-error">{error}</div>}
 
-        <form
-          className="login-form"
-          onSubmit={handleSubmit}
-        >
+        <form className="login-form" onSubmit={handleSubmit}>
           <input
             type="text"
             name="username"

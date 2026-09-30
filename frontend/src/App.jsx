@@ -17,6 +17,9 @@ import DailyProgress from "./pages/DailyProgress";
 import Users from "./pages/Users";
 import Login from "./pages/Login";
 
+import Contractors from "./pages/Contractors";
+import SubcontractorPayments from "./pages/SubcontractorPayments";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import "./App.css";
@@ -66,7 +69,15 @@ function ProtectedLayout() {
           </NavLink>
 
           <NavLink to="/payments">
-            Payments
+            Client Payments
+          </NavLink>
+
+          <NavLink to="/contractors">
+            Contractors
+          </NavLink>
+
+          <NavLink to="/subcontractor-payments">
+            Subcontractor Payments
           </NavLink>
 
           <NavLink to="/progress">
@@ -100,34 +111,26 @@ function ProtectedLayout() {
 
       <main className="main-content">
         <Routes>
+          <Route path="/" element={<Dashboard />} />
+
+          <Route path="/clients" element={<Clients />} />
+
+          <Route path="/projects" element={<Projects />} />
+
+          <Route path="/boq" element={<Boq />} />
+
+          <Route path="/expenses" element={<Expenses />} />
+
+          <Route path="/payments" element={<Payments />} />
+
           <Route
-            path="/"
-            element={<Dashboard />}
+            path="/contractors"
+            element={<Contractors />}
           />
 
           <Route
-            path="/clients"
-            element={<Clients />}
-          />
-
-          <Route
-            path="/projects"
-            element={<Projects />}
-          />
-
-          <Route
-            path="/boq"
-            element={<Boq />}
-          />
-
-          <Route
-            path="/expenses"
-            element={<Expenses />}
-          />
-
-          <Route
-            path="/payments"
-            element={<Payments />}
+            path="/subcontractor-payments"
+            element={<SubcontractorPayments />}
           />
 
           <Route
