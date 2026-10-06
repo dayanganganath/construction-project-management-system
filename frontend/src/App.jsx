@@ -18,6 +18,7 @@ import Users from "./pages/Users";
 import Login from "./pages/Login";
 
 import Contractors from "./pages/Contractors";
+import ContractorBills from "./pages/ContractorBills";
 import SubcontractorPayments from "./pages/SubcontractorPayments";
 import Accounts from "./pages/Accounts";
 
@@ -75,6 +76,10 @@ function ProtectedLayout() {
 
           <NavLink to="/contractors">
             Contractors
+          </NavLink>
+
+          <NavLink to="/contractor-bills">
+            Contractor Bills
           </NavLink>
 
           <NavLink to="/subcontractor-payments">
@@ -149,6 +154,11 @@ function ProtectedLayout() {
           <Route
             path="/contractors"
             element={<Contractors />}
+          />
+
+          <Route
+            path="/contractor-bills"
+            element={<ContractorBills />}
           />
 
           <Route
