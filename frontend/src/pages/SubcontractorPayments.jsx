@@ -6,18 +6,14 @@ function SubcontractorPayments() {
   const [projects, setProjects] = useState([]);
   const [contractors, setContractors] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [bills, setBills] = useState([]);
 
-  const [selectedSlip, setSelectedSlip] =
-    useState(null);
+  const [selectedSlip, setSelectedSlip] = useState(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loadingBills, setLoadingBills] = useState(false);
 
-  const [analyzing, setAnalyzing] =
-    useState(false);
-
-  const [saving, setSaving] =
-    useState(false);
-
-  const [analysis, setAnalysis] =
-    useState(null);
+  const [analysis, setAnalysis] = useState(null);
 
   const [alert, setAlert] = useState({
     type: "",
@@ -27,6 +23,7 @@ function SubcontractorPayments() {
   const [form, setForm] = useState({
     projectId: "",
     contractorId: "",
+    contractorBillId: "",
     amount: "",
     paymentDate: "",
     paymentMethod: "BANK_TRANSFER",
@@ -40,10 +37,27 @@ function SubcontractorPayments() {
     loadPayments();
   }, []);
 
-  const showAlert = (
-    type,
-    message
-  ) => {
+  /*
+   * Project or subcontractor changes:
+   * reload related bills.
+   */
+  useEffect(() => {
+    if (form.projectId && form.contractorId) {
+      loadBills(
+        form.projectId,
+        form.contractorId
+      );
+    } else {
+      setBills([]);
+
+      setForm((previous) => ({
+        ...previous,
+        contractorBillId: "",
+      }));
+    }
+  }, [form.projectId, form.contractorId]);
+
+  const showAlert = (type, message) => {
     setAlert({
       type,
       message,
@@ -59,14 +73,9 @@ function SubcontractorPayments() {
 
   const loadProjects = async () => {
     try {
-      const response =
-        await api.get(
-          "/projects"
-        );
+      const response = await api.get("/projects");
 
-      setProjects(
-        response.data
-      );
+      setProjects(response.data);
     } catch (error) {
       console.error(
         "Error loading projects:",
@@ -82,23 +91,15 @@ function SubcontractorPayments() {
 
   const loadContractors = async () => {
     try {
-      const response =
-        await api.get(
-          "/contractors"
-        );
+      const response = await api.get("/contractors");
 
-      const subcontractors =
-        response.data.filter(
-          (contractor) =>
-            contractor.type ===
-              "SUBCONTRACTOR" &&
-            contractor.active !==
-              false
-        );
-
-      setContractors(
-        subcontractors
+      const subcontractors = response.data.filter(
+        (contractor) =>
+          contractor.type === "SUBCONTRACTOR" &&
+          contractor.active !== false
       );
+
+      setContractors(subcontractors);
     } catch (error) {
       console.error(
         "Error loading contractors:",
@@ -114,14 +115,11 @@ function SubcontractorPayments() {
 
   const loadPayments = async () => {
     try {
-      const response =
-        await api.get(
-          "/subcontractor-payments"
-        );
-
-      setPayments(
-        response.data
+      const response = await api.get(
+        "/subcontractor-payments"
       );
+
+      setPayments(response.data);
     } catch (error) {
       console.error(
         "Error loading payments:",
@@ -135,20 +133,103 @@ function SubcontractorPayments() {
     }
   };
 
+  const loadBills = async (
+    projectId,
+    contractorId
+  ) => {
+    try {
+      setLoadingBills(true);
+
+      const response = await api.get(
+        `/contractor-bills/contractor/${contractorId}`
+      );
+
+      /*
+       * Contractor endpoint may return bills
+       * from several projects.
+       *
+       * Keep only bills for selected project.
+       * Also hide fully paid bills.
+       */
+      const filteredBills = response.data.filter(
+        (bill) =>
+          String(bill.project?.id) ===
+            String(projectId) &&
+          bill.status !== "PAID"
+      );
+
+      setBills(filteredBills);
+
+      /*
+       * If currently selected bill is no longer
+       * available, clear it.
+       */
+      setForm((previous) => {
+        const selectedStillExists =
+          filteredBills.some(
+            (bill) =>
+              String(bill.id) ===
+              String(previous.contractorBillId)
+          );
+
+        return {
+          ...previous,
+
+          contractorBillId:
+            selectedStillExists
+              ? previous.contractorBillId
+              : "",
+        };
+      });
+    } catch (error) {
+      console.error(
+        "Error loading contractor bills:",
+        error
+      );
+
+      setBills([]);
+
+      showAlert(
+        "error",
+        "Unable to load contractor bills."
+      );
+    } finally {
+      setLoadingBills(false);
+    }
+  };
+
   const handleChange = (e) => {
+    const {
+      name,
+      value,
+    } = e.target;
+
+    /*
+     * Changing project or contractor should
+     * clear old bill selection.
+     */
+    if (
+      name === "projectId" ||
+      name === "contractorId"
+    ) {
+      setForm({
+        ...form,
+        [name]: value,
+        contractorBillId: "",
+      });
+
+      return;
+    }
+
     setForm({
       ...form,
-      [e.target.name]:
-        e.target.value,
+      [name]: value,
     });
   };
 
-  const handleSlipChange = (
-    e
-  ) => {
+  const handleSlipChange = (e) => {
     const file =
-      e.target.files?.[0] ||
-      null;
+      e.target.files?.[0] || null;
 
     setSelectedSlip(file);
     setAnalysis(null);
@@ -168,7 +249,6 @@ function SubcontractorPayments() {
       );
 
       setSelectedSlip(null);
-
       e.target.value = "";
     }
   };
@@ -183,8 +263,7 @@ function SubcontractorPayments() {
       return;
     }
 
-    const formData =
-      new FormData();
+    const formData = new FormData();
 
     formData.append(
       "file",
@@ -195,19 +274,16 @@ function SubcontractorPayments() {
       setAnalyzing(true);
       setAnalysis(null);
 
-      const response =
-        await api.post(
-          "/subcontractor-payments/analyze-upload",
-          formData
-        );
+      const response = await api.post(
+        "/subcontractor-payments/analyze-upload",
+        formData
+      );
 
       const extractedData =
-        response.data
-          .extractedData || {};
+        response.data.extractedData || {};
 
       const contractorMatch =
-        response.data
-          .contractorMatch || {};
+        response.data.contractorMatch || {};
 
       setAnalysis({
         fileName:
@@ -218,63 +294,39 @@ function SubcontractorPayments() {
         contractorMatch,
       });
 
-      /*
-       * Important:
-       *
-       * Even when matched = false,
-       * backend returns the
-       * Other / Unmatched contractor.
-       *
-       * Therefore contractor field
-       * can always be auto-filled.
-       */
-      setForm(
-        (previousForm) => ({
-          ...previousForm,
+      setForm((previousForm) => ({
+        ...previousForm,
 
-          amount:
-            extractedData.amount !=
-            null
-              ? String(
-                  extractedData.amount
-                )
-              : previousForm.amount,
+        amount:
+          extractedData.amount != null
+            ? String(extractedData.amount)
+            : previousForm.amount,
 
-          paymentDate:
-            extractedData.date ||
-            previousForm.paymentDate,
+        paymentDate:
+          extractedData.date ||
+          previousForm.paymentDate,
 
-          referenceNumber:
-            extractedData.referenceNumber ||
-            previousForm.referenceNumber,
+        referenceNumber:
+          extractedData.referenceNumber ||
+          previousForm.referenceNumber,
 
-          contractorId:
-            contractorMatch
-              .contractor?.id
-              ? String(
-                  contractorMatch
-                    .contractor.id
-                )
-              : previousForm.contractorId,
-        })
-      );
+        contractorId:
+          contractorMatch.contractor?.id
+            ? String(
+                contractorMatch.contractor.id
+              )
+            : previousForm.contractorId,
 
-      /*
-       * Other / Unmatched may have
-       * just been created by backend.
-       * Reload contractors so it appears
-       * in the dropdown.
-       */
+        contractorBillId: "",
+      }));
+
       await loadContractors();
 
-      if (
-        contractorMatch.matched
-      ) {
+      if (contractorMatch.matched) {
         showAlert(
           "success",
           `Slip analyzed. Subcontractor detected: ${
-            contractorMatch
-              .contractor?.name ||
+            contractorMatch.contractor?.name ||
             ""
           }`
         );
@@ -292,14 +344,20 @@ function SubcontractorPayments() {
 
       showAlert(
         "error",
-        error.response?.data
-          ?.message ||
+        error.response?.data?.message ||
           "Unable to analyze payment slip."
       );
     } finally {
       setAnalyzing(false);
     }
   };
+
+  const selectedBill =
+    bills.find(
+      (bill) =>
+        String(bill.id) ===
+        String(form.contractorBillId)
+    ) || null;
 
   const validateForm = () => {
     if (!selectedSlip) {
@@ -362,6 +420,26 @@ function SubcontractorPayments() {
       return false;
     }
 
+    /*
+     * Avoid accidental bill overpayment.
+     */
+    if (
+      selectedBill &&
+      Number(form.amount) >
+        Number(
+          selectedBill.balanceAmount || 0
+        )
+    ) {
+      showAlert(
+        "error",
+        `Payment amount cannot exceed the selected bill balance of Rs. ${formatAmount(
+          selectedBill.balanceAmount
+        )}.`
+      );
+
+      return false;
+    }
+
     return true;
   };
 
@@ -369,16 +447,17 @@ function SubcontractorPayments() {
     setForm({
       projectId: "",
       contractorId: "",
+      contractorBillId: "",
       amount: "",
       paymentDate: "",
-      paymentMethod:
-        "BANK_TRANSFER",
+      paymentMethod: "BANK_TRANSFER",
       referenceNumber: "",
       notes: "",
     });
 
     setSelectedSlip(null);
     setAnalysis(null);
+    setBills([]);
 
     const fileInput =
       document.getElementById(
@@ -410,9 +489,7 @@ function SubcontractorPayments() {
       );
     };
 
-  const handleSubmit = async (
-    e
-  ) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -447,6 +524,23 @@ function SubcontractorPayments() {
           form.contractorId
         ),
       },
+
+      /*
+       * Bill is optional.
+       *
+       * If selected, backend will update:
+       * paidAmount
+       * balanceAmount
+       * status
+       */
+      contractorBill:
+        form.contractorBillId
+          ? {
+              id: Number(
+                form.contractorBillId
+              ),
+            }
+          : null,
     };
 
     try {
@@ -467,7 +561,9 @@ function SubcontractorPayments() {
 
       showAlert(
         "success",
-        "Payment confirmed and saved successfully."
+        form.contractorBillId
+          ? "Payment saved and contractor bill updated successfully."
+          : "Payment saved successfully."
       );
 
       resetForm();
@@ -481,8 +577,7 @@ function SubcontractorPayments() {
 
       showAlert(
         "error",
-        error.response?.data
-          ?.message ||
+        error.response?.data?.message ||
           "Unable to save payment."
       );
     } finally {
@@ -490,9 +585,7 @@ function SubcontractorPayments() {
     }
   };
 
-  const handleDelete = async (
-    id
-  ) => {
+  const handleDelete = async (id) => {
     const confirmed =
       window.confirm(
         "Are you sure you want to delete this payment?"
@@ -526,9 +619,7 @@ function SubcontractorPayments() {
     }
   };
 
-  const formatAmount = (
-    amount
-  ) => {
+  const formatAmount = (amount) => {
     const value =
       Number(amount || 0);
 
@@ -551,9 +642,8 @@ function SubcontractorPayments() {
 
           <p>
             Upload payment slip,
-            automatically detect
-            payment details and
-            subcontractor.
+            detect payment details and
+            link payments to contractor bills.
           </p>
         </div>
       </div>
@@ -594,9 +684,7 @@ function SubcontractorPayments() {
           <button
             type="button"
             className="primary-button"
-            onClick={
-              analyzeSlip
-            }
+            onClick={analyzeSlip}
             disabled={
               !selectedSlip ||
               analyzing
@@ -637,31 +725,23 @@ function SubcontractorPayments() {
             }}
           >
             <div>
-              <strong>
-                Amount
-              </strong>
+              <strong>Amount</strong>
 
               <p>
-                {analysis
-                  .extractedData
+                {analysis.extractedData
                   ?.amount != null
                   ? `Rs. ${formatAmount(
-                      analysis
-                        .extractedData
-                        .amount
+                      analysis.extractedData.amount
                     )}`
                   : "Not detected"}
               </p>
             </div>
 
             <div>
-              <strong>
-                Date
-              </strong>
+              <strong>Date</strong>
 
               <p>
-                {analysis
-                  .extractedData
+                {analysis.extractedData
                   ?.date ||
                   "Not detected"}
               </p>
@@ -673,8 +753,7 @@ function SubcontractorPayments() {
               </strong>
 
               <p>
-                {analysis
-                  .extractedData
+                {analysis.extractedData
                   ?.referenceNumber ||
                   "Not detected"}
               </p>
@@ -686,8 +765,7 @@ function SubcontractorPayments() {
               </strong>
 
               <p>
-                {analysis
-                  .extractedData
+                {analysis.extractedData
                   ?.beneficiaryName ||
                   "Not detected"}
               </p>
@@ -699,21 +777,17 @@ function SubcontractorPayments() {
               </strong>
 
               <p>
-                {analysis
-                  .extractedData
+                {analysis.extractedData
                   ?.accountNumber ||
                   "Not detected"}
               </p>
             </div>
 
             <div>
-              <strong>
-                Bank
-              </strong>
+              <strong>Bank</strong>
 
               <p>
-                {analysis
-                  .extractedData
+                {analysis.extractedData
                   ?.bankName ||
                   "Not detected"}
               </p>
@@ -721,13 +795,11 @@ function SubcontractorPayments() {
 
             <div>
               <strong>
-                Assigned
-                Subcontractor
+                Assigned Subcontractor
               </strong>
 
               <p>
-                {analysis
-                  .contractorMatch
+                {analysis.contractorMatch
                   ?.contractor
                   ?.name ||
                   "Other / Unmatched"}
@@ -740,8 +812,7 @@ function SubcontractorPayments() {
               </strong>
 
               <p>
-                {analysis
-                  .contractorMatch
+                {analysis.contractorMatch
                   ?.matched
                   ? "Matched"
                   : "Unmatched"}
@@ -754,72 +825,12 @@ function SubcontractorPayments() {
               </strong>
 
               <p>
-                {analysis
-                  .contractorMatch
+                {analysis.contractorMatch
                   ?.confidence ||
                   "UNMATCHED"}
               </p>
             </div>
           </div>
-
-          {!analysis
-            .contractorMatch
-            ?.matched && (
-            <div
-              style={{
-                marginTop:
-                  "20px",
-              }}
-            >
-              <strong>
-                Review Required
-              </strong>
-
-              <p>
-                This slip could not
-                be matched with a
-                registered
-                subcontractor. It
-                has been assigned
-                to Other /
-                Unmatched.
-                Select the correct
-                subcontractor below
-                if you know it.
-              </p>
-            </div>
-          )}
-
-          <details
-            style={{
-              marginTop: "20px",
-            }}
-          >
-            <summary>
-              View extracted PDF
-              text
-            </summary>
-
-            <pre
-              style={{
-                whiteSpace:
-                  "pre-wrap",
-                wordBreak:
-                  "break-word",
-                maxHeight:
-                  "250px",
-                overflow:
-                  "auto",
-                marginTop:
-                  "10px",
-              }}
-            >
-              {analysis
-                .extractedData
-                ?.rawText ||
-                "No text extracted."}
-            </pre>
-          </details>
         </div>
       )}
 
@@ -830,9 +841,7 @@ function SubcontractorPayments() {
 
         <form
           className="client-form"
-          onSubmit={
-            handleSubmit
-          }
+          onSubmit={handleSubmit}
         >
           <select
             name="projectId"
@@ -844,23 +853,16 @@ function SubcontractorPayments() {
             }
           >
             <option value="">
-              Select Project /
-              Site *
+              Select Project / Site *
             </option>
 
             {projects.map(
               (project) => (
                 <option
-                  key={
-                    project.id
-                  }
-                  value={
-                    project.id
-                  }
+                  key={project.id}
+                  value={project.id}
                 >
-                  {
-                    project.projectName
-                  }
+                  {project.projectName}
 
                   {project.location
                     ? ` - ${project.location}`
@@ -880,23 +882,16 @@ function SubcontractorPayments() {
             }
           >
             <option value="">
-              Select
-              Subcontractor *
+              Select Subcontractor *
             </option>
 
             {contractors.map(
               (contractor) => (
                 <option
-                  key={
-                    contractor.id
-                  }
-                  value={
-                    contractor.id
-                  }
+                  key={contractor.id}
+                  value={contractor.id}
                 >
-                  {
-                    contractor.name
-                  }
+                  {contractor.name}
 
                   {contractor.tradeType
                     ? ` - ${contractor.tradeType}`
@@ -905,6 +900,101 @@ function SubcontractorPayments() {
               )
             )}
           </select>
+
+          <select
+            name="contractorBillId"
+            value={
+              form.contractorBillId
+            }
+            onChange={
+              handleChange
+            }
+            disabled={
+              !form.projectId ||
+              !form.contractorId ||
+              loadingBills
+            }
+          >
+            <option value="">
+              {loadingBills
+                ? "Loading Bills..."
+                : "No Bill / Select Bill"}
+            </option>
+
+            {bills.map(
+              (bill) => (
+                <option
+                  key={bill.id}
+                  value={bill.id}
+                >
+                  {bill.billNumber}
+                  {" - "}
+                  Balance Rs.{" "}
+                  {formatAmount(
+                    bill.balanceAmount
+                  )}
+                </option>
+              )
+            )}
+          </select>
+
+          {form.projectId &&
+            form.contractorId &&
+            !loadingBills &&
+            bills.length === 0 && (
+              <div>
+                No unpaid or partially-paid bills found
+                for this project and subcontractor.
+              </div>
+            )}
+
+          {selectedBill && (
+            <div
+              style={{
+                padding: "12px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+              }}
+            >
+              <strong>
+                Selected Bill:{" "}
+                {selectedBill.billNumber}
+              </strong>
+
+              <div>
+                Work:{" "}
+                {selectedBill.workDescription ||
+                  "-"}
+              </div>
+
+              <div>
+                Net Payable: Rs.{" "}
+                {formatAmount(
+                  selectedBill.netPayable
+                )}
+              </div>
+
+              <div>
+                Already Paid: Rs.{" "}
+                {formatAmount(
+                  selectedBill.paidAmount
+                )}
+              </div>
+
+              <div>
+                Current Balance: Rs.{" "}
+                {formatAmount(
+                  selectedBill.balanceAmount
+                )}
+              </div>
+
+              <div>
+                Status:{" "}
+                {selectedBill.status ||
+                  "-"}
+              </div>
+            </div>
+          )}
 
           <input
             type="number"
@@ -976,7 +1066,7 @@ function SubcontractorPayments() {
           <input
             type="text"
             name="notes"
-            placeholder="Notes"
+            placeholder="Description / Notes"
             value={
               form.notes
             }
@@ -988,9 +1078,7 @@ function SubcontractorPayments() {
           <button
             type="submit"
             className="primary-button"
-            disabled={
-              saving
-            }
+            disabled={saving}
           >
             {saving
               ? "Saving..."
@@ -1000,9 +1088,7 @@ function SubcontractorPayments() {
           <button
             type="button"
             className="cancel-button"
-            onClick={
-              resetForm
-            }
+            onClick={resetForm}
           >
             Clear
           </button>
@@ -1020,42 +1106,31 @@ function SubcontractorPayments() {
               <th>ID</th>
               <th>Date</th>
               <th>Project</th>
-              <th>
-                Subcontractor
-              </th>
+              <th>Subcontractor</th>
+              <th>Bill</th>
               <th>Amount</th>
               <th>Method</th>
-              <th>
-                Reference
-              </th>
+              <th>Reference</th>
               <th>Slip</th>
               <th>Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {payments.length ===
-            0 ? (
+            {payments.length === 0 ? (
               <tr>
-                <td
-                  colSpan="9"
-                >
-                  No subcontractor
-                  payments found.
+                <td colSpan="10">
+                  No subcontractor payments found.
                 </td>
               </tr>
             ) : (
               payments.map(
                 (payment) => (
                   <tr
-                    key={
-                      payment.id
-                    }
+                    key={payment.id}
                   >
                     <td>
-                      {
-                        payment.id
-                      }
+                      {payment.id}
                     </td>
 
                     <td>
@@ -1064,16 +1139,20 @@ function SubcontractorPayments() {
                     </td>
 
                     <td>
-                      {payment
-                        .project
+                      {payment.project
                         ?.projectName ||
                         "-"}
                     </td>
 
                     <td>
-                      {payment
-                        .contractor
+                      {payment.contractor
                         ?.name ||
+                        "-"}
+                    </td>
+
+                    <td>
+                      {payment.contractorBill
+                        ?.billNumber ||
                         "-"}
                     </td>
 
