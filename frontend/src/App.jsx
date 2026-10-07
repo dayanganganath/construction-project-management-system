@@ -17,11 +17,12 @@ import DailyProgress from "./pages/DailyProgress";
 import Users from "./pages/Users";
 import Login from "./pages/Login";
 
+
 import Contractors from "./pages/Contractors";
 import ContractorBills from "./pages/ContractorBills";
 import SubcontractorPayments from "./pages/SubcontractorPayments";
 import Accounts from "./pages/Accounts";
-
+import SiteCostSummary from "./pages/SiteCostSummary";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import "./App.css";
@@ -88,6 +89,10 @@ function ProtectedLayout() {
 
           <NavLink to="/accounts">
             Accounts / Payment Register
+          </NavLink>
+
+          <NavLink to="/site-cost-summary">
+            Site Cost Summary
           </NavLink>
 
           <NavLink to="/progress">
@@ -169,6 +174,11 @@ function ProtectedLayout() {
           <Route
             path="/accounts"
             element={<Accounts />}
+          />
+
+          <Route
+            path="/site-cost-summary"
+            element={<SiteCostSummary />}
           />
 
           <Route
