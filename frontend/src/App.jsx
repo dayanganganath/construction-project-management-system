@@ -25,11 +25,13 @@ import Accounts from "./pages/Accounts";
 import SiteCostSummary from "./pages/SiteCostSummary";
 import SiteReport from "./pages/SiteReport";
 
+import ClientPortal from "./pages/ClientPortal";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import "./App.css";
 
-function ProtectedLayout() {
+function AdminLayout() {
   const navigate = useNavigate();
 
   const role = localStorage.getItem("role");
@@ -235,20 +237,59 @@ function ProtectedLayout() {
   );
 }
 
+function RoleBasedProtectedArea() {
+  const role = localStorage.getItem("role");
+
+  if (role === "CLIENT") {
+    return (
+      <Routes>
+        <Route
+          path="/client"
+          element={<ClientPortal />}
+        />
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/client"
+              replace
+            />
+          }
+        />
+      </Routes>
+    );
+  }
+
+  return <AdminLayout />;
+}
+
 function App() {
+  const role = localStorage.getItem("role");
+
   return (
     <BrowserRouter>
       <Routes>
         <Route
           path="/login"
-          element={<Login />}
+          element={
+            role === "CLIENT" &&
+            localStorage.getItem("token") ? (
+              <Navigate
+                to="/client"
+                replace
+              />
+            ) : (
+              <Login />
+            )
+          }
         />
 
         <Route
           path="/*"
           element={
             <ProtectedRoute>
-              <ProtectedLayout />
+              <RoleBasedProtectedArea />
             </ProtectedRoute>
           }
         />
