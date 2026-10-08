@@ -24,6 +24,7 @@ import SubcontractorPayments from "./pages/SubcontractorPayments";
 import Accounts from "./pages/Accounts";
 import SiteCostSummary from "./pages/SiteCostSummary";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ContractorLedger from "./pages/ContractorLedger";
 
 import "./App.css";
 
@@ -81,6 +82,10 @@ function ProtectedLayout() {
 
           <NavLink to="/contractor-bills">
             Contractor Bills
+          </NavLink>
+
+          <NavLink to="/contractor-ledger">
+            Contractor Ledger
           </NavLink>
 
           <NavLink to="/subcontractor-payments">
@@ -164,6 +169,11 @@ function ProtectedLayout() {
           <Route
             path="/contractor-bills"
             element={<ContractorBills />}
+          />
+
+          <Route
+            path="/contractor-ledger"
+            element={<ContractorLedger />}
           />
 
           <Route
