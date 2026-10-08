@@ -20,14 +20,21 @@ public class DailyProgress {
     @Column(nullable = false)
     private LocalDate date;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 2000)
     private String workDescription;
 
     private Integer progressPercentage;
 
     private Integer workersCount;
 
+    @Column(length = 2000)
     private String remarks;
+
+    @Column(length = 2000)
+    private String tomorrowPlan;
+
+    @Column(length = 2000)
+    private String issuesBlockers;
 
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)

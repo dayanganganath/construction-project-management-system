@@ -26,24 +26,34 @@ import SiteCostSummary from "./pages/SiteCostSummary";
 import SiteReport from "./pages/SiteReport";
 
 import ClientPortal from "./pages/ClientPortal";
+import SupervisorPortal from "./pages/SupervisorPortal";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import "./App.css";
 
+function logoutAndGoToLogin(navigate) {
+  localStorage.removeItem("isAuthenticated");
+  localStorage.removeItem("username");
+  localStorage.removeItem("role");
+  localStorage.removeItem("token");
+
+  navigate("/login", {
+    replace: true,
+  });
+}
+
 function AdminLayout() {
   const navigate = useNavigate();
 
-  const role = localStorage.getItem("role");
-  const username = localStorage.getItem("username");
+  const role =
+    localStorage.getItem("role");
+
+  const username =
+    localStorage.getItem("username");
 
   const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("username");
-    localStorage.removeItem("role");
-    localStorage.removeItem("token");
-
-    navigate("/login");
+    logoutAndGoToLogin(navigate);
   };
 
   return (
@@ -51,11 +61,16 @@ function AdminLayout() {
       <aside className="sidebar">
         <div className="brand">
           <h2>CPMS</h2>
-          <p>Construction Management</p>
+          <p>
+            Construction Management
+          </p>
         </div>
 
         <nav className="nav-menu">
-          <NavLink to="/" end>
+          <NavLink
+            to="/"
+            end
+          >
             Dashboard
           </NavLink>
 
@@ -185,7 +200,9 @@ function AdminLayout() {
 
           <Route
             path="/subcontractor-payments"
-            element={<SubcontractorPayments />}
+            element={
+              <SubcontractorPayments />
+            }
           />
 
           <Route
@@ -195,7 +212,9 @@ function AdminLayout() {
 
           <Route
             path="/site-cost-summary"
-            element={<SiteCostSummary />}
+            element={
+              <SiteCostSummary />
+            }
           />
 
           <Route
@@ -238,7 +257,8 @@ function AdminLayout() {
 }
 
 function RoleBasedProtectedArea() {
-  const role = localStorage.getItem("role");
+  const role =
+    localStorage.getItem("role");
 
   if (role === "CLIENT") {
     return (
@@ -261,28 +281,51 @@ function RoleBasedProtectedArea() {
     );
   }
 
-  return <AdminLayout />;
+  if (role === "SUPERVISOR") {
+    return (
+      <Routes>
+        <Route
+          path="/supervisor"
+          element={
+            <SupervisorPortal />
+          }
+        />
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/supervisor"
+              replace
+            />
+          }
+        />
+      </Routes>
+    );
+  }
+
+  if (
+    role === "ADMIN" ||
+    role === "MANAGER"
+  ) {
+    return <AdminLayout />;
+  }
+
+  return (
+    <Navigate
+      to="/login"
+      replace
+    />
+  );
 }
 
 function App() {
-  const role = localStorage.getItem("role");
-
   return (
     <BrowserRouter>
       <Routes>
         <Route
           path="/login"
-          element={
-            role === "CLIENT" &&
-            localStorage.getItem("token") ? (
-              <Navigate
-                to="/client"
-                replace
-              />
-            ) : (
-              <Login />
-            )
-          }
+          element={<Login />}
         />
 
         <Route

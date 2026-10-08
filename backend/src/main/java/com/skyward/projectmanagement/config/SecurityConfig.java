@@ -68,6 +68,11 @@ public class SecurityConfig {
                         .hasRole("CLIENT")
 
                         .requestMatchers(
+                               "/api/supervisor/**"
+                        )
+                        .hasRole("SUPERVISOR")
+
+                        .requestMatchers(
                                 "/api/**"
                         )
                         .authenticated()

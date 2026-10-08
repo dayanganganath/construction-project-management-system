@@ -2,6 +2,7 @@ package com.skyward.projectmanagement.controller;
 
 import com.skyward.projectmanagement.model.DailyProgress;
 import com.skyward.projectmanagement.service.DailyProgressService;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,60 +15,130 @@ public class DailyProgressController {
 
     private final DailyProgressService dailyProgressService;
 
-    public DailyProgressController(DailyProgressService dailyProgressService) {
-        this.dailyProgressService = dailyProgressService;
+    public DailyProgressController(
+            DailyProgressService dailyProgressService
+    ) {
+        this.dailyProgressService =
+                dailyProgressService;
     }
 
     @GetMapping
-    public List<DailyProgress> getAllProgress() {
-        return dailyProgressService.getAllProgress();
+    public List<DailyProgress>
+    getAllProgress() {
+
+        return dailyProgressService
+                .getAllProgress();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DailyProgress> getProgressById(@PathVariable Long id) {
-        return dailyProgressService.getProgressById(id)
+    public ResponseEntity<DailyProgress>
+    getProgressById(
+            @PathVariable Long id
+    ) {
+
+        return dailyProgressService
+                .getProgressById(id)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(
+                        ResponseEntity
+                                .notFound()
+                                .build()
+                );
     }
 
     @GetMapping("/project/{projectId}")
-    public List<DailyProgress> getProgressByProject(@PathVariable Long projectId) {
-        return dailyProgressService.getProgressByProject(projectId);
+    public List<DailyProgress>
+    getProgressByProject(
+            @PathVariable Long projectId
+    ) {
+
+        return dailyProgressService
+                .getProgressByProject(
+                        projectId
+                );
     }
 
     @PostMapping
-    public ResponseEntity<?> createProgress(@RequestBody DailyProgress progress) {
+    public ResponseEntity<?>
+    createProgress(
+            @RequestBody DailyProgress progress
+    ) {
+
         try {
+
             return ResponseEntity.ok(
-                    dailyProgressService.createProgress(progress)
+                    dailyProgressService
+                            .createProgress(
+                                    progress
+                            )
             );
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+
+        } catch (
+                RuntimeException e
+        ) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            e.getMessage()
+                    );
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateProgress(
+    public ResponseEntity<?>
+    updateProgress(
             @PathVariable Long id,
-            @RequestBody DailyProgress updatedProgress) {
+            @RequestBody
+            DailyProgress updatedProgress
+    ) {
 
         try {
+
             return ResponseEntity.ok(
-                    dailyProgressService.updateProgress(id, updatedProgress)
+                    dailyProgressService
+                            .updateProgress(
+                                    id,
+                                    updatedProgress
+                            )
             );
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+
+        } catch (
+                RuntimeException e
+        ) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            e.getMessage()
+                    );
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProgress(@PathVariable Long id) {
+    public ResponseEntity<?>
+    deleteProgress(
+            @PathVariable Long id
+    ) {
 
-        if (dailyProgressService.getProgressById(id).isEmpty()) {
-            return ResponseEntity.notFound().build();
+        try {
+
+            dailyProgressService
+                    .deleteProgress(id);
+
+            return ResponseEntity
+                    .noContent()
+                    .build();
+
+        } catch (
+                RuntimeException e
+        ) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            e.getMessage()
+                    );
         }
-
-        dailyProgressService.deleteProgress(id);
-        return ResponseEntity.noContent().build();
     }
 }
