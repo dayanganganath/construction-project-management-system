@@ -1,6 +1,6 @@
 package com.skyward.projectmanagement.controller;
 
-import com.skyward.projectmanagement.entity.UserProjectAssignment;
+import com.skyward.projectmanagement.dto.UserProjectAssignmentResponse;
 import com.skyward.projectmanagement.service.UserProjectAssignmentService;
 
 import org.springframework.http.ResponseEntity;
@@ -24,7 +24,7 @@ public class UserProjectAssignmentController {
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<
-            List<UserProjectAssignment>
+            List<UserProjectAssignmentResponse>
             >
     getByUser(
             @PathVariable Long userId
@@ -39,7 +39,7 @@ public class UserProjectAssignmentController {
 
     @GetMapping("/project/{projectId}")
     public ResponseEntity<
-            List<UserProjectAssignment>
+            List<UserProjectAssignmentResponse>
             >
     getByProject(
             @PathVariable Long projectId
@@ -54,7 +54,7 @@ public class UserProjectAssignmentController {
 
     @PostMapping
     public ResponseEntity<
-            UserProjectAssignment
+            UserProjectAssignmentResponse
             >
     assignProject(
             @RequestParam Long userId,
@@ -81,7 +81,8 @@ public class UserProjectAssignmentController {
                 projectId
         );
 
-        return ResponseEntity.noContent()
+        return ResponseEntity
+                .noContent()
                 .build();
     }
 }

@@ -1,5 +1,6 @@
 package com.skyward.projectmanagement.service;
 
+import com.skyward.projectmanagement.dto.UserProjectAssignmentResponse;
 import com.skyward.projectmanagement.entity.User;
 import com.skyward.projectmanagement.entity.UserProjectAssignment;
 import com.skyward.projectmanagement.model.Project;
@@ -24,34 +25,33 @@ public class UserProjectAssignmentService {
             UserRepository userRepository,
             ProjectRepository projectRepository
     ) {
-        this.assignmentRepository =
-                assignmentRepository;
-
-        this.userRepository =
-                userRepository;
-
-        this.projectRepository =
-                projectRepository;
+        this.assignmentRepository = assignmentRepository;
+        this.userRepository = userRepository;
+        this.projectRepository = projectRepository;
     }
 
-    public List<UserProjectAssignment>
-    getAssignmentsByUser(
-            Long userId
-    ) {
+    public List<UserProjectAssignmentResponse>
+    getAssignmentsByUser(Long userId) {
+
         return assignmentRepository
-                .findByUserId(userId);
+                .findByUserId(userId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
-    public List<UserProjectAssignment>
-    getAssignmentsByProject(
-            Long projectId
-    ) {
+    public List<UserProjectAssignmentResponse>
+    getAssignmentsByProject(Long projectId) {
+
         return assignmentRepository
-                .findByProjectId(projectId);
+                .findByProjectId(projectId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     @Transactional
-    public UserProjectAssignment assignProject(
+    public UserProjectAssignmentResponse assignProject(
             Long userId,
             Long projectId
     ) {
@@ -92,9 +92,12 @@ public class UserProjectAssignmentService {
         assignment.setUser(user);
         assignment.setProject(project);
 
-        return assignmentRepository.save(
-                assignment
-        );
+        UserProjectAssignment saved =
+                assignmentRepository.save(
+                        assignment
+                );
+
+        return toResponse(saved);
     }
 
     @Transactional
@@ -134,10 +137,6 @@ public class UserProjectAssignmentService {
                                 )
                         );
 
-        /*
-         * ADMIN and MANAGER can access
-         * all projects.
-         */
         if (
                 "ADMIN".equalsIgnoreCase(
                         user.getRole()
@@ -154,5 +153,48 @@ public class UserProjectAssignmentService {
                         userId,
                         projectId
                 );
+    }
+
+    private UserProjectAssignmentResponse toResponse(
+            UserProjectAssignment assignment
+    ) {
+
+        User user =
+                assignment.getUser();
+
+        Project project =
+                assignment.getProject();
+
+        return new UserProjectAssignmentResponse(
+                assignment.getId(),
+
+                user != null
+                        ? user.getId()
+                        : null,
+
+                user != null
+                        ? user.getUsername()
+                        : null,
+
+                user != null
+                        ? user.getRole()
+                        : null,
+
+                project != null
+                        ? project.getId()
+                        : null,
+
+                project != null
+                        ? project.getProjectName()
+                        : null,
+
+                project != null
+                        ? project.getLocation()
+                        : null,
+
+                project != null
+                        ? project.getStatus()
+                        : null
+        );
     }
 }
