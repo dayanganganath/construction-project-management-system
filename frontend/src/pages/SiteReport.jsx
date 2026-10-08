@@ -22,10 +22,7 @@ function SiteReport() {
   }, []);
 
   const showAlert = (type, message) => {
-    setAlert({
-      type,
-      message,
-    });
+    setAlert({ type, message });
 
     setTimeout(() => {
       setAlert({
@@ -38,13 +35,9 @@ function SiteReport() {
   const loadProjects = async () => {
     try {
       const response = await api.get("/projects");
-
       setProjects(response.data);
     } catch (error) {
-      console.error(
-        "Error loading projects:",
-        error
-      );
+      console.error(error);
 
       showAlert(
         "error",
@@ -87,7 +80,7 @@ function SiteReport() {
       );
     } catch (error) {
       console.error(
-        "Error loading site report:",
+        "Site report load error:",
         error
       );
 
@@ -104,26 +97,20 @@ function SiteReport() {
     }
   };
 
-  const handleProjectChange = async (
-    e
-  ) => {
+  const handleProjectChange = async (e) => {
     const value = e.target.value;
 
     setProjectId(value);
-
     await loadReport(value);
   };
 
   const formatAmount = (amount) => {
     return Number(
       amount || 0
-    ).toLocaleString(
-      "en-LK",
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }
-    );
+    ).toLocaleString("en-LK", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   };
 
   const downloadPdf = () => {
@@ -145,82 +132,141 @@ function SiteReport() {
       format: "a4",
     });
 
+    const pageWidth =
+      doc.internal.pageSize.getWidth();
+
     /*
-     * -------------------------
-     * REPORT HEADER
-     * -------------------------
+     * COMPANY HEADER
      */
 
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
 
     doc.text(
-      "Construction Project Site Report",
-      14,
-      18
+      "SKYWARD ENGINEERING (PVT) LTD",
+      pageWidth / 2,
+      16,
+      {
+        align: "center",
+      }
     );
 
-    doc.setFontSize(11);
-
-    doc.text(
-      `Project: ${
-        report.projectName || "-"
-      }`,
-      14,
-      29
-    );
-
-    doc.text(
-      `Location: ${
-        report.location || "-"
-      }`,
-      14,
-      36
+    doc.setFontSize(10);
+    doc.setFont(
+      "helvetica",
+      "normal"
     );
 
     doc.text(
-      `Status: ${
-        report.status || "-"
-      }`,
-      14,
-      43
+      "Construction Project Management System",
+      pageWidth / 2,
+      23,
+      {
+        align: "center",
+      }
     );
 
-    doc.text(
-      `Start Date: ${
-        report.startDate || "-"
-      }`,
+    doc.setLineWidth(0.4);
+
+    doc.line(
       14,
-      50
+      28,
+      pageWidth - 14,
+      28
     );
 
-    doc.text(
-      `End Date: ${
-        report.endDate || "-"
-      }`,
-      14,
-      57
+    doc.setFont(
+      "helvetica",
+      "bold"
     );
 
+    doc.setFontSize(15);
+
     doc.text(
-      `Generated Date: ${new Date().toLocaleDateString(
-        "en-LK"
-      )}`,
-      14,
-      64
+      "SITE PROGRESS & COST REPORT",
+      pageWidth / 2,
+      38,
+      {
+        align: "center",
+      }
     );
 
     /*
-     * -------------------------
-     * FINANCIAL SUMMARY
-     * -------------------------
+     * PROJECT INFORMATION
      */
 
     autoTable(doc, {
-      startY: 73,
+      startY: 45,
+
+      body: [
+        [
+          "Project",
+          report.projectName || "-",
+        ],
+        [
+          "Location",
+          report.location || "-",
+        ],
+        [
+          "Status",
+          report.status || "-",
+        ],
+        [
+          "Start Date",
+          report.startDate || "-",
+        ],
+        [
+          "End Date",
+          report.endDate || "-",
+        ],
+        [
+          "Report Date",
+          new Date().toLocaleDateString(
+            "en-LK"
+          ),
+        ],
+      ],
+
+      theme: "grid",
+
+      styles: {
+        fontSize: 9,
+      },
+
+      columnStyles: {
+        0: {
+          fontStyle: "bold",
+          cellWidth: 42,
+        },
+      },
+    });
+
+    /*
+     * FINANCIAL SUMMARY
+     */
+
+    let nextY =
+      doc.lastAutoTable.finalY + 9;
+
+    doc.setFont(
+      "helvetica",
+      "bold"
+    );
+
+    doc.setFontSize(12);
+
+    doc.text(
+      "Financial Summary",
+      14,
+      nextY
+    );
+
+    autoTable(doc, {
+      startY: nextY + 4,
 
       head: [
         [
-          "Financial Item",
+          "Description",
           "Amount (LKR)",
         ],
       ],
@@ -282,21 +328,83 @@ function SiteReport() {
         ],
       ],
 
+      theme: "grid",
+
       styles: {
-        fontSize: 9,
+        fontSize: 8.5,
+      },
+
+      columnStyles: {
+        1: {
+          halign: "right",
+        },
       },
     });
 
     /*
-     * -------------------------
-     * PROGRESS SUMMARY
-     * -------------------------
+     * BILL STATUS SUMMARY
      */
 
-    let nextY =
-      doc.lastAutoTable.finalY + 10;
+    nextY =
+      doc.lastAutoTable.finalY + 9;
 
-    doc.setFontSize(13);
+    doc.setFont(
+      "helvetica",
+      "bold"
+    );
+
+    doc.setFontSize(12);
+
+    doc.text(
+      "Contractor Bill Summary",
+      14,
+      nextY
+    );
+
+    autoTable(doc, {
+      startY: nextY + 4,
+
+      head: [
+        [
+          "Total Bills",
+          "Paid",
+          "Partially Paid",
+          "Unpaid",
+        ],
+      ],
+
+      body: [
+        [
+          financial.totalContractorBills ||
+            0,
+
+          financial.paidBills ||
+            0,
+
+          financial.partiallyPaidBills ||
+            0,
+
+          financial.unpaidBills ||
+            0,
+        ],
+      ],
+
+      theme: "grid",
+
+      styles: {
+        fontSize: 9,
+        halign: "center",
+      },
+    });
+
+    /*
+     * PROGRESS SUMMARY
+     */
+
+    nextY =
+      doc.lastAutoTable.finalY + 9;
+
+    doc.setFontSize(12);
 
     doc.text(
       "Latest Site Progress",
@@ -304,79 +412,79 @@ function SiteReport() {
       nextY
     );
 
-    nextY += 8;
-
-    doc.setFontSize(10);
-
-    const progressData = [
-      [
-        "Date",
-        report.latestProgressDate ||
-          "-",
-      ],
-      [
-        "Progress",
-        `${
-          report.latestProgressPercentage ??
-          0
-        }%`,
-      ],
-      [
-        "Workers",
-        String(
-          report.latestWorkersCount ??
-            0
-        ),
-      ],
-      [
-        "Work Description",
-        report.latestWorkDescription ||
-          "-",
-      ],
-      [
-        "Remarks",
-        report.latestRemarks || "-",
-      ],
-      [
-        "Total Progress Entries",
-        String(
-          report.totalProgressEntries ||
-            0
-        ),
-      ],
-    ];
-
     autoTable(doc, {
-      startY: nextY,
+      startY: nextY + 4,
 
-      head: [
+      body: [
         [
-          "Progress Item",
-          "Details",
+          "Progress Date",
+          report.latestProgressDate ||
+            "-",
+        ],
+        [
+          "Progress",
+          `${
+            report.latestProgressPercentage ??
+            0
+          }%`,
+        ],
+        [
+          "Workers",
+          report.latestWorkersCount ??
+            0,
+        ],
+        [
+          "Work Description",
+          report.latestWorkDescription ||
+            "-",
+        ],
+        [
+          "Remarks",
+          report.latestRemarks ||
+            "-",
+        ],
+        [
+          "Total Progress Entries",
+          report.totalProgressEntries ||
+            0,
         ],
       ],
 
-      body: progressData,
+      theme: "grid",
 
       styles: {
-        fontSize: 9,
+        fontSize: 8.5,
+      },
+
+      columnStyles: {
+        0: {
+          fontStyle: "bold",
+          cellWidth: 45,
+        },
       },
     });
 
     /*
-     * -------------------------
-     * TRANSACTION REGISTER
-     * -------------------------
+     * PAYMENT REGISTER
      */
 
     if (
       transactions &&
       transactions.length > 0
     ) {
+      nextY =
+        doc.lastAutoTable.finalY + 10;
+
+      doc.setFontSize(12);
+
+      doc.text(
+        "Payment Register",
+        14,
+        nextY
+      );
+
       autoTable(doc, {
-        startY:
-          doc.lastAutoTable.finalY +
-          10,
+        startY: nextY + 4,
 
         head: [
           [
@@ -422,51 +530,72 @@ function SiteReport() {
           ]
         ),
 
+        theme: "grid",
+
         styles: {
-          fontSize: 7,
+          fontSize: 6.8,
         },
 
         headStyles: {
-          fontSize: 7,
+          fontSize: 6.8,
+        },
+
+        columnStyles: {
+          5: {
+            halign: "right",
+          },
+
+          6: {
+            halign: "right",
+          },
         },
 
         margin: {
-          left: 10,
-          right: 10,
+          left: 8,
+          right: 8,
         },
       });
     }
 
     /*
-     * -------------------------
-     * PAGE NUMBERS
-     * -------------------------
+     * FOOTER / PAGE NUMBER
      */
 
-    const pageCount =
+    const totalPages =
       doc.internal.getNumberOfPages();
 
     for (
-      let i = 1;
-      i <= pageCount;
-      i++
+      let page = 1;
+      page <= totalPages;
+      page++
     ) {
-      doc.setPage(i);
+      doc.setPage(page);
 
-      doc.setFontSize(8);
+      const height =
+        doc.internal.pageSize.getHeight();
+
+      doc.setFontSize(7);
+
+      doc.setFont(
+        "helvetica",
+        "normal"
+      );
 
       doc.text(
-        `Page ${i} of ${pageCount}`,
-        170,
-        290
+        "Generated by CPMS - Skyward Engineering (Pvt) Ltd",
+        14,
+        height - 8
+      );
+
+      doc.text(
+        `Page ${page} of ${totalPages}`,
+        pageWidth - 14,
+        height - 8,
+        {
+          align: "right",
+        }
       );
     }
-
-    /*
-     * -------------------------
-     * SAVE PDF
-     * -------------------------
-     */
 
     const safeProjectName = (
       report.projectName ||
@@ -479,7 +608,7 @@ function SiteReport() {
       .toLowerCase();
 
     doc.save(
-      `${safeProjectName}_site_report.pdf`
+      `${safeProjectName}_professional_site_report.pdf`
     );
   };
 
@@ -487,13 +616,11 @@ function SiteReport() {
     <div>
       <div className="page-header">
         <div>
-          <h1>
-            Site Report
-          </h1>
+          <h1>Site Report</h1>
 
           <p>
-            Project financial summary,
-            progress and transaction report.
+            Professional project cost,
+            payment and progress report.
           </p>
         </div>
       </div>
@@ -518,8 +645,8 @@ function SiteReport() {
           style={{
             display: "flex",
             gap: "15px",
-            flexWrap: "wrap",
             alignItems: "center",
+            flexWrap: "wrap",
           }}
         >
           <select
@@ -556,12 +683,14 @@ function SiteReport() {
           <button
             type="button"
             className="primary-button"
-            onClick={downloadPdf}
             disabled={
               !report || loading
             }
+            onClick={
+              downloadPdf
+            }
           >
-            Download PDF
+            Download Professional PDF
           </button>
 
           <button
@@ -617,16 +746,11 @@ function SiteReport() {
               </p>
 
               <p>
-                Start Date:{" "}
+                Project Period:{" "}
                 <strong>
                   {report.startDate ||
                     "-"}
-                </strong>
-              </p>
-
-              <p>
-                End Date:{" "}
-                <strong>
+                  {" to "}
                   {report.endDate ||
                     "-"}
                 </strong>
@@ -725,7 +849,7 @@ function SiteReport() {
                 <thead>
                   <tr>
                     <th>
-                      Item
+                      Description
                     </th>
 
                     <th>
@@ -738,7 +862,6 @@ function SiteReport() {
                   <tr>
                     <td>
                       Contractor Gross
-                      Amount
                     </td>
 
                     <td>
@@ -926,123 +1049,6 @@ function SiteReport() {
                     "-"}
                 </strong>
               </p>
-
-              <p>
-                Total Progress Entries:{" "}
-                <strong>
-                  {report.totalProgressEntries ||
-                    0}
-                </strong>
-              </p>
-            </div>
-
-            <div className="table-card">
-              <h2>
-                Site Payment Register
-              </h2>
-
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>
-                      Date
-                    </th>
-
-                    <th>
-                      Type
-                    </th>
-
-                    <th>
-                      Paid To /
-                      Received From
-                    </th>
-
-                    <th>
-                      Description
-                    </th>
-
-                    <th>
-                      Reference
-                    </th>
-
-                    <th>
-                      Money In
-                    </th>
-
-                    <th>
-                      Money Out
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {transactions.length ===
-                  0 ? (
-                    <tr>
-                      <td
-                        colSpan="7"
-                      >
-                        No transactions
-                        found.
-                      </td>
-                    </tr>
-                  ) : (
-                    transactions.map(
-                      (
-                        transaction,
-                        index
-                      ) => (
-                        <tr
-                          key={`${transaction.sourceType}-${transaction.sourceId}-${index}`}
-                        >
-                          <td>
-                            {transaction.date ||
-                              "-"}
-                          </td>
-
-                          <td>
-                            {transaction.sourceType ||
-                              "-"}
-                          </td>
-
-                          <td>
-                            {transaction.partyName ||
-                              "-"}
-                          </td>
-
-                          <td>
-                            {transaction.description ||
-                              "-"}
-                          </td>
-
-                          <td>
-                            {transaction.referenceNumber ||
-                              "-"}
-                          </td>
-
-                          <td>
-                            {transaction.direction ===
-                            "IN"
-                              ? `Rs. ${formatAmount(
-                                  transaction.amount
-                                )}`
-                              : "-"}
-                          </td>
-
-                          <td>
-                            {transaction.direction ===
-                            "OUT"
-                              ? `Rs. ${formatAmount(
-                                  transaction.amount
-                                )}`
-                              : "-"}
-                          </td>
-                        </tr>
-                      )
-                    )
-                  )}
-                </tbody>
-              </table>
             </div>
           </>
         )}
