@@ -57,7 +57,8 @@ public class SecurityConfig {
                         .permitAll()
 
                         .requestMatchers(
-                                "/api/users/**"
+                                "/api/users/**",
+                                "/api/user-project-assignments/**"
                         )
                         .hasRole("ADMIN")
 
