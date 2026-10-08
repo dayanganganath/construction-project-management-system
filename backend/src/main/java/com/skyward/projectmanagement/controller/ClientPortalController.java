@@ -1,5 +1,6 @@
 package com.skyward.projectmanagement.controller;
 
+import com.skyward.projectmanagement.dto.ClientDashboardDto;
 import com.skyward.projectmanagement.dto.ClientProjectSummaryDto;
 import com.skyward.projectmanagement.service.ClientPortalService;
 
@@ -54,6 +55,29 @@ public class ClientPortalController {
         return ResponseEntity.ok(
                 clientPortalService
                         .getMyProject(
+                                username,
+                                projectId
+                        )
+        );
+    }
+
+    @GetMapping(
+            "/projects/{projectId}/dashboard"
+    )
+    public ResponseEntity<
+            ClientDashboardDto
+            >
+    getMyDashboard(
+            @PathVariable Long projectId,
+            Authentication authentication
+    ) {
+
+        String username =
+                authentication.getName();
+
+        return ResponseEntity.ok(
+                clientPortalService
+                        .getMyDashboard(
                                 username,
                                 projectId
                         )

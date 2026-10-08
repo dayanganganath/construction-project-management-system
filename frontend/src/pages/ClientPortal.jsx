@@ -7,7 +7,7 @@ function ClientPortal() {
 
   const [projects, setProjects] = useState([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [dashboard, setDashboard] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [loadingProject, setLoadingProject] = useState(false);
@@ -32,11 +32,19 @@ function ClientPortal() {
       setProjects(data);
 
       if (data.length > 0) {
-        setSelectedProjectId(data[0].projectId);
-        setSelectedProject(data[0]);
+        const firstProjectId = data[0].projectId;
+
+        setSelectedProjectId(firstProjectId);
+
+        await loadDashboard(firstProjectId);
+      } else {
+        setDashboard(null);
       }
     } catch (error) {
-      console.error("Error loading client projects:", error);
+      console.error(
+        "Error loading client projects:",
+        error
+      );
 
       setError(
         error.response?.data?.message ||
@@ -47,9 +55,9 @@ function ClientPortal() {
     }
   };
 
-  const loadProject = async (projectId) => {
+  const loadDashboard = async (projectId) => {
     if (!projectId) {
-      setSelectedProject(null);
+      setDashboard(null);
       return;
     }
 
@@ -58,18 +66,21 @@ function ClientPortal() {
       setError("");
 
       const response = await api.get(
-        `/client/projects/${projectId}`
+        `/client/projects/${projectId}/dashboard`
       );
 
-      setSelectedProject(response.data);
+      setDashboard(response.data);
     } catch (error) {
-      console.error("Error loading project:", error);
+      console.error(
+        "Error loading client dashboard:",
+        error
+      );
 
-      setSelectedProject(null);
+      setDashboard(null);
 
       setError(
         error.response?.data?.message ||
-          "Unable to load project details."
+          "Unable to load project dashboard."
       );
     } finally {
       setLoadingProject(false);
@@ -81,7 +92,7 @@ function ClientPortal() {
 
     setSelectedProjectId(projectId);
 
-    await loadProject(projectId);
+    await loadDashboard(projectId);
   };
 
   const handleLogout = () => {
@@ -94,15 +105,21 @@ function ClientPortal() {
   };
 
   const formatCurrency = (value) => {
-    if (value === null || value === undefined) {
+    if (
+      value === null ||
+      value === undefined
+    ) {
       return "LKR 0.00";
     }
 
-    return new Intl.NumberFormat("en-LK", {
-      style: "currency",
-      currency: "LKR",
-      minimumFractionDigits: 2,
-    }).format(value);
+    return new Intl.NumberFormat(
+      "en-LK",
+      {
+        style: "currency",
+        currency: "LKR",
+        minimumFractionDigits: 2,
+      }
+    ).format(value);
   };
 
   const formatDate = (value) => {
@@ -110,13 +127,40 @@ function ClientPortal() {
       return "-";
     }
 
-    return new Date(value).toLocaleDateString();
+    return new Date(
+      value
+    ).toLocaleDateString();
   };
+
+  const progressValue =
+    dashboard?.physicalProgress ?? 0;
+
+  const paymentPercentage =
+    dashboard?.projectValue > 0
+      ? Math.min(
+          100,
+          Math.round(
+            (Number(
+              dashboard.totalPaid || 0
+            ) /
+              Number(
+                dashboard.projectValue
+              )) *
+              100
+          )
+        )
+      : 0;
 
   if (loading) {
     return (
-      <div style={{ padding: "30px" }}>
-        <p>Loading client portal...</p>
+      <div
+        style={{
+          padding: "30px",
+        }}
+      >
+        <p>
+          Loading client portal...
+        </p>
       </div>
     );
   }
@@ -132,9 +176,11 @@ function ClientPortal() {
         style={{
           background: "#ffffff",
           padding: "18px 30px",
-          borderBottom: "1px solid #e5e7eb",
+          borderBottom:
+            "1px solid #e5e7eb",
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent:
+            "space-between",
           alignItems: "center",
           gap: "20px",
           flexWrap: "wrap",
@@ -155,7 +201,8 @@ function ClientPortal() {
               color: "#666",
             }}
           >
-            Skyward Engineering Project Management
+            Skyward Engineering
+            Project Management
           </p>
         </div>
 
@@ -171,7 +218,9 @@ function ClientPortal() {
               textAlign: "right",
             }}
           >
-            <strong>{username}</strong>
+            <strong>
+              {username}
+            </strong>
 
             <div
               style={{
@@ -219,7 +268,10 @@ function ClientPortal() {
               color: "#666",
             }}
           >
-            View the latest information about your assigned project.
+            View the latest progress,
+            payments and site
+            information for your
+            project.
           </p>
         </div>
 
@@ -238,47 +290,69 @@ function ClientPortal() {
 
         {projects.length === 0 ? (
           <div className="form-card">
-            <h3>No Projects Assigned</h3>
+            <h3>
+              No Projects Assigned
+            </h3>
 
             <p>
-              There are currently no projects assigned to your account.
+              There are currently no
+              projects assigned to your
+              account.
             </p>
           </div>
         ) : (
           <>
             <div className="form-card">
               <label>
-                <strong>Select Project</strong>
+                <strong>
+                  Select Project
+                </strong>
               </label>
 
               <select
-                value={selectedProjectId}
-                onChange={handleProjectChange}
+                value={
+                  selectedProjectId
+                }
+                onChange={
+                  handleProjectChange
+                }
                 style={{
                   width: "100%",
                   marginTop: "10px",
                 }}
               >
-                {projects.map((project) => (
-                  <option
-                    key={project.projectId}
-                    value={project.projectId}
-                  >
-                    {project.projectName}
-                    {project.location
-                      ? ` - ${project.location}`
-                      : ""}
-                  </option>
-                ))}
+                {projects.map(
+                  (project) => (
+                    <option
+                      key={
+                        project.projectId
+                      }
+                      value={
+                        project.projectId
+                      }
+                    >
+                      {
+                        project.projectName
+                      }
+
+                      {project.location
+                        ? ` - ${project.location}`
+                        : ""}
+                    </option>
+                  )
+                )}
               </select>
             </div>
 
             {loadingProject ? (
               <div className="form-card">
-                <p>Loading project...</p>
+                <p>
+                  Loading project
+                  dashboard...
+                </p>
               </div>
             ) : (
-              selectedProject && (
+              dashboard && (
                 <>
                   <div
                     style={{
@@ -286,43 +360,53 @@ function ClientPortal() {
                       gridTemplateColumns:
                         "repeat(auto-fit, minmax(220px, 1fr))",
                       gap: "15px",
-                      marginBottom: "20px",
+                      marginBottom:
+                        "20px",
                     }}
                   >
                     <div className="form-card">
-                      <h3>Project Status</h3>
+                      <h3>
+                        Project Status
+                      </h3>
 
                       <h2>
-                        {selectedProject.status || "-"}
+                        {dashboard.status ||
+                          "-"}
                       </h2>
                     </div>
 
                     <div className="form-card">
-                      <h3>Project Value</h3>
+                      <h3>
+                        Project Value
+                      </h3>
 
                       <h2>
                         {formatCurrency(
-                          selectedProject.projectValue
+                          dashboard.projectValue
                         )}
                       </h2>
                     </div>
 
                     <div className="form-card">
-                      <h3>Start Date</h3>
+                      <h3>
+                        Start Date
+                      </h3>
 
                       <h2>
                         {formatDate(
-                          selectedProject.startDate
+                          dashboard.startDate
                         )}
                       </h2>
                     </div>
 
                     <div className="form-card">
-                      <h3>Expected Completion</h3>
+                      <h3>
+                        Expected Completion
+                      </h3>
 
                       <h2>
                         {formatDate(
-                          selectedProject.endDate
+                          dashboard.endDate
                         )}
                       </h2>
                     </div>
@@ -330,17 +414,24 @@ function ClientPortal() {
 
                   <div className="form-card">
                     <h2>
-                      {selectedProject.projectName}
+                      {
+                        dashboard.projectName
+                      }
                     </h2>
 
                     <p>
-                      <strong>Location:</strong>{" "}
-                      {selectedProject.location || "-"}
+                      <strong>
+                        Location:
+                      </strong>{" "}
+                      {dashboard.location ||
+                        "-"}
                     </p>
 
                     <p>
-                      <strong>Description:</strong>{" "}
-                      {selectedProject.description ||
+                      <strong>
+                        Description:
+                      </strong>{" "}
+                      {dashboard.description ||
                         "No description available."}
                     </p>
                   </div>
@@ -354,35 +445,254 @@ function ClientPortal() {
                       marginTop: "20px",
                     }}
                   >
+                    {/* PHYSICAL PROGRESS */}
+
                     <div className="form-card">
-                      <h3>Physical Progress</h3>
+                      <h3>
+                        Physical Progress
+                      </h3>
+
+                      <h1
+                        style={{
+                          marginBottom:
+                            "10px",
+                        }}
+                      >
+                        {progressValue}%
+                      </h1>
+
+                      <div
+                        style={{
+                          height: "12px",
+                          background:
+                            "#e5e7eb",
+                          borderRadius:
+                            "10px",
+                          overflow:
+                            "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              progressValue
+                            )}%`,
+                            height: "100%",
+                            background:
+                              "#2563eb",
+                          }}
+                        />
+                      </div>
+
+                      <p
+                        style={{
+                          marginTop:
+                            "12px",
+                          color: "#666",
+                        }}
+                      >
+                        Latest recorded
+                        construction
+                        progress.
+                      </p>
+                    </div>
+
+                    {/* PAYMENT SUMMARY */}
+
+                    <div className="form-card">
+                      <h3>
+                        Payment Summary
+                      </h3>
 
                       <p>
-                        Progress tracking will appear here.
+                        <strong>
+                          Total Paid:
+                        </strong>
+                      </p>
+
+                      <h2>
+                        {formatCurrency(
+                          dashboard.totalPaid
+                        )}
+                      </h2>
+
+                      <p>
+                        <strong>
+                          Balance:
+                        </strong>{" "}
+                        {formatCurrency(
+                          dashboard.paymentBalance
+                        )}
+                      </p>
+
+                      <div
+                        style={{
+                          height: "10px",
+                          background:
+                            "#e5e7eb",
+                          borderRadius:
+                            "10px",
+                          overflow:
+                            "hidden",
+                          marginTop:
+                            "12px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${paymentPercentage}%`,
+                            height: "100%",
+                            background:
+                              "#16a34a",
+                          }}
+                        />
+                      </div>
+
+                      <p
+                        style={{
+                          color: "#666",
+                          marginTop:
+                            "10px",
+                        }}
+                      >
+                        {paymentPercentage}%
+                        of project value
+                        paid.
+                      </p>
+                    </div>
+
+                    {/* TIME PROGRESS */}
+
+                    <div className="form-card">
+                      <h3>
+                        Project Time
+                      </h3>
+
+                      <p>
+                        <strong>
+                          Total Days:
+                        </strong>{" "}
+                        {dashboard.totalProjectDays ??
+                          0}
+                      </p>
+
+                      <p>
+                        <strong>
+                          Days Completed:
+                        </strong>{" "}
+                        {dashboard.daysCompleted ??
+                          0}
+                      </p>
+
+                      <p>
+                        <strong>
+                          Days Remaining:
+                        </strong>{" "}
+                        {dashboard.daysRemaining ??
+                          0}
+                      </p>
+                    </div>
+
+                    {/* LATEST SITE UPDATE */}
+
+                    <div className="form-card">
+                      <h3>
+                        Latest Site Update
+                      </h3>
+
+                      {dashboard.latestProgressDate ? (
+                        <>
+                          <p>
+                            <strong>
+                              Date:
+                            </strong>{" "}
+                            {formatDate(
+                              dashboard.latestProgressDate
+                            )}
+                          </p>
+
+                          <p>
+                            <strong>
+                              Work:
+                            </strong>{" "}
+                            {dashboard.latestWorkDescription ||
+                              "-"}
+                          </p>
+
+                          <p>
+                            <strong>
+                              Workers:
+                            </strong>{" "}
+                            {dashboard.latestWorkersCount ??
+                              0}
+                          </p>
+
+                          <p>
+                            <strong>
+                              Remarks:
+                            </strong>{" "}
+                            {dashboard.latestRemarks ||
+                              "No remarks."}
+                          </p>
+                        </>
+                      ) : (
+                        <p>
+                          No daily progress
+                          update has been
+                          recorded yet.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(260px, 1fr))",
+                      gap: "15px",
+                      marginTop: "20px",
+                    }}
+                  >
+                    <div className="form-card">
+                      <h3>
+                        Project Health
+                      </h3>
+
+                      <p>
+                        <strong>
+                          Construction:
+                        </strong>{" "}
+                        {progressValue}%
+                      </p>
+
+                      <p>
+                        <strong>
+                          Payment:
+                        </strong>{" "}
+                        {paymentPercentage}%
+                      </p>
+
+                      <p>
+                        <strong>
+                          Current Status:
+                        </strong>{" "}
+                        {dashboard.status ||
+                          "-"}
                       </p>
                     </div>
 
                     <div className="form-card">
-                      <h3>Payment Summary</h3>
+                      <h3>
+                        Weather
+                      </h3>
 
                       <p>
-                        Client payment information will appear here.
-                      </p>
-                    </div>
-
-                    <div className="form-card">
-                      <h3>Latest Site Update</h3>
-
-                      <p>
-                        Latest daily progress will appear here.
-                      </p>
-                    </div>
-
-                    <div className="form-card">
-                      <h3>Weather</h3>
-
-                      <p>
-                        Site weather information will appear here.
+                        Site weather and
+                        rain forecast will
+                        be added in the
+                        next phase.
                       </p>
                     </div>
                   </div>
