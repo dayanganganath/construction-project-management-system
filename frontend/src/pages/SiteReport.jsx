@@ -37,7 +37,7 @@ function SiteReport() {
       const response = await api.get("/projects");
       setProjects(response.data);
     } catch (error) {
-      console.error(error);
+      console.error("Error loading projects:", error);
 
       showAlert(
         "error",
@@ -60,27 +60,20 @@ function SiteReport() {
         reportResponse,
         accountsResponse,
       ] = await Promise.all([
-        api.get(
-          `/site-report/project/${id}`
-        ),
+        api.get(`/site-report/project/${id}`),
 
-        api.get(
-          "/accounts/payment-register",
-          {
-            params: {
-              projectId: id,
-            },
-          }
-        ),
+        api.get("/accounts/payment-register", {
+          params: {
+            projectId: id,
+          },
+        }),
       ]);
 
       setReport(reportResponse.data);
-      setTransactions(
-        accountsResponse.data
-      );
+      setTransactions(accountsResponse.data);
     } catch (error) {
       console.error(
-        "Site report load error:",
+        "Error loading site report:",
         error
       );
 
@@ -105,15 +98,33 @@ function SiteReport() {
   };
 
   const formatAmount = (amount) => {
-    return Number(
-      amount || 0
-    ).toLocaleString("en-LK", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+    return Number(amount || 0).toLocaleString(
+      "en-LK",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }
+    );
+  };
+
+  const imageToBase64 = async (url) => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        resolve(reader.result);
+      };
+
+      reader.onerror = reject;
+
+      reader.readAsDataURL(blob);
     });
   };
 
-  const downloadPdf = () => {
+  const downloadPdf = async () => {
     if (!report) {
       showAlert(
         "error",
@@ -123,362 +134,184 @@ function SiteReport() {
       return;
     }
 
-    const financial =
-      report.financialSummary || {};
+    try {
+      const financial =
+        report.financialSummary || {};
 
-    const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-    });
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
 
-    const pageWidth =
-      doc.internal.pageSize.getWidth();
+      const pageWidth =
+        doc.internal.pageSize.getWidth();
 
-    /*
-     * COMPANY HEADER
-     */
+      /*
+       * -------------------------
+       * LOGO
+       * -------------------------
+       */
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
+      try {
+        const logoBase64 =
+          await imageToBase64(
+            "/skyward-logo.png"
+          );
 
-    doc.text(
-      "SKYWARD ENGINEERING (PVT) LTD",
-      pageWidth / 2,
-      16,
-      {
-        align: "center",
+        doc.addImage(
+          logoBase64,
+          "PNG",
+          14,
+          10,
+          32,
+          32
+        );
+      } catch (logoError) {
+        console.error(
+          "Logo loading error:",
+          logoError
+        );
       }
-    );
 
-    doc.setFontSize(10);
-    doc.setFont(
-      "helvetica",
-      "normal"
-    );
+      /*
+       * -------------------------
+       * COMPANY HEADER
+       * -------------------------
+       */
 
-    doc.text(
-      "Construction Project Management System",
-      pageWidth / 2,
-      23,
-      {
-        align: "center",
-      }
-    );
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
 
-    doc.setLineWidth(0.4);
+      doc.text(
+        "SKYWARD ENGINEERING (PVT) LTD",
+        52,
+        17
+      );
 
-    doc.line(
-      14,
-      28,
-      pageWidth - 14,
-      28
-    );
+      doc.setFont(
+        "helvetica",
+        "normal"
+      );
 
-    doc.setFont(
-      "helvetica",
-      "bold"
-    );
+      doc.setFontSize(9.5);
 
-    doc.setFontSize(15);
+      doc.text(
+        "187/16, Pipe Road, Sri Jayawardenapura Kotte",
+        52,
+        24
+      );
 
-    doc.text(
-      "SITE PROGRESS & COST REPORT",
-      pageWidth / 2,
-      38,
-      {
-        align: "center",
-      }
-    );
+      doc.text(
+        "Construction | Renovation | Engineering Services",
+        52,
+        30
+      );
 
-    /*
-     * PROJECT INFORMATION
-     */
+      doc.setFontSize(8);
 
-    autoTable(doc, {
-      startY: 45,
+      doc.text(
+        "Construction Project Management System",
+        52,
+        36
+      );
 
-      body: [
-        [
-          "Project",
-          report.projectName || "-",
+      doc.setLineWidth(0.4);
+
+      doc.line(
+        14,
+        46,
+        pageWidth - 14,
+        46
+      );
+
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      doc.setFontSize(15);
+
+      doc.text(
+        "SITE PROGRESS & COST REPORT",
+        pageWidth / 2,
+        56,
+        {
+          align: "center",
+        }
+      );
+
+      /*
+       * -------------------------
+       * PROJECT DETAILS
+       * -------------------------
+       */
+
+      autoTable(doc, {
+        startY: 63,
+
+        body: [
+          [
+            "Project",
+            report.projectName || "-",
+          ],
+          [
+            "Location",
+            report.location || "-",
+          ],
+          [
+            "Status",
+            report.status || "-",
+          ],
+          [
+            "Start Date",
+            report.startDate || "-",
+          ],
+          [
+            "End Date",
+            report.endDate || "-",
+          ],
+          [
+            "Report Date",
+            new Date().toLocaleDateString(
+              "en-LK"
+            ),
+          ],
         ],
-        [
-          "Location",
-          report.location || "-",
-        ],
-        [
-          "Status",
-          report.status || "-",
-        ],
-        [
-          "Start Date",
-          report.startDate || "-",
-        ],
-        [
-          "End Date",
-          report.endDate || "-",
-        ],
-        [
-          "Report Date",
-          new Date().toLocaleDateString(
-            "en-LK"
-          ),
-        ],
-      ],
 
-      theme: "grid",
+        theme: "grid",
 
-      styles: {
-        fontSize: 9,
-      },
-
-      columnStyles: {
-        0: {
-          fontStyle: "bold",
-          cellWidth: 42,
+        styles: {
+          fontSize: 9,
+          cellPadding: 2.5,
         },
-      },
-    });
 
-    /*
-     * FINANCIAL SUMMARY
-     */
-
-    let nextY =
-      doc.lastAutoTable.finalY + 9;
-
-    doc.setFont(
-      "helvetica",
-      "bold"
-    );
-
-    doc.setFontSize(12);
-
-    doc.text(
-      "Financial Summary",
-      14,
-      nextY
-    );
-
-    autoTable(doc, {
-      startY: nextY + 4,
-
-      head: [
-        [
-          "Description",
-          "Amount (LKR)",
-        ],
-      ],
-
-      body: [
-        [
-          "Contractor Gross Amount",
-          formatAmount(
-            financial.contractorGrossAmount
-          ),
-        ],
-        [
-          "Contractor Net Payable",
-          formatAmount(
-            financial.contractorNetPayable
-          ),
-        ],
-        [
-          "Contractor Paid Amount",
-          formatAmount(
-            financial.contractorPaidAmount
-          ),
-        ],
-        [
-          "Contractor Outstanding",
-          formatAmount(
-            financial.contractorOutstandingAmount
-          ),
-        ],
-        [
-          "Client Payments",
-          formatAmount(
-            financial.clientPayments
-          ),
-        ],
-        [
-          "Subcontractor Payments",
-          formatAmount(
-            financial.subcontractorPayments
-          ),
-        ],
-        [
-          "Project Expenses",
-          formatAmount(
-            financial.projectExpenses
-          ),
-        ],
-        [
-          "Total Outgoing",
-          formatAmount(
-            financial.totalOutgoing
-          ),
-        ],
-        [
-          "Net Cash Position",
-          formatAmount(
-            financial.netCashPosition
-          ),
-        ],
-      ],
-
-      theme: "grid",
-
-      styles: {
-        fontSize: 8.5,
-      },
-
-      columnStyles: {
-        1: {
-          halign: "right",
+        columnStyles: {
+          0: {
+            fontStyle: "bold",
+            cellWidth: 42,
+          },
         },
-      },
-    });
+      });
 
-    /*
-     * BILL STATUS SUMMARY
-     */
+      /*
+       * -------------------------
+       * FINANCIAL SUMMARY
+       * -------------------------
+       */
 
-    nextY =
-      doc.lastAutoTable.finalY + 9;
+      let nextY =
+        doc.lastAutoTable.finalY + 9;
 
-    doc.setFont(
-      "helvetica",
-      "bold"
-    );
-
-    doc.setFontSize(12);
-
-    doc.text(
-      "Contractor Bill Summary",
-      14,
-      nextY
-    );
-
-    autoTable(doc, {
-      startY: nextY + 4,
-
-      head: [
-        [
-          "Total Bills",
-          "Paid",
-          "Partially Paid",
-          "Unpaid",
-        ],
-      ],
-
-      body: [
-        [
-          financial.totalContractorBills ||
-            0,
-
-          financial.paidBills ||
-            0,
-
-          financial.partiallyPaidBills ||
-            0,
-
-          financial.unpaidBills ||
-            0,
-        ],
-      ],
-
-      theme: "grid",
-
-      styles: {
-        fontSize: 9,
-        halign: "center",
-      },
-    });
-
-    /*
-     * PROGRESS SUMMARY
-     */
-
-    nextY =
-      doc.lastAutoTable.finalY + 9;
-
-    doc.setFontSize(12);
-
-    doc.text(
-      "Latest Site Progress",
-      14,
-      nextY
-    );
-
-    autoTable(doc, {
-      startY: nextY + 4,
-
-      body: [
-        [
-          "Progress Date",
-          report.latestProgressDate ||
-            "-",
-        ],
-        [
-          "Progress",
-          `${
-            report.latestProgressPercentage ??
-            0
-          }%`,
-        ],
-        [
-          "Workers",
-          report.latestWorkersCount ??
-            0,
-        ],
-        [
-          "Work Description",
-          report.latestWorkDescription ||
-            "-",
-        ],
-        [
-          "Remarks",
-          report.latestRemarks ||
-            "-",
-        ],
-        [
-          "Total Progress Entries",
-          report.totalProgressEntries ||
-            0,
-        ],
-      ],
-
-      theme: "grid",
-
-      styles: {
-        fontSize: 8.5,
-      },
-
-      columnStyles: {
-        0: {
-          fontStyle: "bold",
-          cellWidth: 45,
-        },
-      },
-    });
-
-    /*
-     * PAYMENT REGISTER
-     */
-
-    if (
-      transactions &&
-      transactions.length > 0
-    ) {
-      nextY =
-        doc.lastAutoTable.finalY + 10;
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
 
       doc.setFontSize(12);
 
       doc.text(
-        "Payment Register",
+        "Financial Summary",
         14,
         nextY
       );
@@ -488,128 +321,351 @@ function SiteReport() {
 
         head: [
           [
-            "Date",
-            "Type",
-            "Party",
             "Description",
-            "Reference",
-            "Money In",
-            "Money Out",
+            "Amount (LKR)",
           ],
         ],
 
-        body: transactions.map(
-          (transaction) => [
-            transaction.date || "-",
-
-            transaction.sourceType ||
-              "-",
-
-            transaction.partyName ||
-              "-",
-
-            transaction.description ||
-              "-",
-
-            transaction.referenceNumber ||
-              "-",
-
-            transaction.direction ===
-            "IN"
-              ? formatAmount(
-                  transaction.amount
-                )
-              : "-",
-
-            transaction.direction ===
-            "OUT"
-              ? formatAmount(
-                  transaction.amount
-                )
-              : "-",
-          ]
-        ),
+        body: [
+          [
+            "Contractor Gross Amount",
+            formatAmount(
+              financial.contractorGrossAmount
+            ),
+          ],
+          [
+            "Contractor Net Payable",
+            formatAmount(
+              financial.contractorNetPayable
+            ),
+          ],
+          [
+            "Contractor Paid Amount",
+            formatAmount(
+              financial.contractorPaidAmount
+            ),
+          ],
+          [
+            "Contractor Outstanding",
+            formatAmount(
+              financial.contractorOutstandingAmount
+            ),
+          ],
+          [
+            "Client Payments",
+            formatAmount(
+              financial.clientPayments
+            ),
+          ],
+          [
+            "Subcontractor Payments",
+            formatAmount(
+              financial.subcontractorPayments
+            ),
+          ],
+          [
+            "Project Expenses",
+            formatAmount(
+              financial.projectExpenses
+            ),
+          ],
+          [
+            "Total Outgoing",
+            formatAmount(
+              financial.totalOutgoing
+            ),
+          ],
+          [
+            "Net Cash Position",
+            formatAmount(
+              financial.netCashPosition
+            ),
+          ],
+        ],
 
         theme: "grid",
 
         styles: {
-          fontSize: 6.8,
-        },
-
-        headStyles: {
-          fontSize: 6.8,
+          fontSize: 8.5,
         },
 
         columnStyles: {
-          5: {
+          1: {
             halign: "right",
           },
-
-          6: {
-            halign: "right",
-          },
-        },
-
-        margin: {
-          left: 8,
-          right: 8,
         },
       });
-    }
 
-    /*
-     * FOOTER / PAGE NUMBER
-     */
+      /*
+       * -------------------------
+       * BILL SUMMARY
+       * -------------------------
+       */
 
-    const totalPages =
-      doc.internal.getNumberOfPages();
+      nextY =
+        doc.lastAutoTable.finalY + 9;
 
-    for (
-      let page = 1;
-      page <= totalPages;
-      page++
-    ) {
-      doc.setPage(page);
-
-      const height =
-        doc.internal.pageSize.getHeight();
-
-      doc.setFontSize(7);
-
-      doc.setFont(
-        "helvetica",
-        "normal"
-      );
+      doc.setFontSize(12);
 
       doc.text(
-        "Generated by CPMS - Skyward Engineering (Pvt) Ltd",
+        "Contractor Bill Summary",
         14,
-        height - 8
+        nextY
       );
+
+      autoTable(doc, {
+        startY: nextY + 4,
+
+        head: [
+          [
+            "Total Bills",
+            "Paid",
+            "Partially Paid",
+            "Unpaid",
+          ],
+        ],
+
+        body: [
+          [
+            financial.totalContractorBills || 0,
+            financial.paidBills || 0,
+            financial.partiallyPaidBills || 0,
+            financial.unpaidBills || 0,
+          ],
+        ],
+
+        theme: "grid",
+
+        styles: {
+          fontSize: 9,
+          halign: "center",
+        },
+      });
+
+      /*
+       * -------------------------
+       * PROGRESS SUMMARY
+       * -------------------------
+       */
+
+      nextY =
+        doc.lastAutoTable.finalY + 9;
+
+      doc.setFontSize(12);
 
       doc.text(
-        `Page ${page} of ${totalPages}`,
-        pageWidth - 14,
-        height - 8,
-        {
-          align: "right",
-        }
+        "Latest Site Progress",
+        14,
+        nextY
+      );
+
+      autoTable(doc, {
+        startY: nextY + 4,
+
+        body: [
+          [
+            "Progress Date",
+            report.latestProgressDate || "-",
+          ],
+          [
+            "Progress",
+            `${
+              report.latestProgressPercentage ??
+              0
+            }%`,
+          ],
+          [
+            "Workers",
+            report.latestWorkersCount ?? 0,
+          ],
+          [
+            "Work Description",
+            report.latestWorkDescription || "-",
+          ],
+          [
+            "Remarks",
+            report.latestRemarks || "-",
+          ],
+          [
+            "Total Progress Entries",
+            report.totalProgressEntries || 0,
+          ],
+        ],
+
+        theme: "grid",
+
+        styles: {
+          fontSize: 8.5,
+        },
+
+        columnStyles: {
+          0: {
+            fontStyle: "bold",
+            cellWidth: 45,
+          },
+        },
+      });
+
+      /*
+       * -------------------------
+       * PAYMENT REGISTER
+       * -------------------------
+       */
+
+      if (
+        transactions &&
+        transactions.length > 0
+      ) {
+        nextY =
+          doc.lastAutoTable.finalY + 10;
+
+        doc.setFontSize(12);
+
+        doc.text(
+          "Payment Register",
+          14,
+          nextY
+        );
+
+        autoTable(doc, {
+          startY: nextY + 4,
+
+          head: [
+            [
+              "Date",
+              "Type",
+              "Party",
+              "Description",
+              "Reference",
+              "Money In",
+              "Money Out",
+            ],
+          ],
+
+          body: transactions.map(
+            (transaction) => [
+              transaction.date || "-",
+
+              transaction.sourceType ||
+                "-",
+
+              transaction.partyName ||
+                "-",
+
+              transaction.description ||
+                "-",
+
+              transaction.referenceNumber ||
+                "-",
+
+              transaction.direction ===
+              "IN"
+                ? formatAmount(
+                    transaction.amount
+                  )
+                : "-",
+
+              transaction.direction ===
+              "OUT"
+                ? formatAmount(
+                    transaction.amount
+                  )
+                : "-",
+            ]
+          ),
+
+          theme: "grid",
+
+          styles: {
+            fontSize: 6.8,
+          },
+
+          headStyles: {
+            fontSize: 6.8,
+          },
+
+          columnStyles: {
+            5: {
+              halign: "right",
+            },
+
+            6: {
+              halign: "right",
+            },
+          },
+
+          margin: {
+            left: 8,
+            right: 8,
+          },
+        });
+      }
+
+      /*
+       * -------------------------
+       * FOOTER
+       * -------------------------
+       */
+
+      const totalPages =
+        doc.internal.getNumberOfPages();
+
+      for (
+        let page = 1;
+        page <= totalPages;
+        page++
+      ) {
+        doc.setPage(page);
+
+        const height =
+          doc.internal.pageSize.getHeight();
+
+        doc.setFontSize(7);
+
+        doc.setFont(
+          "helvetica",
+          "normal"
+        );
+
+        doc.text(
+          "Skyward Engineering (Pvt) Ltd - CPMS Generated Report",
+          14,
+          height - 8
+        );
+
+        doc.text(
+          `Page ${page} of ${totalPages}`,
+          pageWidth - 14,
+          height - 8,
+          {
+            align: "right",
+          }
+        );
+      }
+
+      const safeProjectName = (
+        report.projectName || "site"
+      )
+        .replace(
+          /[^a-z0-9]/gi,
+          "_"
+        )
+        .toLowerCase();
+
+      doc.save(
+        `${safeProjectName}_site_report.pdf`
+      );
+    } catch (error) {
+      console.error(
+        "PDF generation error:",
+        error
+      );
+
+      showAlert(
+        "error",
+        "Unable to generate PDF."
       );
     }
-
-    const safeProjectName = (
-      report.projectName ||
-      "site"
-    )
-      .replace(
-        /[^a-z0-9]/gi,
-        "_"
-      )
-      .toLowerCase();
-
-    doc.save(
-      `${safeProjectName}_professional_site_report.pdf`
-    );
   };
 
   return (
@@ -619,8 +675,8 @@ function SiteReport() {
           <h1>Site Report</h1>
 
           <p>
-            Professional project cost,
-            payment and progress report.
+            Project financial summary,
+            progress and transaction report.
           </p>
         </div>
       </div>
@@ -668,9 +724,7 @@ function SiteReport() {
                   key={project.id}
                   value={project.id}
                 >
-                  {
-                    project.projectName
-                  }
+                  {project.projectName}
 
                   {project.location
                     ? ` - ${project.location}`
@@ -683,11 +737,9 @@ function SiteReport() {
           <button
             type="button"
             className="primary-button"
+            onClick={downloadPdf}
             disabled={
               !report || loading
-            }
-            onClick={
-              downloadPdf
             }
           >
             Download Professional PDF
@@ -724,9 +776,7 @@ function SiteReport() {
           <>
             <div className="form-card">
               <h2>
-                {
-                  report.projectName
-                }
+                {report.projectName}
               </h2>
 
               <p>
@@ -876,8 +926,7 @@ function SiteReport() {
 
                   <tr>
                     <td>
-                      Contractor Net
-                      Payable
+                      Contractor Net Payable
                     </td>
 
                     <td>
@@ -907,8 +956,7 @@ function SiteReport() {
 
                   <tr>
                     <td>
-                      Contractor
-                      Outstanding
+                      Contractor Outstanding
                     </td>
 
                     <td>
@@ -938,8 +986,7 @@ function SiteReport() {
 
                   <tr>
                     <td>
-                      Subcontractor
-                      Payments
+                      Subcontractor Payments
                     </td>
 
                     <td>
