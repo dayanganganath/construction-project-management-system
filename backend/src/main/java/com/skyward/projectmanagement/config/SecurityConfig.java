@@ -63,6 +63,11 @@ public class SecurityConfig {
                         .hasRole("ADMIN")
 
                         .requestMatchers(
+                                "/api/client/**"
+                        )
+                        .hasRole("CLIENT")
+
+                        .requestMatchers(
                                 "/api/**"
                         )
                         .authenticated()
@@ -86,7 +91,9 @@ public class SecurityConfig {
                 new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-                List.of("http://localhost:5173")
+                List.of(
+                        "http://localhost:5173"
+                )
         );
 
         configuration.setAllowedMethods(
