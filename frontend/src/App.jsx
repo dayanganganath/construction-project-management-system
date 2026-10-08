@@ -17,14 +17,15 @@ import DailyProgress from "./pages/DailyProgress";
 import Users from "./pages/Users";
 import Login from "./pages/Login";
 
-
 import Contractors from "./pages/Contractors";
 import ContractorBills from "./pages/ContractorBills";
+import ContractorLedger from "./pages/ContractorLedger";
 import SubcontractorPayments from "./pages/SubcontractorPayments";
 import Accounts from "./pages/Accounts";
 import SiteCostSummary from "./pages/SiteCostSummary";
+import SiteReport from "./pages/SiteReport";
+
 import ProtectedRoute from "./components/ProtectedRoute";
-import ContractorLedger from "./pages/ContractorLedger";
 
 import "./App.css";
 
@@ -98,6 +99,10 @@ function ProtectedLayout() {
 
           <NavLink to="/site-cost-summary">
             Site Cost Summary
+          </NavLink>
+
+          <NavLink to="/site-report">
+            Site Report
           </NavLink>
 
           <NavLink to="/progress">
@@ -192,6 +197,11 @@ function ProtectedLayout() {
           />
 
           <Route
+            path="/site-report"
+            element={<SiteReport />}
+          />
+
+          <Route
             path="/progress"
             element={<DailyProgress />}
           />
@@ -202,14 +212,22 @@ function ProtectedLayout() {
               role === "ADMIN" ? (
                 <Users />
               ) : (
-                <Navigate to="/" replace />
+                <Navigate
+                  to="/"
+                  replace
+                />
               )
             }
           />
 
           <Route
             path="*"
-            element={<Navigate to="/" replace />}
+            element={
+              <Navigate
+                to="/"
+                replace
+              />
+            }
           />
         </Routes>
       </main>
