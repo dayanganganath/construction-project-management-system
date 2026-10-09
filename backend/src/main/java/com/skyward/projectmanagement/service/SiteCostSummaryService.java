@@ -2,9 +2,12 @@ package com.skyward.projectmanagement.service;
 
 import com.skyward.projectmanagement.dto.SiteCostSummaryDto;
 import com.skyward.projectmanagement.entity.ContractorBill;
+import com.skyward.projectmanagement.entity.LabourPayment;
 import com.skyward.projectmanagement.entity.SubcontractorPayment;
 import com.skyward.projectmanagement.model.Project;
+
 import com.skyward.projectmanagement.repository.ContractorBillRepository;
+import com.skyward.projectmanagement.repository.LabourPaymentRepository;
 import com.skyward.projectmanagement.repository.PaymentRepository;
 import com.skyward.projectmanagement.repository.ProjectExpenseRepository;
 import com.skyward.projectmanagement.repository.ProjectRepository;
@@ -19,23 +22,42 @@ import java.util.List;
 public class SiteCostSummaryService {
 
     private final ProjectRepository projectRepository;
+
     private final ContractorBillRepository contractorBillRepository;
+
     private final SubcontractorPaymentRepository subcontractorPaymentRepository;
+
+    private final LabourPaymentRepository labourPaymentRepository;
+
     private final ProjectExpenseRepository projectExpenseRepository;
+
     private final PaymentRepository paymentRepository;
 
     public SiteCostSummaryService(
             ProjectRepository projectRepository,
             ContractorBillRepository contractorBillRepository,
             SubcontractorPaymentRepository subcontractorPaymentRepository,
+            LabourPaymentRepository labourPaymentRepository,
             ProjectExpenseRepository projectExpenseRepository,
             PaymentRepository paymentRepository
     ) {
-        this.projectRepository = projectRepository;
-        this.contractorBillRepository = contractorBillRepository;
-        this.subcontractorPaymentRepository = subcontractorPaymentRepository;
-        this.projectExpenseRepository = projectExpenseRepository;
-        this.paymentRepository = paymentRepository;
+        this.projectRepository =
+                projectRepository;
+
+        this.contractorBillRepository =
+                contractorBillRepository;
+
+        this.subcontractorPaymentRepository =
+                subcontractorPaymentRepository;
+
+        this.labourPaymentRepository =
+                labourPaymentRepository;
+
+        this.projectExpenseRepository =
+                projectExpenseRepository;
+
+        this.paymentRepository =
+                paymentRepository;
     }
 
     public SiteCostSummaryDto getProjectSummary(
@@ -43,7 +65,8 @@ public class SiteCostSummaryService {
     ) {
 
         Project project =
-                projectRepository.findById(projectId)
+                projectRepository
+                        .findById(projectId)
                         .orElseThrow(() ->
                                 new RuntimeException(
                                         "Project not found."
@@ -66,9 +89,9 @@ public class SiteCostSummaryService {
         );
 
         /*
-         * --------------------------
+         * =====================================================
          * CONTRACTOR BILLS
-         * --------------------------
+         * =====================================================
          */
 
         List<ContractorBill> bills =
@@ -124,12 +147,18 @@ public class SiteCostSummaryService {
             String status =
                     bill.getStatus();
 
-            if ("PAID".equalsIgnoreCase(status)) {
+            if (
+                    "PAID".equalsIgnoreCase(
+                            status
+                    )
+            ) {
                 paidBills++;
 
             } else if (
                     "PARTIALLY_PAID"
-                            .equalsIgnoreCase(status)
+                            .equalsIgnoreCase(
+                                    status
+                            )
             ) {
                 partiallyPaidBills++;
 
@@ -171,12 +200,13 @@ public class SiteCostSummaryService {
         );
 
         /*
-         * --------------------------
+         * =====================================================
          * SUBCONTRACTOR PAYMENTS
-         * --------------------------
+         * =====================================================
          */
 
-        List<SubcontractorPayment> subcontractorPayments =
+        List<SubcontractorPayment>
+                subcontractorPayments =
                 subcontractorPaymentRepository
                         .findByProjectId(projectId);
 
@@ -201,9 +231,50 @@ public class SiteCostSummaryService {
         );
 
         /*
-         * --------------------------
+         * =====================================================
+         * LABOUR PAYMENTS
+         * =====================================================
+         *
+         * Only PAID labour payments are treated
+         * as real outgoing cash.
+         */
+
+        List<LabourPayment> labourPayments =
+                labourPaymentRepository
+                        .findByProjectId(projectId);
+
+        BigDecimal labourPaymentTotal =
+                BigDecimal.ZERO;
+
+        for (
+                LabourPayment payment :
+                labourPayments
+        ) {
+
+            if (
+                    payment.getStatus()
+                            == LabourPayment
+                            .PaymentStatus
+                            .PAID
+            ) {
+
+                labourPaymentTotal =
+                        labourPaymentTotal.add(
+                                safeAmount(
+                                        payment.getAmount()
+                                )
+                        );
+            }
+        }
+
+        summary.setLabourPayments(
+                labourPaymentTotal
+        );
+
+        /*
+         * =====================================================
          * PROJECT EXPENSES
-         * --------------------------
+         * =====================================================
          */
 
         BigDecimal expenseTotal =
@@ -212,7 +283,9 @@ public class SiteCostSummaryService {
         for (
                 var expense :
                 projectExpenseRepository
-                        .findByProjectId(projectId)
+                        .findByProjectId(
+                                projectId
+                        )
         ) {
 
             expenseTotal =
@@ -228,13 +301,9 @@ public class SiteCostSummaryService {
         );
 
         /*
-         * --------------------------
+         * =====================================================
          * CLIENT PAYMENTS
-         * --------------------------
-         *
-         * Using findAll() here avoids
-         * depending on a custom repository
-         * method.
+         * =====================================================
          */
 
         BigDecimal clientPaymentTotal =
@@ -246,11 +315,18 @@ public class SiteCostSummaryService {
         ) {
 
             if (
-                    payment.getProject() != null &&
-                    payment.getProject().getId() != null &&
+                    payment.getProject()
+                            != null
+                            &&
                     payment.getProject()
                             .getId()
-                            .equals(projectId)
+                            != null
+                            &&
+                    payment.getProject()
+                            .getId()
+                            .equals(
+                                    projectId
+                            )
             ) {
 
                 clientPaymentTotal =
@@ -267,23 +343,31 @@ public class SiteCostSummaryService {
         );
 
         /*
-         * --------------------------
+         * =====================================================
          * CASH POSITION
-         * --------------------------
+         * =====================================================
          *
-         * Contractor paid amount is NOT
-         * added separately because those
-         * payments are already represented
-         * by subcontractor payments.
+         * Contractor paid amount is NOT added again because
+         * subcontractor payments already represent actual
+         * outgoing payments.
+         *
+         * Labour payments ARE added separately.
          */
 
         BigDecimal totalOutgoing =
                 subcontractorPaymentTotal
-                        .add(expenseTotal);
+                        .add(
+                                labourPaymentTotal
+                        )
+                        .add(
+                                expenseTotal
+                        );
 
         BigDecimal netCashPosition =
                 clientPaymentTotal
-                        .subtract(totalOutgoing);
+                        .subtract(
+                                totalOutgoing
+                        );
 
         summary.setTotalOutgoing(
                 totalOutgoing

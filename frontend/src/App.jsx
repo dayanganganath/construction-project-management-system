@@ -25,6 +25,10 @@ import Accounts from "./pages/Accounts";
 import SiteCostSummary from "./pages/SiteCostSummary";
 import SiteReport from "./pages/SiteReport";
 
+import Workers from "./pages/Workers";
+import LabourAttendance from "./pages/LabourAttendance";
+import LabourPayments from "./pages/LabourPayments";
+
 import ClientPortal from "./pages/ClientPortal";
 import SupervisorPortal from "./pages/SupervisorPortal";
 
@@ -108,6 +112,18 @@ function AdminLayout() {
 
           <NavLink to="/subcontractor-payments">
             Subcontractor Payments
+          </NavLink>
+
+          <NavLink to="/workers">
+            Workers
+          </NavLink>
+
+          <NavLink to="/labour-attendance">
+            Labour Attendance
+          </NavLink>
+
+          <NavLink to="/labour-payments">
+            Labour Payments
           </NavLink>
 
           <NavLink to="/accounts">
@@ -202,6 +218,25 @@ function AdminLayout() {
             path="/subcontractor-payments"
             element={
               <SubcontractorPayments />
+            }
+          />
+
+          <Route
+            path="/workers"
+            element={<Workers />}
+          />
+
+          <Route
+            path="/labour-attendance"
+            element={
+              <LabourAttendance />
+            }
+          />
+
+          <Route
+            path="/labour-payments"
+            element={
+              <LabourPayments />
             }
           />
 

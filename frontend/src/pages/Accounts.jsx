@@ -13,6 +13,7 @@ function Accounts() {
     transactionCount: 0,
     totalReceived: 0,
     totalSubcontractorPayments: 0,
+    totalLabourPayments: 0,
     totalExpenses: 0,
     totalOutgoing: 0,
     netCashFlow: 0,
@@ -54,10 +55,17 @@ function Accounts() {
 
   const loadProjects = async () => {
     try {
-      const response = await api.get("/projects");
-      setProjects(response.data);
+      const response =
+        await api.get("/projects");
+
+      setProjects(
+        response.data || []
+      );
     } catch (error) {
-      console.error("Error loading projects:", error);
+      console.error(
+        "Error loading projects:",
+        error
+      );
 
       showAlert(
         "error",
@@ -66,30 +74,39 @@ function Accounts() {
     }
   };
 
-  const buildParams = (customFilters = filters) => {
+  const buildParams = (
+    customFilters = filters
+  ) => {
     const params = {};
 
     if (customFilters.from) {
-      params.from = customFilters.from;
+      params.from =
+        customFilters.from;
     }
 
     if (customFilters.to) {
-      params.to = customFilters.to;
+      params.to =
+        customFilters.to;
     }
 
     if (customFilters.projectId) {
-      params.projectId = customFilters.projectId;
+      params.projectId =
+        customFilters.projectId;
     }
 
     if (
       customFilters.type &&
       customFilters.type !== "ALL"
     ) {
-      params.type = customFilters.type;
+      params.type =
+        customFilters.type;
     }
 
-    if (customFilters.search.trim()) {
-      params.search = customFilters.search.trim();
+    if (
+      customFilters.search.trim()
+    ) {
+      params.search =
+        customFilters.search.trim();
     }
 
     return params;
@@ -101,7 +118,8 @@ function Accounts() {
     try {
       setLoading(true);
 
-      const params = buildParams(customFilters);
+      const params =
+        buildParams(customFilters);
 
       const [
         registerResponse,
@@ -109,26 +127,49 @@ function Accounts() {
       ] = await Promise.all([
         api.get(
           "/accounts/payment-register",
-          {
-            params,
-          }
+          { params }
         ),
 
         api.get(
           "/accounts/summary",
-          {
-            params,
-          }
+          { params }
         ),
       ]);
 
       setTransactions(
-        registerResponse.data
+        registerResponse.data || []
       );
 
-      setSummary(
-        summaryResponse.data
-      );
+      setSummary({
+        transactionCount:
+          summaryResponse.data
+            ?.transactionCount || 0,
+
+        totalReceived:
+          summaryResponse.data
+            ?.totalReceived || 0,
+
+        totalSubcontractorPayments:
+          summaryResponse.data
+            ?.totalSubcontractorPayments ||
+          0,
+
+        totalLabourPayments:
+          summaryResponse.data
+            ?.totalLabourPayments || 0,
+
+        totalExpenses:
+          summaryResponse.data
+            ?.totalExpenses || 0,
+
+        totalOutgoing:
+          summaryResponse.data
+            ?.totalOutgoing || 0,
+
+        netCashFlow:
+          summaryResponse.data
+            ?.netCashFlow || 0,
+      });
     } catch (error) {
       console.error(
         "Error loading accounts:",
@@ -147,38 +188,37 @@ function Accounts() {
   const handleChange = (e) => {
     setFilters({
       ...filters,
-      [e.target.name]: e.target.value,
+      [e.target.name]:
+        e.target.value,
     });
   };
 
   const applyFilters = (e) => {
     e.preventDefault();
-
     loadRegister(filters);
   };
 
-  const formatDateForInput = (date) => {
+  const formatDateForInput = (
+    date
+  ) => {
     const year =
       date.getFullYear();
 
-    const month =
-      String(
-        date.getMonth() + 1
-      ).padStart(2, "0");
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
 
-    const day =
-      String(
-        date.getDate()
-      ).padStart(2, "0");
+    const day = String(
+      date.getDate()
+    ).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
   };
 
-  const getToday = () => {
-    return formatDateForInput(
+  const getToday = () =>
+    formatDateForInput(
       new Date()
     );
-  };
 
   const setThisWeek = () => {
     const today = new Date();
@@ -208,12 +248,10 @@ function Accounts() {
 
     const updatedFilters = {
       ...filters,
-
       from:
         formatDateForInput(
           monday
         ),
-
       to:
         formatDateForInput(
           sunday
@@ -248,12 +286,10 @@ function Accounts() {
 
     const updatedFilters = {
       ...filters,
-
       from:
         formatDateForInput(
           firstDay
         ),
-
       to:
         formatDateForInput(
           lastDay
@@ -279,17 +315,15 @@ function Accounts() {
     };
 
     setFilters(cleared);
-
     loadRegister(cleared);
   };
 
   const formatAmount = (
     amount
   ) => {
-    const value =
-      Number(amount || 0);
-
-    return value.toLocaleString(
+    return Number(
+      amount || 0
+    ).toLocaleString(
       "en-LK",
       {
         minimumFractionDigits: 2,
@@ -307,6 +341,9 @@ function Accounts() {
 
       case "SUBCONTRACTOR_PAYMENT":
         return "Subcontractor Payment";
+
+      case "LABOUR_PAYMENT":
+        return "Labour Payment";
 
       case "EXPENSE":
         return "Project Expense";
@@ -354,11 +391,8 @@ function Accounts() {
 
     const doc =
       new jsPDF({
-        orientation:
-          "landscape",
-
+        orientation: "landscape",
         unit: "mm",
-
         format: "a4",
       });
 
@@ -402,21 +436,20 @@ function Accounts() {
       32
     );
 
+    let summaryY = 39;
+
     if (filters.search) {
       doc.text(
         `Search: ${filters.search}`,
         14,
         37
       );
+
+      summaryY = 44;
     }
 
-    const summaryY =
-      filters.search
-        ? 44
-        : 39;
-
     doc.text(
-      `Total Received: Rs. ${formatAmount(
+      `Received: Rs. ${formatAmount(
         summary.totalReceived
       )}`,
       14,
@@ -424,10 +457,18 @@ function Accounts() {
     );
 
     doc.text(
-      `Subcontractor Payments: Rs. ${formatAmount(
+      `Subcontractors: Rs. ${formatAmount(
         summary.totalSubcontractorPayments
       )}`,
-      65,
+      60,
+      summaryY
+    );
+
+    doc.text(
+      `Labour: Rs. ${formatAmount(
+        summary.totalLabourPayments
+      )}`,
+      120,
       summaryY
     );
 
@@ -435,15 +476,15 @@ function Accounts() {
       `Expenses: Rs. ${formatAmount(
         summary.totalExpenses
       )}`,
-      140,
+      165,
       summaryY
     );
 
     doc.text(
-      `Total Outgoing: Rs. ${formatAmount(
+      `Outgoing: Rs. ${formatAmount(
         summary.totalOutgoing
       )}`,
-      195,
+      215,
       summaryY
     );
 
@@ -508,19 +549,17 @@ function Accounts() {
       startY:
         summaryY + 12,
 
-      head: [
-        [
-          "Date",
-          "Project / Site",
-          "Type",
-          "Paid To / Received From",
-          "Description",
-          "Method",
-          "Reference",
-          "Money In",
-          "Money Out",
-        ],
-      ],
+      head: [[
+        "Date",
+        "Project / Site",
+        "Type",
+        "Paid To / Received From",
+        "Description",
+        "Method",
+        "Reference",
+        "Money In",
+        "Money Out",
+      ]],
 
       body: tableRows,
 
@@ -531,44 +570,6 @@ function Accounts() {
 
       headStyles: {
         fontSize: 7,
-      },
-
-      columnStyles: {
-        0: {
-          cellWidth: 20,
-        },
-
-        1: {
-          cellWidth: 35,
-        },
-
-        2: {
-          cellWidth: 30,
-        },
-
-        3: {
-          cellWidth: 38,
-        },
-
-        4: {
-          cellWidth: 45,
-        },
-
-        5: {
-          cellWidth: 26,
-        },
-
-        6: {
-          cellWidth: 28,
-        },
-
-        7: {
-          cellWidth: 28,
-        },
-
-        8: {
-          cellWidth: 28,
-        },
       },
     });
 
@@ -593,9 +594,10 @@ function Accounts() {
           </h1>
 
           <p>
-            Review all money received,
-            subcontractor payments and
-            project expenses.
+            Review client receipts,
+            subcontractor payments,
+            labour payments and project
+            expenses.
           </p>
         </div>
 
@@ -629,16 +631,13 @@ function Accounts() {
             display: "flex",
             gap: "10px",
             flexWrap: "wrap",
-            marginBottom:
-              "15px",
+            marginBottom: "15px",
           }}
         >
           <button
             type="button"
             className="primary-button"
-            onClick={
-              setThisWeek
-            }
+            onClick={setThisWeek}
           >
             This Week
           </button>
@@ -646,9 +645,7 @@ function Accounts() {
           <button
             type="button"
             className="primary-button"
-            onClick={
-              setThisMonth
-            }
+            onClick={setThisMonth}
           >
             This Month
           </button>
@@ -656,9 +653,7 @@ function Accounts() {
           <button
             type="button"
             className="cancel-button"
-            onClick={
-              clearFilters
-            }
+            onClick={clearFilters}
           >
             Clear Filters
           </button>
@@ -666,9 +661,7 @@ function Accounts() {
 
         <form
           className="client-form"
-          onSubmit={
-            applyFilters
-          }
+          onSubmit={applyFilters}
         >
           <div>
             <label>
@@ -678,9 +671,7 @@ function Accounts() {
             <input
               type="date"
               name="from"
-              value={
-                filters.from
-              }
+              value={filters.from}
               onChange={
                 handleChange
               }
@@ -695,9 +686,7 @@ function Accounts() {
             <input
               type="date"
               name="to"
-              value={
-                filters.to
-              }
+              value={filters.to}
               onChange={
                 handleChange
               }
@@ -714,8 +703,7 @@ function Accounts() {
             }
           >
             <option value="">
-              All Projects /
-              Sites
+              All Projects / Sites
             </option>
 
             {projects.map(
@@ -761,6 +749,10 @@ function Accounts() {
               Subcontractor Payments
             </option>
 
+            <option value="LABOUR_PAYMENT">
+              Labour Payments
+            </option>
+
             <option value="EXPENSE">
               Project Expenses
             </option>
@@ -769,7 +761,7 @@ function Accounts() {
           <input
             type="text"
             name="search"
-            placeholder="Search name, project, reference, description..."
+            placeholder="Search worker, contractor, project, reference..."
             value={
               filters.search
             }
@@ -787,23 +779,11 @@ function Accounts() {
         </form>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-
-          gridTemplateColumns:
-            "repeat(auto-fit, minmax(190px, 1fr))",
-
-          gap: "15px",
-
-          marginBottom:
-            "20px",
-        }}
-      >
-        <div className="form-card">
-          <h3>
+      <div className="dashboard-grid">
+        <div className="dashboard-card green">
+          <p>
             Total Received
-          </h3>
+          </p>
 
           <h2>
             Rs.{" "}
@@ -813,23 +793,38 @@ function Accounts() {
           </h2>
         </div>
 
-        <div className="form-card">
-          <h3>
+        <div className="dashboard-card purple">
+          <p>
             Subcontractor Payments
-          </h3>
+          </p>
 
           <h2>
             Rs.{" "}
             {formatAmount(
-              summary.totalSubcontractorPayments
+              summary
+                .totalSubcontractorPayments
             )}
           </h2>
         </div>
 
-        <div className="form-card">
-          <h3>
+        <div className="dashboard-card orange">
+          <p>
+            Labour Payments
+          </p>
+
+          <h2>
+            Rs.{" "}
+            {formatAmount(
+              summary
+                .totalLabourPayments
+            )}
+          </h2>
+        </div>
+
+        <div className="dashboard-card cyan">
+          <p>
             Project Expenses
-          </h3>
+          </p>
 
           <h2>
             Rs.{" "}
@@ -839,10 +834,10 @@ function Accounts() {
           </h2>
         </div>
 
-        <div className="form-card">
-          <h3>
+        <div className="dashboard-card red">
+          <p>
             Total Outgoing
-          </h3>
+          </p>
 
           <h2>
             Rs.{" "}
@@ -852,10 +847,10 @@ function Accounts() {
           </h2>
         </div>
 
-        <div className="form-card">
-          <h3>
+        <div className="dashboard-card navy">
+          <p>
             Net Cash Flow
-          </h3>
+          </p>
 
           <h2>
             Rs.{" "}
@@ -864,40 +859,37 @@ function Accounts() {
             )}
           </h2>
         </div>
-
-        <div className="form-card">
-          <h3>
-            Transactions
-          </h3>
-
-          <h2>
-            {summary.transactionCount ||
-              0}
-          </h2>
-        </div>
       </div>
 
-      <div className="table-card">
+      <div
+        className="table-card"
+        style={{
+          marginTop: "24px",
+        }}
+      >
         <div
           style={{
+            padding:
+              "20px 20px 0",
             display: "flex",
             justifyContent:
               "space-between",
-            alignItems:
-              "center",
+            alignItems: "center",
             gap: "15px",
-            marginBottom:
-              "15px",
           }}
         >
           <div>
-            <h2>
+            <h2
+              style={{
+                margin: 0,
+              }}
+            >
               Payment Register
             </h2>
 
             <p>
-              {transactions.length} transaction(s)
-              shown
+              {transactions.length}{" "}
+              transaction(s)
             </p>
           </div>
 
@@ -912,43 +904,28 @@ function Accounts() {
           <thead>
             <tr>
               <th>Date</th>
-
               <th>
                 Project / Site
               </th>
-
-              <th>
-                Type
-              </th>
-
+              <th>Type</th>
               <th>
                 Paid To /
                 Received From
               </th>
-
               <th>
                 Description
               </th>
-
-              <th>
-                Method
-              </th>
-
+              <th>Method</th>
               <th>
                 Reference
               </th>
-
               <th>
                 Money In
               </th>
-
               <th>
                 Money Out
               </th>
-
-              <th>
-                Slip
-              </th>
+              <th>Slip</th>
             </tr>
           </thead>
 
@@ -959,6 +936,10 @@ function Accounts() {
               <tr>
                 <td
                   colSpan="10"
+                  style={{
+                    textAlign:
+                      "center",
+                  }}
                 >
                   No transactions
                   found for the

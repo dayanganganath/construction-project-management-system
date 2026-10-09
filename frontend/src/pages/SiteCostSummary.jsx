@@ -3,21 +3,32 @@ import api from "../services/api";
 import Alert from "../components/Alert";
 
 function SiteCostSummary() {
-  const [projects, setProjects] = useState([]);
-  const [projectId, setProjectId] = useState("");
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [projects, setProjects] =
+    useState([]);
 
-  const [alert, setAlert] = useState({
-    type: "",
-    message: "",
-  });
+  const [projectId, setProjectId] =
+    useState("");
+
+  const [summary, setSummary] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [alert, setAlert] =
+    useState({
+      type: "",
+      message: "",
+    });
 
   useEffect(() => {
     loadProjects();
   }, []);
 
-  const showAlert = (type, message) => {
+  const showAlert = (
+    type,
+    message
+  ) => {
     setAlert({
       type,
       message,
@@ -31,94 +42,103 @@ function SiteCostSummary() {
     }, 4000);
   };
 
-  const loadProjects = async () => {
-    try {
-      const response = await api.get("/projects");
-      setProjects(response.data);
-    } catch (error) {
-      console.error(
-        "Error loading projects:",
-        error
+  const loadProjects =
+    async () => {
+      try {
+        const response =
+          await api.get(
+            "/projects"
+          );
+
+        setProjects(
+          response.data || []
+        );
+      } catch (error) {
+        console.error(
+          "Error loading projects:",
+          error
+        );
+
+        showAlert(
+          "error",
+          "Unable to load projects."
+        );
+      }
+    };
+
+  const fetchSummary =
+    async (id) => {
+      if (!id) {
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        const response =
+          await api.get(
+            `/site-cost-summary/project/${id}`
+          );
+
+        setSummary(
+          response.data
+        );
+      } catch (error) {
+        console.error(
+          "Error loading site cost summary:",
+          error
+        );
+
+        showAlert(
+          "error",
+          error.response?.data
+            ?.message ||
+            "Unable to load site cost summary."
+        );
+
+        setSummary(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+  const loadSummary =
+    async () => {
+      if (!projectId) {
+        showAlert(
+          "error",
+          "Please select a project / site."
+        );
+
+        return;
+      }
+
+      await fetchSummary(
+        projectId
       );
+    };
 
-      showAlert(
-        "error",
-        "Unable to load projects."
-      );
-    }
-  };
+  const handleProjectChange =
+    async (e) => {
+      const value =
+        e.target.value;
 
-  const loadSummary = async () => {
-    if (!projectId) {
-      showAlert(
-        "error",
-        "Please select a project / site."
-      );
-
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const response = await api.get(
-        `/site-cost-summary/project/${projectId}`
-      );
-
-      setSummary(response.data);
-    } catch (error) {
-      console.error(
-        "Error loading site cost summary:",
-        error
-      );
-
-      showAlert(
-        "error",
-        error.response?.data?.message ||
-          "Unable to load site cost summary."
-      );
-
+      setProjectId(value);
       setSummary(null);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleProjectChange = async (e) => {
-    const value = e.target.value;
+      if (value) {
+        await fetchSummary(
+          value
+        );
+      }
+    };
 
-    setProjectId(value);
-    setSummary(null);
-
-    if (!value) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const response = await api.get(
-        `/site-cost-summary/project/${value}`
-      );
-
-      setSummary(response.data);
-    } catch (error) {
-      console.error(
-        "Error loading summary:",
-        error
-      );
-
-      showAlert(
-        "error",
-        "Unable to load site cost summary."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatAmount = (amount) => {
-    return Number(amount || 0).toLocaleString(
+  const formatAmount = (
+    amount
+  ) => {
+    return Number(
+      amount || 0
+    ).toLocaleString(
       "en-LK",
       {
         minimumFractionDigits: 2,
@@ -127,15 +147,37 @@ function SiteCostSummary() {
     );
   };
 
+  const moneyCard = (
+    title,
+    value,
+    className = "blue"
+  ) => (
+    <div
+      className={`dashboard-card ${className}`}
+    >
+      <p>{title}</p>
+
+      <h2>
+        Rs.{" "}
+        {formatAmount(
+          value
+        )}
+      </h2>
+    </div>
+  );
+
   return (
     <div>
       <div className="page-header">
         <div>
-          <h1>Site Cost Summary</h1>
+          <h1>
+            Site Cost Summary
+          </h1>
 
           <p>
-            Project-wise contractor bills,
-            payments, expenses and cash position.
+            Project-wise contractor,
+            subcontractor, labour,
+            expense and cash position.
           </p>
         </div>
       </div>
@@ -152,45 +194,68 @@ function SiteCostSummary() {
       />
 
       <div className="form-card">
-        <h2>Select Project / Site</h2>
+        <h2>
+          Select Project / Site
+        </h2>
 
         <div
           style={{
             display: "flex",
             gap: "12px",
             flexWrap: "wrap",
-            alignItems: "center",
+            alignItems:
+              "center",
           }}
         >
           <select
             value={projectId}
-            onChange={handleProjectChange}
+            onChange={
+              handleProjectChange
+            }
             style={{
-              minWidth: "300px",
+              minWidth:
+                "300px",
+              maxWidth:
+                "500px",
             }}
           >
             <option value="">
-              Select Project / Site
+              Select Project /
+              Site
             </option>
 
-            {projects.map((project) => (
-              <option
-                key={project.id}
-                value={project.id}
-              >
-                {project.projectName}
-                {project.location
-                  ? ` - ${project.location}`
-                  : ""}
-              </option>
-            ))}
+            {projects.map(
+              (project) => (
+                <option
+                  key={
+                    project.id
+                  }
+                  value={
+                    project.id
+                  }
+                >
+                  {
+                    project.projectName
+                  }
+
+                  {project.location
+                    ? ` - ${project.location}`
+                    : ""}
+                </option>
+              )
+            )}
           </select>
 
           <button
             type="button"
             className="primary-button"
-            onClick={loadSummary}
-            disabled={!projectId || loading}
+            onClick={
+              loadSummary
+            }
+            disabled={
+              !projectId ||
+              loading
+            }
           >
             {loading
               ? "Loading..."
@@ -201,293 +266,276 @@ function SiteCostSummary() {
 
       {summary && (
         <>
-          <div className="form-card">
+          <div className="selected-project-info">
             <h2>
-              {summary.projectName}
+              {
+                summary.projectName
+              }
             </h2>
 
             <p>
-              {summary.location || "No location"}
+              {summary.location ||
+                "No location"}
             </p>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: "16px",
-              marginBottom: "20px",
-            }}
-          >
-            <div className="form-card">
-              <h3>Total Contractor Bills</h3>
+          <div className="dashboard-grid">
+            <div className="dashboard-card blue">
+              <p>
+                Total Contractor Bills
+              </p>
 
               <h2>
-                {summary.totalContractorBills || 0}
+                {summary.totalContractorBills ||
+                  0}
               </h2>
             </div>
 
-            <div className="form-card">
-              <h3>Paid Bills</h3>
+            <div className="dashboard-card green">
+              <p>
+                Paid Bills
+              </p>
 
               <h2>
-                {summary.paidBills || 0}
+                {summary.paidBills ||
+                  0}
               </h2>
             </div>
 
-            <div className="form-card">
-              <h3>Partially Paid</h3>
+            <div className="dashboard-card orange">
+              <p>
+                Partially Paid
+              </p>
 
               <h2>
-                {summary.partiallyPaidBills || 0}
+                {summary.partiallyPaidBills ||
+                  0}
               </h2>
             </div>
 
-            <div className="form-card">
-              <h3>Unpaid Bills</h3>
+            <div className="dashboard-card red">
+              <p>
+                Unpaid Bills
+              </p>
 
               <h2>
-                {summary.unpaidBills || 0}
-              </h2>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(230px, 1fr))",
-              gap: "16px",
-              marginBottom: "20px",
-            }}
-          >
-            <div className="form-card">
-              <h3>
-                Contractor Gross Amount
-              </h3>
-
-              <h2>
-                Rs.{" "}
-                {formatAmount(
-                  summary.contractorGrossAmount
-                )}
-              </h2>
-            </div>
-
-            <div className="form-card">
-              <h3>
-                Contractor Net Payable
-              </h3>
-
-              <h2>
-                Rs.{" "}
-                {formatAmount(
-                  summary.contractorNetPayable
-                )}
-              </h2>
-            </div>
-
-            <div className="form-card">
-              <h3>
-                Contractor Paid Amount
-              </h3>
-
-              <h2>
-                Rs.{" "}
-                {formatAmount(
-                  summary.contractorPaidAmount
-                )}
-              </h2>
-            </div>
-
-            <div className="form-card">
-              <h3>
-                Contractor Outstanding
-              </h3>
-
-              <h2>
-                Rs.{" "}
-                {formatAmount(
-                  summary.contractorOutstandingAmount
-                )}
+                {summary.unpaidBills ||
+                  0}
               </h2>
             </div>
           </div>
 
           <div
+            className="dashboard-grid"
             style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(230px, 1fr))",
-              gap: "16px",
-              marginBottom: "20px",
+              marginTop: "20px",
             }}
           >
-            <div className="form-card">
-              <h3>Client Payments</h3>
+            {moneyCard(
+              "Contractor Gross Amount",
+              summary.contractorGrossAmount,
+              "blue"
+            )}
 
-              <h2>
-                Rs.{" "}
-                {formatAmount(
-                  summary.clientPayments
-                )}
-              </h2>
-            </div>
+            {moneyCard(
+              "Contractor Net Payable",
+              summary.contractorNetPayable,
+              "purple"
+            )}
 
-            <div className="form-card">
-              <h3>
-                Subcontractor Payments
-              </h3>
+            {moneyCard(
+              "Contractor Paid Amount",
+              summary.contractorPaidAmount,
+              "green"
+            )}
 
-              <h2>
-                Rs.{" "}
-                {formatAmount(
-                  summary.subcontractorPayments
-                )}
-              </h2>
-            </div>
-
-            <div className="form-card">
-              <h3>Project Expenses</h3>
-
-              <h2>
-                Rs.{" "}
-                {formatAmount(
-                  summary.projectExpenses
-                )}
-              </h2>
-            </div>
-
-            <div className="form-card">
-              <h3>Total Outgoing</h3>
-
-              <h2>
-                Rs.{" "}
-                {formatAmount(
-                  summary.totalOutgoing
-                )}
-              </h2>
-            </div>
-
-            <div className="form-card">
-              <h3>Net Cash Position</h3>
-
-              <h2>
-                Rs.{" "}
-                {formatAmount(
-                  summary.netCashPosition
-                )}
-              </h2>
-            </div>
+            {moneyCard(
+              "Contractor Outstanding",
+              summary.contractorOutstandingAmount,
+              "red"
+            )}
           </div>
 
-          <div className="table-card">
-            <h2>Financial Summary</h2>
+          <div
+            className="dashboard-grid"
+            style={{
+              marginTop: "20px",
+            }}
+          >
+            {moneyCard(
+              "Client Payments",
+              summary.clientPayments,
+              "green"
+            )}
+
+            {moneyCard(
+              "Subcontractor Payments",
+              summary.subcontractorPayments,
+              "purple"
+            )}
+
+            {moneyCard(
+              "Labour Payments",
+              summary.labourPayments,
+              "orange"
+            )}
+
+            {moneyCard(
+              "Project Expenses",
+              summary.projectExpenses,
+              "cyan"
+            )}
+
+            {moneyCard(
+              "Total Outgoing",
+              summary.totalOutgoing,
+              "red"
+            )}
+
+            {moneyCard(
+              "Net Cash Position",
+              summary.netCashPosition,
+              "navy"
+            )}
+          </div>
+
+          <div
+            className="table-card"
+            style={{
+              marginTop: "24px",
+            }}
+          >
+            <h2>
+              Financial Summary
+            </h2>
 
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Item</th>
-                  <th>Amount</th>
+                  <th>
+                    Item
+                  </th>
+
+                  <th>
+                    Amount
+                  </th>
                 </tr>
               </thead>
 
               <tbody>
                 <tr>
                   <td>
-                    Contractor Gross Amount
+                    Contractor Gross
+                    Amount
                   </td>
 
                   <td>
                     Rs.{" "}
                     {formatAmount(
-                      summary.contractorGrossAmount
+                      summary
+                        .contractorGrossAmount
                     )}
                   </td>
                 </tr>
 
                 <tr>
                   <td>
-                    Contractor Net Payable
+                    Contractor Net
+                    Payable
                   </td>
 
                   <td>
                     Rs.{" "}
                     {formatAmount(
-                      summary.contractorNetPayable
+                      summary
+                        .contractorNetPayable
                     )}
                   </td>
                 </tr>
 
                 <tr>
                   <td>
-                    Contractor Paid Amount
+                    Contractor Paid
+                    Amount
                   </td>
 
                   <td>
                     Rs.{" "}
                     {formatAmount(
-                      summary.contractorPaidAmount
+                      summary
+                        .contractorPaidAmount
                     )}
                   </td>
                 </tr>
 
                 <tr>
                   <td>
-                    Contractor Outstanding
+                    Contractor
+                    Outstanding
                   </td>
 
                   <td>
                     Rs.{" "}
                     {formatAmount(
-                      summary.contractorOutstandingAmount
-                    )}
-                  </td>
-                </tr>
-
-                <tr>
-                  <td>Client Payments</td>
-
-                  <td>
-                    Rs.{" "}
-                    {formatAmount(
-                      summary.clientPayments
+                      summary
+                        .contractorOutstandingAmount
                     )}
                   </td>
                 </tr>
 
                 <tr>
                   <td>
-                    Subcontractor Payments
+                    Client Payments
                   </td>
 
                   <td>
                     Rs.{" "}
                     {formatAmount(
-                      summary.subcontractorPayments
+                      summary
+                        .clientPayments
                     )}
                   </td>
                 </tr>
 
                 <tr>
-                  <td>Project Expenses</td>
+                  <td>
+                    Subcontractor
+                    Payments
+                  </td>
 
                   <td>
                     Rs.{" "}
                     {formatAmount(
-                      summary.projectExpenses
+                      summary
+                        .subcontractorPayments
                     )}
                   </td>
                 </tr>
 
                 <tr>
-                  <td>Total Outgoing</td>
+                  <td>
+                    Labour Payments
+                  </td>
 
                   <td>
                     Rs.{" "}
                     {formatAmount(
-                      summary.totalOutgoing
+                      summary
+                        .labourPayments
+                    )}
+                  </td>
+                </tr>
+
+                <tr>
+                  <td>
+                    Project Expenses
+                  </td>
+
+                  <td>
+                    Rs.{" "}
+                    {formatAmount(
+                      summary
+                        .projectExpenses
                     )}
                   </td>
                 </tr>
@@ -495,7 +543,7 @@ function SiteCostSummary() {
                 <tr>
                   <td>
                     <strong>
-                      Net Cash Position
+                      Total Outgoing
                     </strong>
                   </td>
 
@@ -503,7 +551,27 @@ function SiteCostSummary() {
                     <strong>
                       Rs.{" "}
                       {formatAmount(
-                        summary.netCashPosition
+                        summary
+                          .totalOutgoing
+                      )}
+                    </strong>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td>
+                    <strong>
+                      Net Cash
+                      Position
+                    </strong>
+                  </td>
+
+                  <td>
+                    <strong>
+                      Rs.{" "}
+                      {formatAmount(
+                        summary
+                          .netCashPosition
                       )}
                     </strong>
                   </td>

@@ -24,9 +24,14 @@ public class SiteCostSummaryDto {
     private BigDecimal contractorOutstandingAmount;
 
     private BigDecimal subcontractorPayments;
+
+    private BigDecimal labourPayments;
+
     private BigDecimal projectExpenses;
+
     private BigDecimal clientPayments;
 
     private BigDecimal totalOutgoing;
+
     private BigDecimal netCashPosition;
 }
