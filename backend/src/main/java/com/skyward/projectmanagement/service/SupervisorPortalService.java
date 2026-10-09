@@ -20,15 +20,18 @@ public class SupervisorPortalService {
     private final UserRepository userRepository;
     private final UserProjectAssignmentRepository assignmentRepository;
     private final DailyProgressRepository dailyProgressRepository;
+    private final DailyProgressService dailyProgressService;
 
     public SupervisorPortalService(
             UserRepository userRepository,
             UserProjectAssignmentRepository assignmentRepository,
-            DailyProgressRepository dailyProgressRepository
+            DailyProgressRepository dailyProgressRepository,
+            DailyProgressService dailyProgressService
     ) {
         this.userRepository = userRepository;
         this.assignmentRepository = assignmentRepository;
         this.dailyProgressRepository = dailyProgressRepository;
+        this.dailyProgressService = dailyProgressService;
     }
 
     public List<SupervisorProjectSummaryDto> getMyProjects(
@@ -58,6 +61,48 @@ public class SupervisorPortalService {
         return toSummary(assignment);
     }
 
+    public List<DailyProgress> getProjectProgress(
+            String username,
+            Long projectId
+    ) {
+
+        getSupervisorProjectAssignment(
+                username,
+                projectId
+        );
+
+        return dailyProgressRepository
+                .findByProjectId(projectId);
+    }
+
+    public DailyProgress createDailyProgress(
+            String username,
+            Long projectId,
+            DailyProgress progress
+    ) {
+
+        UserProjectAssignment assignment =
+                getSupervisorProjectAssignment(
+                        username,
+                        projectId
+                );
+
+        Project assignedProject =
+                assignment.getProject();
+
+        /*
+         * Important:
+         * Ignore any project sent from frontend.
+         * Always force the supervisor's assigned project.
+         */
+        progress.setProject(
+                assignedProject
+        );
+
+        return dailyProgressService
+                .createProgress(progress);
+    }
+
     public boolean hasProjectAccess(
             String username,
             Long projectId
@@ -85,17 +130,17 @@ public class SupervisorPortalService {
                                 )
                         );
 
-        if (!Boolean.TRUE.equals(user.getActive())) {
+        if (!Boolean.TRUE.equals(
+                user.getActive()
+        )) {
             throw new RuntimeException(
                     "User account is inactive."
             );
         }
 
-        if (
-                !"SUPERVISOR".equalsIgnoreCase(
-                        user.getRole()
-                )
-        ) {
+        if (!"SUPERVISOR".equalsIgnoreCase(
+                user.getRole()
+        )) {
             throw new RuntimeException(
                     "Supervisor portal access is only available for SUPERVISOR users."
             );
