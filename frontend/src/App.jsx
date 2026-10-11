@@ -30,34 +30,65 @@ import LabourAttendance from "./pages/LabourAttendance";
 import LabourPayments from "./pages/LabourPayments";
 
 import ClientPortal from "./pages/ClientPortal";
-import SupervisorPortal from "./pages/SupervisorPortal";
+
+/*
+ * NEW SUPERVISOR STRUCTURE
+ */
+import SupervisorLayout from "./components/supervisor/SupervisorLayout";
+import SupervisorDashboard from "./pages/supervisor/SupervisorDashboard";
+import SupervisorProgress from "./pages/supervisor/SupervisorProgress";
+import SupervisorMaterialRequests from "./pages/supervisor/SupervisorMaterialRequests";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import "./App.css";
 
 function logoutAndGoToLogin(navigate) {
-  localStorage.removeItem("isAuthenticated");
-  localStorage.removeItem("username");
-  localStorage.removeItem("role");
-  localStorage.removeItem("token");
+  localStorage.removeItem(
+    "isAuthenticated"
+  );
+
+  localStorage.removeItem(
+    "username"
+  );
+
+  localStorage.removeItem(
+    "role"
+  );
+
+  localStorage.removeItem(
+    "token"
+  );
 
   navigate("/login", {
     replace: true,
   });
 }
 
+/*
+ * =====================================================
+ * ADMIN / MANAGER LAYOUT
+ * =====================================================
+ */
+
 function AdminLayout() {
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
   const role =
-    localStorage.getItem("role");
+    localStorage.getItem(
+      "role"
+    );
 
   const username =
-    localStorage.getItem("username");
+    localStorage.getItem(
+      "username"
+    );
 
   const handleLogout = () => {
-    logoutAndGoToLogin(navigate);
+    logoutAndGoToLogin(
+      navigate
+    );
   };
 
   return (
@@ -65,6 +96,7 @@ function AdminLayout() {
       <aside className="sidebar">
         <div className="brand">
           <h2>CPMS</h2>
+
           <p>
             Construction Management
           </p>
@@ -152,15 +184,22 @@ function AdminLayout() {
         <div className="sidebar-footer">
           {username && (
             <div className="logged-user">
-              <p>{username}</p>
-              <span>{role}</span>
+              <p>
+                {username}
+              </p>
+
+              <span>
+                {role}
+              </span>
             </div>
           )}
 
           <button
             type="button"
             className="logout-button"
-            onClick={handleLogout}
+            onClick={
+              handleLogout
+            }
           >
             Logout
           </button>
@@ -171,47 +210,65 @@ function AdminLayout() {
         <Routes>
           <Route
             path="/"
-            element={<Dashboard />}
+            element={
+              <Dashboard />
+            }
           />
 
           <Route
             path="/clients"
-            element={<Clients />}
+            element={
+              <Clients />
+            }
           />
 
           <Route
             path="/projects"
-            element={<Projects />}
+            element={
+              <Projects />
+            }
           />
 
           <Route
             path="/boq"
-            element={<Boq />}
+            element={
+              <Boq />
+            }
           />
 
           <Route
             path="/expenses"
-            element={<Expenses />}
+            element={
+              <Expenses />
+            }
           />
 
           <Route
             path="/payments"
-            element={<Payments />}
+            element={
+              <Payments />
+            }
           />
 
           <Route
             path="/contractors"
-            element={<Contractors />}
+            element={
+              <Contractors />
+            }
           />
 
           <Route
             path="/contractor-bills"
-            element={<ContractorBills />}
+            element={
+              <ContractorBills />
+            }
           />
 
           <Route
             path="/contractor-ledger"
-            element={<ContractorLedger />}
+            element={
+              <ContractorLedger />
+            }
           />
 
           <Route
@@ -223,7 +280,9 @@ function AdminLayout() {
 
           <Route
             path="/workers"
-            element={<Workers />}
+            element={
+              <Workers />
+            }
           />
 
           <Route
@@ -242,7 +301,9 @@ function AdminLayout() {
 
           <Route
             path="/accounts"
-            element={<Accounts />}
+            element={
+              <Accounts />
+            }
           />
 
           <Route
@@ -254,12 +315,16 @@ function AdminLayout() {
 
           <Route
             path="/site-report"
-            element={<SiteReport />}
+            element={
+              <SiteReport />
+            }
           />
 
           <Route
             path="/progress"
-            element={<DailyProgress />}
+            element={
+              <DailyProgress />
+            }
           />
 
           <Route
@@ -291,16 +356,31 @@ function AdminLayout() {
   );
 }
 
+/*
+ * =====================================================
+ * ROLE BASED AREA
+ * =====================================================
+ */
+
 function RoleBasedProtectedArea() {
   const role =
-    localStorage.getItem("role");
+    localStorage.getItem(
+      "role"
+    );
 
-  if (role === "CLIENT") {
+  /*
+   * CLIENT
+   */
+  if (
+    role === "CLIENT"
+  ) {
     return (
       <Routes>
         <Route
           path="/client"
-          element={<ClientPortal />}
+          element={
+            <ClientPortal />
+          }
         />
 
         <Route
@@ -316,15 +396,47 @@ function RoleBasedProtectedArea() {
     );
   }
 
-  if (role === "SUPERVISOR") {
+  /*
+   * SUPERVISOR
+   *
+   * New nested layout:
+   *
+   * /supervisor
+   * /supervisor/progress
+   * /supervisor/material-requests
+   */
+  if (
+    role === "SUPERVISOR"
+  ) {
     return (
       <Routes>
         <Route
           path="/supervisor"
           element={
-            <SupervisorPortal />
+            <SupervisorLayout />
           }
-        />
+        >
+          <Route
+            index
+            element={
+              <SupervisorDashboard />
+            }
+          />
+
+          <Route
+            path="progress"
+            element={
+              <SupervisorProgress />
+            }
+          />
+
+          <Route
+            path="material-requests"
+            element={
+              <SupervisorMaterialRequests />
+            }
+          />
+        </Route>
 
         <Route
           path="*"
@@ -339,13 +451,21 @@ function RoleBasedProtectedArea() {
     );
   }
 
+  /*
+   * ADMIN / MANAGER
+   */
   if (
     role === "ADMIN" ||
     role === "MANAGER"
   ) {
-    return <AdminLayout />;
+    return (
+      <AdminLayout />
+    );
   }
 
+  /*
+   * UNKNOWN ROLE
+   */
   return (
     <Navigate
       to="/login"
@@ -354,13 +474,21 @@ function RoleBasedProtectedArea() {
   );
 }
 
+/*
+ * =====================================================
+ * MAIN APP
+ * =====================================================
+ */
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route
           path="/login"
-          element={<Login />}
+          element={
+            <Login />
+          }
         />
 
         <Route

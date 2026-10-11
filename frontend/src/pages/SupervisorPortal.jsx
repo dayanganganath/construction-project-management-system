@@ -9,23 +9,52 @@ import api from "../services/api";
 function SupervisorPortal() {
   const navigate = useNavigate();
 
-  const [projects, setProjects] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] =
-    useState("");
-  const [selectedProject, setSelectedProject] =
-    useState(null);
-
-  const [progressHistory, setProgressHistory] =
+  const [projects, setProjects] =
     useState([]);
 
-  const [loading, setLoading] = useState(true);
-  const [loadingProject, setLoadingProject] =
-    useState(false);
-  const [savingProgress, setSavingProgress] =
-    useState(false);
+  const [
+    selectedProjectId,
+    setSelectedProjectId,
+  ] = useState("");
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [
+    selectedProject,
+    setSelectedProject,
+  ] = useState(null);
+
+  const [
+    progressHistory,
+    setProgressHistory,
+  ] = useState([]);
+
+  const [
+    materialRequests,
+    setMaterialRequests,
+  ] = useState([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [
+    loadingProject,
+    setLoadingProject,
+  ] = useState(false);
+
+  const [
+    savingProgress,
+    setSavingProgress,
+  ] = useState(false);
+
+  const [
+    savingMaterial,
+    setSavingMaterial,
+  ] = useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [success, setSuccess] =
+    useState("");
 
   const username =
     localStorage.getItem("username");
@@ -39,15 +68,13 @@ function SupervisorPortal() {
     const year =
       now.getFullYear();
 
-    const month =
-      String(
-        now.getMonth() + 1
-      ).padStart(2, "0");
+    const month = String(
+      now.getMonth() + 1
+    ).padStart(2, "0");
 
-    const day =
-      String(
-        now.getDate()
-      ).padStart(2, "0");
+    const day = String(
+      now.getDate()
+    ).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
   };
@@ -62,8 +89,28 @@ function SupervisorPortal() {
     issuesBlockers: "",
   };
 
-  const [progressForm, setProgressForm] =
-    useState(initialProgressForm);
+  const initialMaterialForm = {
+    requestDate: getToday(),
+    materialName: "",
+    quantity: "",
+    unit: "",
+    purpose: "",
+    notes: "",
+  };
+
+  const [
+    progressForm,
+    setProgressForm,
+  ] = useState(
+    initialProgressForm
+  );
+
+  const [
+    materialForm,
+    setMaterialForm,
+  ] = useState(
+    initialMaterialForm
+  );
 
   useEffect(() => {
     loadProjects();
@@ -96,12 +143,18 @@ function SupervisorPortal() {
           data[0]
         );
 
-        await loadProgressHistory(
-          firstProjectId
-        );
+        await Promise.all([
+          loadProgressHistory(
+            firstProjectId
+          ),
+          loadMaterialRequests(
+            firstProjectId
+          ),
+        ]);
       } else {
         setSelectedProject(null);
         setProgressHistory([]);
+        setMaterialRequests([]);
       }
     } catch (error) {
       console.error(
@@ -110,9 +163,12 @@ function SupervisorPortal() {
       );
 
       setError(
-        error.response?.data ||
-          error.response?.data?.message ||
-          "Unable to load assigned sites."
+        typeof error.response?.data ===
+          "string"
+          ? error.response.data
+          : error.response?.data
+              ?.message ||
+            "Unable to load assigned sites."
       );
     } finally {
       setLoading(false);
@@ -125,6 +181,7 @@ function SupervisorPortal() {
     if (!projectId) {
       setSelectedProject(null);
       setProgressHistory([]);
+      setMaterialRequests([]);
       return;
     }
 
@@ -141,9 +198,14 @@ function SupervisorPortal() {
         response.data
       );
 
-      await loadProgressHistory(
-        projectId
-      );
+      await Promise.all([
+        loadProgressHistory(
+          projectId
+        ),
+        loadMaterialRequests(
+          projectId
+        ),
+      ]);
     } catch (error) {
       console.error(
         "Error loading project:",
@@ -152,11 +214,15 @@ function SupervisorPortal() {
 
       setSelectedProject(null);
       setProgressHistory([]);
+      setMaterialRequests([]);
 
       setError(
-        error.response?.data ||
-          error.response?.data?.message ||
-          "Unable to load site details."
+        typeof error.response?.data ===
+          "string"
+          ? error.response.data
+          : error.response?.data
+              ?.message ||
+            "Unable to load site details."
       );
     } finally {
       setLoadingProject(false);
@@ -181,7 +247,9 @@ function SupervisorPortal() {
             new Date(b.date) -
             new Date(a.date);
 
-          if (dateCompare !== 0) {
+          if (
+            dateCompare !== 0
+          ) {
             return dateCompare;
           }
 
@@ -204,6 +272,55 @@ function SupervisorPortal() {
       }
     };
 
+  const loadMaterialRequests =
+    async (projectId) => {
+      try {
+        const response =
+          await api.get(
+            `/supervisor/projects/${projectId}/material-requests`
+          );
+
+        const data =
+          response.data || [];
+
+        const sortedData = [
+          ...data,
+        ].sort((a, b) => {
+          const dateCompare =
+            String(
+              b.requestDate || ""
+            ).localeCompare(
+              String(
+                a.requestDate ||
+                  ""
+              )
+            );
+
+          if (
+            dateCompare !== 0
+          ) {
+            return dateCompare;
+          }
+
+          return (
+            Number(b.id || 0) -
+            Number(a.id || 0)
+          );
+        });
+
+        setMaterialRequests(
+          sortedData
+        );
+      } catch (error) {
+        console.error(
+          "Error loading material requests:",
+          error
+        );
+
+        setMaterialRequests([]);
+      }
+    };
+
   const handleProjectChange =
     async (e) => {
       const projectId =
@@ -214,6 +331,7 @@ function SupervisorPortal() {
       );
 
       setSuccess("");
+      setError("");
 
       await loadProject(
         projectId
@@ -228,6 +346,24 @@ function SupervisorPortal() {
       } = e.target;
 
       setProgressForm(
+        (previous) => ({
+          ...previous,
+          [name]: value,
+        })
+      );
+
+      setError("");
+      setSuccess("");
+    };
+
+  const handleMaterialChange =
+    (e) => {
+      const {
+        name,
+        value,
+      } = e.target;
+
+      setMaterialForm(
         (previous) => ({
           ...previous,
           [name]: value,
@@ -253,7 +389,9 @@ function SupervisorPortal() {
       }
 
       if (
-        !progressForm.workDescription.trim()
+        !progressForm
+          .workDescription
+          .trim()
       ) {
         return "Today's work description is required.";
       }
@@ -267,7 +405,7 @@ function SupervisorPortal() {
       if (
         progressForm
           .progressPercentage ===
-          ""
+        ""
       ) {
         return "Progress percentage is required.";
       }
@@ -289,7 +427,7 @@ function SupervisorPortal() {
       if (
         progressForm
           .workersCount ===
-          ""
+        ""
       ) {
         return "Workers count is required.";
       }
@@ -299,6 +437,52 @@ function SupervisorPortal() {
         workers < 0
       ) {
         return "Workers count cannot be negative.";
+      }
+
+      return null;
+    };
+
+  const validateMaterialForm =
+    () => {
+      if (
+        !selectedProjectId
+      ) {
+        return "Please select a project.";
+      }
+
+      if (
+        !materialForm
+          .requestDate
+      ) {
+        return "Request date is required.";
+      }
+
+      if (
+        !materialForm
+          .materialName
+          .trim()
+      ) {
+        return "Material name is required.";
+      }
+
+      const quantity =
+        Number(
+          materialForm.quantity
+        );
+
+      if (
+        materialForm.quantity ===
+          "" ||
+        Number.isNaN(quantity) ||
+        quantity <= 0
+      ) {
+        return "Quantity must be greater than zero.";
+      }
+
+      if (
+        !materialForm.unit.trim()
+      ) {
+        return "Unit is required.";
       }
 
       return null;
@@ -384,14 +568,106 @@ function SupervisorPortal() {
         );
 
         setError(
-          typeof error.response?.data ===
+          typeof error.response
+            ?.data ===
             "string"
             ? error.response.data
-            : error.response?.data?.message ||
-                "Unable to save daily progress."
+            : error.response
+                ?.data?.message ||
+              "Unable to save daily progress."
         );
       } finally {
-        setSavingProgress(false);
+        setSavingProgress(
+          false
+        );
+      }
+    };
+
+  const handleMaterialSubmit =
+    async (e) => {
+      e.preventDefault();
+
+      const validationError =
+        validateMaterialForm();
+
+      if (validationError) {
+        setError(
+          validationError
+        );
+        return;
+      }
+
+      const payload = {
+        requestDate:
+          materialForm.requestDate,
+
+        materialName:
+          materialForm
+            .materialName
+            .trim(),
+
+        quantity:
+          Number(
+            materialForm.quantity
+          ),
+
+        unit:
+          materialForm.unit.trim(),
+
+        purpose:
+          materialForm.purpose
+            .trim() || null,
+
+        notes:
+          materialForm.notes
+            .trim() || null,
+      };
+
+      try {
+        setSavingMaterial(
+          true
+        );
+
+        setError("");
+        setSuccess("");
+
+        await api.post(
+          `/supervisor/projects/${selectedProjectId}/material-requests`,
+          payload
+        );
+
+        setSuccess(
+          "Material request submitted successfully."
+        );
+
+        setMaterialForm({
+          ...initialMaterialForm,
+          requestDate:
+            getToday(),
+        });
+
+        await loadMaterialRequests(
+          selectedProjectId
+        );
+      } catch (error) {
+        console.error(
+          "Error saving material request:",
+          error
+        );
+
+        setError(
+          typeof error.response
+            ?.data ===
+            "string"
+            ? error.response.data
+            : error.response
+                ?.data?.message ||
+              "Unable to submit material request."
+        );
+      } finally {
+        setSavingMaterial(
+          false
+        );
       }
     };
 
@@ -430,6 +706,24 @@ function SupervisorPortal() {
     return new Date(
       `${value}T00:00:00`
     ).toLocaleDateString();
+  };
+
+  const getStatusLabel = (
+    status
+  ) => {
+    if (
+      status === "APPROVED"
+    ) {
+      return "Approved";
+    }
+
+    if (
+      status === "REJECTED"
+    ) {
+      return "Rejected";
+    }
+
+    return "Pending";
   };
 
   if (loading) {
@@ -494,12 +788,14 @@ function SupervisorPortal() {
 
             <p>
               View assigned sites,
-              submit daily progress
-              and track site activity.
+              submit daily progress,
+              request materials and
+              track site activity.
             </p>
           </div>
 
-          {projects.length > 0 && (
+          {projects.length >
+            0 && (
             <select
               className="project-filter"
               value={
@@ -522,6 +818,7 @@ function SupervisorPortal() {
                     {
                       project.projectName
                     }
+
                     {project.location
                       ? ` - ${project.location}`
                       : ""}
@@ -534,7 +831,9 @@ function SupervisorPortal() {
 
         {error && (
           <div className="alert alert-error">
-            <span>{error}</span>
+            <span>
+              {error}
+            </span>
           </div>
         )}
 
@@ -939,6 +1238,292 @@ function SupervisorPortal() {
                               </tr>
                             )
                           )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div
+                className="form-card"
+                style={{
+                  marginTop:
+                    "24px",
+                }}
+              >
+                <h2>
+                  Request Materials
+                </h2>
+
+                <p>
+                  Submit material
+                  requirements for this
+                  project / site.
+                </p>
+
+                <form
+                  onSubmit={
+                    handleMaterialSubmit
+                  }
+                >
+                  <div className="progress-form">
+                    <input
+                      type="date"
+                      name="requestDate"
+                      value={
+                        materialForm.requestDate
+                      }
+                      onChange={
+                        handleMaterialChange
+                      }
+                    />
+
+                    <input
+                      type="text"
+                      name="materialName"
+                      placeholder="Material Name *"
+                      value={
+                        materialForm.materialName
+                      }
+                      onChange={
+                        handleMaterialChange
+                      }
+                    />
+
+                    <input
+                      type="number"
+                      name="quantity"
+                      min="0.01"
+                      step="0.01"
+                      placeholder="Quantity *"
+                      value={
+                        materialForm.quantity
+                      }
+                      onChange={
+                        handleMaterialChange
+                      }
+                    />
+
+                    <select
+                      name="unit"
+                      value={
+                        materialForm.unit
+                      }
+                      onChange={
+                        handleMaterialChange
+                      }
+                    >
+                      <option value="">
+                        Select Unit *
+                      </option>
+
+                      <option value="BAG">
+                        Bag
+                      </option>
+
+                      <option value="KG">
+                        Kg
+                      </option>
+
+                      <option value="TON">
+                        Ton
+                      </option>
+
+                      <option value="M3">
+                        m³
+                      </option>
+
+                      <option value="SQFT">
+                        Sq.ft
+                      </option>
+
+                      <option value="LFT">
+                        L.ft
+                      </option>
+
+                      <option value="NOS">
+                        Nos
+                      </option>
+
+                      <option value="PCS">
+                        Pieces
+                      </option>
+
+                      <option value="LITER">
+                        Liter
+                      </option>
+
+                      <option value="OTHER">
+                        Other
+                      </option>
+                    </select>
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop:
+                        "15px",
+                    }}
+                  >
+                    <label>
+                      Purpose
+                    </label>
+
+                    <textarea
+                      name="purpose"
+                      placeholder="Example: Ground floor plastering..."
+                      value={
+                        materialForm.purpose
+                      }
+                      onChange={
+                        handleMaterialChange
+                      }
+                    />
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop:
+                        "15px",
+                    }}
+                  >
+                    <label>
+                      Notes
+                    </label>
+
+                    <textarea
+                      name="notes"
+                      placeholder="Urgency, preferred specification, brand, delivery notes, etc..."
+                      value={
+                        materialForm.notes
+                      }
+                      onChange={
+                        handleMaterialChange
+                      }
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="primary-button"
+                    disabled={
+                      savingMaterial
+                    }
+                    style={{
+                      marginTop:
+                        "18px",
+                    }}
+                  >
+                    {savingMaterial
+                      ? "Submitting..."
+                      : "Submit Material Request"}
+                  </button>
+                </form>
+              </div>
+
+              <div className="form-card">
+                <h2>
+                  Material Request History
+                </h2>
+
+                {materialRequests.length ===
+                0 ? (
+                  <p>
+                    No material requests
+                    submitted for this
+                    site.
+                  </p>
+                ) : (
+                  <div className="table-card">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>
+                            Date
+                          </th>
+
+                          <th>
+                            Material
+                          </th>
+
+                          <th>
+                            Quantity
+                          </th>
+
+                          <th>
+                            Purpose
+                          </th>
+
+                          <th>
+                            Status
+                          </th>
+
+                          <th>
+                            Reviewed By
+                          </th>
+
+                          <th>
+                            Review Remarks
+                          </th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {materialRequests.map(
+                          (
+                            request
+                          ) => (
+                            <tr
+                              key={
+                                request.id
+                              }
+                            >
+                              <td>
+                                {formatDate(
+                                  request.requestDate
+                                )}
+                              </td>
+
+                              <td>
+                                <strong>
+                                  {request.materialName ||
+                                    "-"}
+                                </strong>
+                              </td>
+
+                              <td>
+                                {request.quantity ??
+                                  0}{" "}
+                                {request.unit ||
+                                  ""}
+                              </td>
+
+                              <td>
+                                {request.purpose ||
+                                  request.notes ||
+                                  "-"}
+                              </td>
+
+                              <td>
+                                <strong>
+                                  {getStatusLabel(
+                                    request.status
+                                  )}
+                                </strong>
+                              </td>
+
+                              <td>
+                                {request.reviewedBy ||
+                                  "-"}
+                              </td>
+
+                              <td>
+                                {request.reviewRemarks ||
+                                  "-"}
+                              </td>
+                            </tr>
+                          )
+                        )}
                       </tbody>
                     </table>
                   </div>
