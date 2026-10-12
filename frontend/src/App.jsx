@@ -31,6 +31,7 @@ import LabourPayments from "./pages/LabourPayments";
 
 import MaterialRequests from "./pages/MaterialRequests";
 import SitePhotos from "./pages/SitePhotos";
+import SiteIssues from "./pages/SiteIssues";
 
 import ClientPortal from "./pages/ClientPortal";
 
@@ -142,6 +143,10 @@ function AdminLayout() {
 
           <NavLink to="/site-photos">
             Site Photos
+          </NavLink>
+
+          <NavLink to="/site-issues">
+            Site Issues
           </NavLink>
 
           <NavLink to="/accounts">
@@ -294,6 +299,13 @@ function AdminLayout() {
             path="/site-photos"
             element={
               <SitePhotos />
+            }
+          />
+
+          <Route
+            path="/site-issues"
+            element={
+              <SiteIssues />
             }
           />
 

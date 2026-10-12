@@ -275,6 +275,12 @@ function SupervisorLayout() {
           >
             Site Photos
           </NavLink>
+
+          <NavLink
+  to="/supervisor/site-issues"
+>
+  Site Issues
+</NavLink>
         </nav>
 
         <div className="sidebar-footer">
