@@ -39,6 +39,7 @@ import SupervisorDashboard from "./pages/supervisor/SupervisorDashboard";
 import SupervisorProgress from "./pages/supervisor/SupervisorProgress";
 import SupervisorMaterialRequests from "./pages/supervisor/SupervisorMaterialRequests";
 import SupervisorSitePhotos from "./pages/supervisor/SupervisorSitePhotos";
+import SupervisorSiteIssues from "./pages/supervisor/SupervisorSiteIssues";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -414,6 +415,13 @@ function RoleBasedProtectedArea() {
             path="site-photos"
             element={
               <SupervisorSitePhotos />
+            }
+          />
+
+          <Route
+            path="site-issues"
+            element={
+              <SupervisorSiteIssues />
             }
           />
         </Route>
