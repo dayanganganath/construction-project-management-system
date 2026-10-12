@@ -2,6 +2,7 @@ package com.skyward.projectmanagement.service;
 
 import com.skyward.projectmanagement.dto.ClientDashboardDto;
 import com.skyward.projectmanagement.dto.ClientProjectSummaryDto;
+import com.skyward.projectmanagement.entity.ProjectDocument;
 import com.skyward.projectmanagement.entity.SitePhoto;
 import com.skyward.projectmanagement.entity.User;
 import com.skyward.projectmanagement.entity.UserProjectAssignment;
@@ -10,6 +11,7 @@ import com.skyward.projectmanagement.model.Payment;
 import com.skyward.projectmanagement.model.Project;
 import com.skyward.projectmanagement.repository.DailyProgressRepository;
 import com.skyward.projectmanagement.repository.PaymentRepository;
+import com.skyward.projectmanagement.repository.ProjectDocumentRepository;
 import com.skyward.projectmanagement.repository.SitePhotoRepository;
 import com.skyward.projectmanagement.repository.UserProjectAssignmentRepository;
 import com.skyward.projectmanagement.repository.UserRepository;
@@ -31,71 +33,42 @@ import java.util.Optional;
 public class ClientPortalService {
 
     private final UserRepository userRepository;
-
-    private final UserProjectAssignmentRepository
-            assignmentRepository;
-
-    private final DailyProgressRepository
-            dailyProgressRepository;
-
-    private final PaymentRepository
-            paymentRepository;
-
-    private final SitePhotoRepository
-            sitePhotoRepository;
+    private final UserProjectAssignmentRepository assignmentRepository;
+    private final DailyProgressRepository dailyProgressRepository;
+    private final PaymentRepository paymentRepository;
+    private final SitePhotoRepository sitePhotoRepository;
+    private final ProjectDocumentRepository projectDocumentRepository;
 
     public ClientPortalService(
             UserRepository userRepository,
             UserProjectAssignmentRepository assignmentRepository,
             DailyProgressRepository dailyProgressRepository,
             PaymentRepository paymentRepository,
-            SitePhotoRepository sitePhotoRepository
+            SitePhotoRepository sitePhotoRepository,
+            ProjectDocumentRepository projectDocumentRepository
     ) {
-        this.userRepository =
-                userRepository;
-
-        this.assignmentRepository =
-                assignmentRepository;
-
-        this.dailyProgressRepository =
-                dailyProgressRepository;
-
-        this.paymentRepository =
-                paymentRepository;
-
-        this.sitePhotoRepository =
-                sitePhotoRepository;
+        this.userRepository = userRepository;
+        this.assignmentRepository = assignmentRepository;
+        this.dailyProgressRepository = dailyProgressRepository;
+        this.paymentRepository = paymentRepository;
+        this.sitePhotoRepository = sitePhotoRepository;
+        this.projectDocumentRepository = projectDocumentRepository;
     }
 
-    /*
-     * =========================================================
-     * PROJECTS
-     * =========================================================
-     */
-
-    public List<ClientProjectSummaryDto>
-    getMyProjects(
+    public List<ClientProjectSummaryDto> getMyProjects(
             String username
     ) {
 
-        User user =
-                getClientUser(
-                        username
-                );
+        User user = getClientUser(username);
 
         return assignmentRepository
-                .findByUserId(
-                        user.getId()
-                )
+                .findByUserId(user.getId())
                 .stream()
-                .map(
-                        this::toProjectSummary
-                )
+                .map(this::toProjectSummary)
                 .toList();
     }
 
-    public ClientProjectSummaryDto
-    getMyProject(
+    public ClientProjectSummaryDto getMyProject(
             String username,
             Long projectId
     ) {
@@ -106,19 +79,10 @@ public class ClientPortalService {
                         projectId
                 );
 
-        return toProjectSummary(
-                assignment
-        );
+        return toProjectSummary(assignment);
     }
 
-    /*
-     * =========================================================
-     * DASHBOARD
-     * =========================================================
-     */
-
-    public ClientDashboardDto
-    getMyDashboard(
+    public ClientDashboardDto getMyDashboard(
             String username,
             Long projectId
     ) {
@@ -146,11 +110,8 @@ public class ClientPortalService {
         Integer physicalProgress =
                 latestProgress != null
                         &&
-                latestProgress
-                        .getProgressPercentage()
-                        != null
-                        ? latestProgress
-                        .getProgressPercentage()
+                latestProgress.getProgressPercentage() != null
+                        ? latestProgress.getProgressPercentage()
                         : 0;
 
         List<Payment> payments =
@@ -161,9 +122,7 @@ public class ClientPortalService {
 
         BigDecimal totalPaid =
                 payments.stream()
-                        .map(
-                                Payment::getAmount
-                        )
+                        .map(Payment::getAmount)
                         .filter(
                                 amount ->
                                         amount != null
@@ -174,8 +133,7 @@ public class ClientPortalService {
                         );
 
         BigDecimal projectValue =
-                project.getBudget()
-                        != null
+                project.getBudget() != null
                         ? project.getBudget()
                         : BigDecimal.ZERO;
 
@@ -196,29 +154,21 @@ public class ClientPortalService {
         LocalDate today =
                 LocalDate.now();
 
-        Long totalProjectDays =
-                0L;
-
-        Long daysCompleted =
-                0L;
-
-        Long daysRemaining =
-                0L;
+        Long totalProjectDays = 0L;
+        Long daysCompleted = 0L;
+        Long daysRemaining = 0L;
 
         if (
-                project.getStartDate()
-                        != null
+                project.getStartDate() != null
                         &&
-                project.getEndDate()
-                        != null
+                project.getEndDate() != null
         ) {
 
             totalProjectDays =
-                    ChronoUnit.DAYS
-                            .between(
-                                    project.getStartDate(),
-                                    project.getEndDate()
-                            );
+                    ChronoUnit.DAYS.between(
+                            project.getStartDate(),
+                            project.getEndDate()
+                    );
 
             if (
                     today.isBefore(
@@ -226,9 +176,7 @@ public class ClientPortalService {
                     )
             ) {
 
-                daysCompleted =
-                        0L;
-
+                daysCompleted = 0L;
                 daysRemaining =
                         totalProjectDays;
 
@@ -241,24 +189,21 @@ public class ClientPortalService {
                 daysCompleted =
                         totalProjectDays;
 
-                daysRemaining =
-                        0L;
+                daysRemaining = 0L;
 
             } else {
 
                 daysCompleted =
-                        ChronoUnit.DAYS
-                                .between(
-                                        project.getStartDate(),
-                                        today
-                                );
+                        ChronoUnit.DAYS.between(
+                                project.getStartDate(),
+                                today
+                        );
 
                 daysRemaining =
-                        ChronoUnit.DAYS
-                                .between(
-                                        today,
-                                        project.getEndDate()
-                                );
+                        ChronoUnit.DAYS.between(
+                                today,
+                                project.getEndDate()
+                        );
             }
         }
 
@@ -316,10 +261,6 @@ public class ClientPortalService {
             Long projectId
     ) {
 
-        /*
-         * First validate that the logged-in
-         * client is assigned to this project.
-         */
         getClientProjectAssignment(
                 username,
                 projectId
@@ -355,9 +296,6 @@ public class ClientPortalService {
             Long photoId
     ) {
 
-        /*
-         * Validate project access first.
-         */
         getClientProjectAssignment(
                 username,
                 projectId
@@ -365,9 +303,7 @@ public class ClientPortalService {
 
         SitePhoto photo =
                 sitePhotoRepository
-                        .findById(
-                                photoId
-                        )
+                        .findById(photoId)
                         .orElseThrow(() ->
                                 new RuntimeException(
                                         "Site photo not found."
@@ -375,18 +311,12 @@ public class ClientPortalService {
                         );
 
         if (
-                photo.getProject()
-                        == null
+                photo.getProject() == null
                         ||
-                photo.getProject()
-                        .getId()
-                        == null
+                photo.getProject().getId() == null
                         ||
-                !photo.getProject()
-                        .getId()
-                        .equals(
-                                projectId
-                        )
+                !photo.getProject().getId()
+                        .equals(projectId)
         ) {
             throw new RuntimeException(
                     "This photo does not belong to this project."
@@ -433,6 +363,145 @@ public class ClientPortalService {
 
             throw new RuntimeException(
                     "Unable to load photo file.",
+                    e
+            );
+        }
+    }
+
+    /*
+     * =========================================================
+     * CLIENT DOCUMENTS
+     * =========================================================
+     */
+
+    public List<ProjectDocument>
+    getMyVisibleDocuments(
+            String username,
+            Long projectId
+    ) {
+
+        getClientProjectAssignment(
+                username,
+                projectId
+        );
+
+        return projectDocumentRepository
+                .findByProjectIdAndClientVisibleTrue(
+                        projectId
+                )
+                .stream()
+                .sorted(
+                        Comparator
+                                .comparing(
+                                        ProjectDocument::getDocumentDate,
+                                        Comparator.nullsLast(
+                                                Comparator.reverseOrder()
+                                        )
+                                )
+                                .thenComparing(
+                                        ProjectDocument::getId,
+                                        Comparator.nullsLast(
+                                                Comparator.reverseOrder()
+                                        )
+                                )
+                )
+                .toList();
+    }
+
+    public ProjectDocument
+    getMyVisibleDocument(
+            String username,
+            Long projectId,
+            Long documentId
+    ) {
+
+        getClientProjectAssignment(
+                username,
+                projectId
+        );
+
+        ProjectDocument document =
+                projectDocumentRepository
+                        .findById(
+                                documentId
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Project document not found."
+                                )
+                        );
+
+        if (
+                document.getProject() == null
+                        ||
+                document.getProject().getId() == null
+                        ||
+                !document.getProject()
+                        .getId()
+                        .equals(projectId)
+        ) {
+            throw new RuntimeException(
+                    "This document does not belong to this project."
+            );
+        }
+
+        if (
+                !Boolean.TRUE.equals(
+                        document.getClientVisible()
+                )
+        ) {
+            throw new RuntimeException(
+                    "This document is not available to the client."
+            );
+        }
+
+        return document;
+    }
+
+    public Resource
+    getMyVisibleDocumentFile(
+            String username,
+            Long projectId,
+            Long documentId
+    ) {
+
+        ProjectDocument document =
+                getMyVisibleDocument(
+                        username,
+                        projectId,
+                        documentId
+                );
+
+        try {
+
+            Path path =
+                    Paths.get(
+                            document.getFilePath()
+                    )
+                    .toAbsolutePath()
+                    .normalize();
+
+            Resource resource =
+                    new UrlResource(
+                            path.toUri()
+                    );
+
+            if (
+                    !resource.exists()
+                            ||
+                    !resource.isReadable()
+            ) {
+                throw new RuntimeException(
+                        "Document file not found."
+                );
+            }
+
+            return resource;
+
+        } catch (Exception e) {
+
+            throw new RuntimeException(
+                    "Unable to load document file.",
                     e
             );
         }
@@ -505,12 +574,6 @@ public class ClientPortalService {
                         )
                 );
     }
-
-    /*
-     * =========================================================
-     * DTO
-     * =========================================================
-     */
 
     private ClientProjectSummaryDto
     toProjectSummary(

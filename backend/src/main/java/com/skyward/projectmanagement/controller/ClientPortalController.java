@@ -2,10 +2,12 @@ package com.skyward.projectmanagement.controller;
 
 import com.skyward.projectmanagement.dto.ClientDashboardDto;
 import com.skyward.projectmanagement.dto.ClientProjectSummaryDto;
+import com.skyward.projectmanagement.entity.ProjectDocument;
 import com.skyward.projectmanagement.entity.SitePhoto;
 import com.skyward.projectmanagement.service.ClientPortalService;
 
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -27,12 +29,6 @@ public class ClientPortalController {
                 clientPortalService;
     }
 
-    /*
-     * =========================================================
-     * PROJECTS
-     * =========================================================
-     */
-
     @GetMapping("/projects")
     public ResponseEntity<
             List<ClientProjectSummaryDto>
@@ -41,13 +37,10 @@ public class ClientPortalController {
             Authentication authentication
     ) {
 
-        String username =
-                authentication.getName();
-
         return ResponseEntity.ok(
                 clientPortalService
                         .getMyProjects(
-                                username
+                                authentication.getName()
                         )
         );
     }
@@ -63,23 +56,14 @@ public class ClientPortalController {
             Authentication authentication
     ) {
 
-        String username =
-                authentication.getName();
-
         return ResponseEntity.ok(
                 clientPortalService
                         .getMyProject(
-                                username,
+                                authentication.getName(),
                                 projectId
                         )
         );
     }
-
-    /*
-     * =========================================================
-     * DASHBOARD
-     * =========================================================
-     */
 
     @GetMapping(
             "/projects/{projectId}/dashboard"
@@ -92,13 +76,10 @@ public class ClientPortalController {
             Authentication authentication
     ) {
 
-        String username =
-                authentication.getName();
-
         return ResponseEntity.ok(
                 clientPortalService
                         .getMyDashboard(
-                                username,
+                                authentication.getName(),
                                 projectId
                         )
         );
@@ -121,13 +102,10 @@ public class ClientPortalController {
 
         try {
 
-            String username =
-                    authentication.getName();
-
             List<SitePhoto> photos =
                     clientPortalService
                             .getMyVisibleSitePhotos(
-                                    username,
+                                    authentication.getName(),
                                     projectId
                             );
 
@@ -135,9 +113,7 @@ public class ClientPortalController {
                     photos
             );
 
-        } catch (
-                RuntimeException e
-        ) {
+        } catch (RuntimeException e) {
 
             return ResponseEntity
                     .badRequest()
@@ -157,13 +133,10 @@ public class ClientPortalController {
             Authentication authentication
     ) {
 
-        String username =
-                authentication.getName();
-
         Resource resource =
                 clientPortalService
                         .getMyVisibleSitePhotoFile(
-                                username,
+                                authentication.getName(),
                                 projectId,
                                 photoId
                         );
@@ -172,6 +145,108 @@ public class ClientPortalController {
                 .ok()
                 .contentType(
                         MediaType.APPLICATION_OCTET_STREAM
+                )
+                .body(resource);
+    }
+
+    /*
+     * =========================================================
+     * DOCUMENTS
+     * =========================================================
+     */
+
+    @GetMapping(
+            "/projects/{projectId}/documents"
+    )
+    public ResponseEntity<?>
+    getMyDocuments(
+            @PathVariable Long projectId,
+            Authentication authentication
+    ) {
+
+        try {
+
+            return ResponseEntity.ok(
+                    clientPortalService
+                            .getMyVisibleDocuments(
+                                    authentication.getName(),
+                                    projectId
+                            )
+            );
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            e.getMessage()
+                    );
+        }
+    }
+
+    @GetMapping(
+            "/projects/{projectId}/documents/{documentId}/file"
+    )
+    public ResponseEntity<Resource>
+    downloadMyDocument(
+            @PathVariable Long projectId,
+            @PathVariable Long documentId,
+            Authentication authentication
+    ) {
+
+        ProjectDocument document =
+                clientPortalService
+                        .getMyVisibleDocument(
+                                authentication.getName(),
+                                projectId,
+                                documentId
+                        );
+
+        Resource resource =
+                clientPortalService
+                        .getMyVisibleDocumentFile(
+                                authentication.getName(),
+                                projectId,
+                                documentId
+                        );
+
+        MediaType mediaType =
+                MediaType.APPLICATION_OCTET_STREAM;
+
+        if (
+                document.getContentType() != null
+                        &&
+                !document.getContentType().isBlank()
+        ) {
+            try {
+
+                mediaType =
+                        MediaType.parseMediaType(
+                                document.getContentType()
+                        );
+
+            } catch (Exception ignored) {
+            }
+        }
+
+        String safeFileName =
+                document
+                        .getOriginalFileName()
+                        .replace(
+                                "\"",
+                                ""
+                        );
+
+        return ResponseEntity
+                .ok()
+                .contentType(
+                        mediaType
+                )
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" +
+                                safeFileName +
+                                "\""
                 )
                 .body(
                         resource

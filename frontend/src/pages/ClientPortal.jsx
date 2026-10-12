@@ -24,11 +24,47 @@ function ClientPortal() {
   const [dashboard, setDashboard] =
     useState(null);
 
+  /*
+   * =========================================================
+   * SITE PHOTOS
+   * =========================================================
+   */
+
   const [photos, setPhotos] =
     useState([]);
 
   const [photoUrls, setPhotoUrls] =
     useState({});
+
+  const [
+    loadingPhotos,
+    setLoadingPhotos,
+  ] = useState(false);
+
+  /*
+   * =========================================================
+   * DOCUMENTS
+   * =========================================================
+   */
+
+  const [documents, setDocuments] =
+    useState([]);
+
+  const [
+    loadingDocuments,
+    setLoadingDocuments,
+  ] = useState(false);
+
+  const [
+    downloadingDocumentId,
+    setDownloadingDocumentId,
+  ] = useState(null);
+
+  /*
+   * =========================================================
+   * GENERAL
+   * =========================================================
+   */
 
   const [loading, setLoading] =
     useState(true);
@@ -36,11 +72,6 @@ function ClientPortal() {
   const [
     loadingProject,
     setLoadingProject,
-  ] = useState(false);
-
-  const [
-    loadingPhotos,
-    setLoadingPhotos,
   ] = useState(false);
 
   const [error, setError] =
@@ -60,25 +91,15 @@ function ClientPortal() {
     loadProjects();
 
     return () => {
-      revokePhotoUrls();
+      clearPhotoUrls();
     };
   }, []);
 
-  const revokePhotoUrls = (
-    urls = photoUrls
-  ) => {
-    Object.values(
-      urls
-    ).forEach((url) => {
-      try {
-        URL.revokeObjectURL(
-          url
-        );
-      } catch {
-        // Ignore cleanup errors
-      }
-    });
-  };
+  /*
+   * =========================================================
+   * PROJECTS
+   * =========================================================
+   */
 
   const loadProjects =
     async () => {
@@ -101,32 +122,34 @@ function ClientPortal() {
             data[0].projectId ??
             data[0].id;
 
-          setSelectedProjectId(
+          const id =
             String(
               firstProjectId
-            )
+            );
+
+          setSelectedProjectId(
+            id
           );
 
           await loadProjectData(
-            firstProjectId
+            id
           );
         } else {
           setDashboard(null);
           setPhotos([]);
+          setDocuments([]);
         }
       } catch (error) {
         console.error(
-          "Error loading projects:",
+          "Error loading client projects:",
           error
         );
 
         setError(
-          typeof error.response?.data ===
-            "string"
-            ? error.response.data
-            : error.response?.data
-                ?.message ||
-              "Unable to load your projects."
+          getErrorMessage(
+            error,
+            "Unable to load your projects."
+          )
         );
       } finally {
         setLoading(false);
@@ -138,9 +161,19 @@ function ClientPortal() {
       if (!projectId) {
         setDashboard(null);
         setPhotos([]);
+        setDocuments([]);
+
         return;
       }
 
+      /*
+       * Dashboard, photos and documents
+       * are independent requests.
+       *
+       * Promise.all lets them load
+       * together instead of waiting
+       * one-by-one.
+       */
       await Promise.all([
         loadDashboard(
           projectId
@@ -148,8 +181,31 @@ function ClientPortal() {
         loadSitePhotos(
           projectId
         ),
+        loadDocuments(
+          projectId
+        ),
       ]);
     };
+
+  const handleProjectChange =
+    async (e) => {
+      const projectId =
+        e.target.value;
+
+      setSelectedProjectId(
+        projectId
+      );
+
+      await loadProjectData(
+        projectId
+      );
+    };
+
+  /*
+   * =========================================================
+   * DASHBOARD
+   * =========================================================
+   */
 
   const loadDashboard =
     async (projectId) => {
@@ -170,19 +226,17 @@ function ClientPortal() {
         );
       } catch (error) {
         console.error(
-          "Error loading dashboard:",
+          "Error loading client dashboard:",
           error
         );
 
         setDashboard(null);
 
         setError(
-          typeof error.response?.data ===
-            "string"
-            ? error.response.data
-            : error.response?.data
-                ?.message ||
-              "Unable to load project dashboard."
+          getErrorMessage(
+            error,
+            "Unable to load project dashboard."
+          )
         );
       } finally {
         setLoadingProject(
@@ -190,6 +244,33 @@ function ClientPortal() {
         );
       }
     };
+
+  /*
+   * =========================================================
+   * SITE PHOTOS
+   * =========================================================
+   */
+
+  const clearPhotoUrls = (
+    urls
+  ) => {
+    const values =
+      urls
+        ? Object.values(urls)
+        : [];
+
+    values.forEach(
+      (url) => {
+        try {
+          URL.revokeObjectURL(
+            url
+          );
+        } catch {
+          // Ignore cleanup errors.
+        }
+      }
+    );
+  };
 
   const loadSitePhotos =
     async (projectId) => {
@@ -220,10 +301,17 @@ function ClientPortal() {
           error
         );
 
-        revokePhotoUrls();
-
-        setPhotoUrls({});
         setPhotos([]);
+
+        setPhotoUrls(
+          (currentUrls) => {
+            clearPhotoUrls(
+              currentUrls
+            );
+
+            return {};
+          }
+        );
       } finally {
         setLoadingPhotos(
           false
@@ -236,8 +324,6 @@ function ClientPortal() {
       projectId,
       photoList
     ) => {
-      revokePhotoUrls();
-
       const newUrls = {};
 
       for (
@@ -266,26 +352,140 @@ function ClientPortal() {
       }
 
       setPhotoUrls(
-        newUrls
+        (currentUrls) => {
+          clearPhotoUrls(
+            currentUrls
+          );
+
+          return newUrls;
+        }
       );
     };
 
-  const handleProjectChange =
-    async (e) => {
-      const projectId =
-        e.target.value;
+  /*
+   * =========================================================
+   * DOCUMENTS
+   * =========================================================
+   */
 
-      setSelectedProjectId(
-        projectId
-      );
+  const loadDocuments =
+    async (projectId) => {
+      try {
+        setLoadingDocuments(
+          true
+        );
 
-      await loadProjectData(
-        projectId
-      );
+        const response =
+          await api.get(
+            `/client/projects/${projectId}/documents`
+          );
+
+        setDocuments(
+          response.data || []
+        );
+      } catch (error) {
+        console.error(
+          "Error loading client documents:",
+          error
+        );
+
+        setDocuments([]);
+      } finally {
+        setLoadingDocuments(
+          false
+        );
+      }
     };
+
+  const downloadDocument =
+    async (document) => {
+      if (
+        !selectedProjectId ||
+        !document?.id
+      ) {
+        return;
+      }
+
+      try {
+        setDownloadingDocumentId(
+          document.id
+        );
+
+        setError("");
+
+        const response =
+          await api.get(
+            `/client/projects/${selectedProjectId}/documents/${document.id}/file`,
+            {
+              responseType:
+                "blob",
+            }
+          );
+
+        const url =
+          URL.createObjectURL(
+            response.data
+          );
+
+        const link =
+          window.document
+            .createElement(
+              "a"
+            );
+
+        link.href = url;
+
+        link.download =
+          document.originalFileName ||
+          `document-${document.id}`;
+
+        window.document.body
+          .appendChild(
+            link
+          );
+
+        link.click();
+
+        link.remove();
+
+        URL.revokeObjectURL(
+          url
+        );
+      } catch (error) {
+        console.error(
+          "Error downloading client document:",
+          error
+        );
+
+        setError(
+          getErrorMessage(
+            error,
+            "Unable to download document."
+          )
+        );
+      } finally {
+        setDownloadingDocumentId(
+          null
+        );
+      }
+    };
+
+  /*
+   * =========================================================
+   * LOGOUT
+   * =========================================================
+   */
 
   const handleLogout = () => {
-    revokePhotoUrls();
+    setPhotoUrls(
+      (currentUrls) => {
+        clearPhotoUrls(
+          currentUrls
+        );
+
+        return {};
+      }
+    );
 
     localStorage.removeItem(
       "isAuthenticated"
@@ -308,6 +508,30 @@ function ClientPortal() {
       {
         replace: true,
       }
+    );
+  };
+
+  /*
+   * =========================================================
+   * FORMATTERS
+   * =========================================================
+   */
+
+  const getErrorMessage = (
+    error,
+    fallback
+  ) => {
+    if (
+      typeof error.response?.data ===
+      "string"
+    ) {
+      return error.response.data;
+    }
+
+    return (
+      error.response?.data
+        ?.message ||
+      fallback
     );
   };
 
@@ -342,6 +566,60 @@ function ClientPortal() {
       `${value}T00:00:00`
     ).toLocaleDateString();
   };
+
+  const formatFileSize = (
+    bytes
+  ) => {
+    if (
+      bytes === null ||
+      bytes === undefined
+    ) {
+      return "-";
+    }
+
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+
+    const kb =
+      bytes / 1024;
+
+    if (kb < 1024) {
+      return `${kb.toFixed(
+        1
+      )} KB`;
+    }
+
+    const mb =
+      kb / 1024;
+
+    return `${mb.toFixed(
+      2
+    )} MB`;
+  };
+
+  const formatDocumentType = (
+    type
+  ) => {
+    if (!type) {
+      return "Other";
+    }
+
+    return type
+      .replaceAll("_", " ")
+      .toLowerCase()
+      .replace(
+        /\b\w/g,
+        (letter) =>
+          letter.toUpperCase()
+      );
+  };
+
+  /*
+   * =========================================================
+   * CALCULATIONS
+   * =========================================================
+   */
 
   const physicalProgress =
     Number(
@@ -378,12 +656,19 @@ function ClientPortal() {
       ? Math.min(
           100,
           Math.round(
-            (totalPaid /
-              projectValue) *
-              100
+            (
+              totalPaid /
+              projectValue
+            ) * 100
           )
         )
       : 0;
+
+  /*
+   * =========================================================
+   * INITIAL LOADING
+   * =========================================================
+   */
 
   if (loading) {
     return (
@@ -394,8 +679,16 @@ function ClientPortal() {
     );
   }
 
+  /*
+   * =========================================================
+   * UI
+   * =========================================================
+   */
+
   return (
     <div className="app-layout client-portal">
+      {/* SIDEBAR */}
+
       <aside className="sidebar">
         <div className="brand">
           <h2>CPMS</h2>
@@ -439,6 +732,8 @@ function ClientPortal() {
         </div>
       </aside>
 
+      {/* MAIN */}
+
       <main className="main-content">
         <div className="dashboard-header">
           <div>
@@ -448,9 +743,9 @@ function ClientPortal() {
 
             <p>
               View project
-              progress, payments
-              and latest site
-              information.
+              progress, payments,
+              site photos and
+              approved documents.
             </p>
           </div>
 
@@ -497,9 +792,7 @@ function ClientPortal() {
 
         {error && (
           <div className="alert alert-error">
-            <span>
-              {error}
-            </span>
+            {error}
           </div>
         )}
 
@@ -525,6 +818,8 @@ function ClientPortal() {
           </div>
         ) : dashboard ? (
           <>
+            {/* PROJECT INFO */}
+
             <div className="selected-project-info">
               <div>
                 <h2>
@@ -576,6 +871,8 @@ function ClientPortal() {
                 </p>
               </div>
             </div>
+
+            {/* SUMMARY */}
 
             <div className="client-summary-grid">
               <div className="client-summary-card blue">
@@ -642,6 +939,8 @@ function ClientPortal() {
                 </span>
               </div>
             </div>
+
+            {/* PAYMENT / TIME / UPDATE */}
 
             <div className="client-detail-grid">
               <div className="form-card client-section-card">
@@ -839,7 +1138,7 @@ function ClientPortal() {
 
                   <p className="client-muted-text">
                     Latest approved
-                    site progress
+                    project progress
                     photos.
                   </p>
                 </div>
@@ -949,11 +1248,7 @@ function ClientPortal() {
                                 "flex",
                               justifyContent:
                                 "space-between",
-                              alignItems:
-                                "center",
                               gap:
-                                "10px",
-                              marginBottom:
                                 "10px",
                             }}
                           >
@@ -962,19 +1257,19 @@ function ClientPortal() {
                                 "SITE PHOTO"}
                             </strong>
 
-                            <span
-                              style={{
-                                fontSize:
-                                  "12px",
-                              }}
-                            >
+                            <span>
                               {formatDate(
                                 photo.photoDate
                               )}
                             </span>
                           </div>
 
-                          <p>
+                          <p
+                            style={{
+                              marginTop:
+                                "10px",
+                            }}
+                          >
                             {photo.caption ||
                               "Project site progress photo."}
                           </p>
@@ -985,6 +1280,184 @@ function ClientPortal() {
                 </div>
               )}
             </div>
+
+            {/* CLIENT DOCUMENTS */}
+
+            <div
+              className="form-card"
+              style={{
+                marginTop:
+                  "24px",
+              }}
+            >
+              <div
+                style={{
+                  display:
+                    "flex",
+                  justifyContent:
+                    "space-between",
+                  alignItems:
+                    "center",
+                  gap: "15px",
+                  marginBottom:
+                    "20px",
+                }}
+              >
+                <div>
+                  <h2>
+                    Project Documents
+                  </h2>
+
+                  <p className="client-muted-text">
+                    Approved drawings,
+                    reports and project
+                    documents shared
+                    with you.
+                  </p>
+                </div>
+
+                {!loadingDocuments && (
+                  <strong>
+                    {
+                      documents.length
+                    }{" "}
+                    document(s)
+                  </strong>
+                )}
+              </div>
+
+              {loadingDocuments ? (
+                <p>
+                  Loading project
+                  documents...
+                </p>
+              ) : documents.length ===
+                0 ? (
+                <p className="client-muted-text">
+                  No project documents
+                  are currently
+                  available for client
+                  viewing.
+                </p>
+              ) : (
+                <div
+                  style={{
+                    overflowX:
+                      "auto",
+                  }}
+                >
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>
+                          Date
+                        </th>
+
+                        <th>
+                          Document
+                        </th>
+
+                        <th>
+                          Type
+                        </th>
+
+                        <th>
+                          File
+                        </th>
+
+                        <th>
+                          Size
+                        </th>
+
+                        <th>
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {documents.map(
+                        (document) => (
+                          <tr
+                            key={
+                              document.id
+                            }
+                          >
+                            <td>
+                              {formatDate(
+                                document.documentDate
+                              )}
+                            </td>
+
+                            <td>
+                              <strong>
+                                {document.title ||
+                                  "-"}
+                              </strong>
+
+                              {document.description && (
+                                <div
+                                  style={{
+                                    marginTop:
+                                      "5px",
+                                    maxWidth:
+                                      "350px",
+                                  }}
+                                >
+                                  {
+                                    document.description
+                                  }
+                                </div>
+                              )}
+                            </td>
+
+                            <td>
+                              {formatDocumentType(
+                                document.documentType
+                              )}
+                            </td>
+
+                            <td>
+                              {document.originalFileName ||
+                                "-"}
+                            </td>
+
+                            <td>
+                              {formatFileSize(
+                                document.fileSize
+                              )}
+                            </td>
+
+                            <td>
+                              <button
+                                type="button"
+                                className="primary-button"
+                                disabled={
+                                  downloadingDocumentId ===
+                                  document.id
+                                }
+                                onClick={() =>
+                                  downloadDocument(
+                                    document
+                                  )
+                                }
+                              >
+                                {downloadingDocumentId ===
+                                document.id
+                                  ? "Downloading..."
+                                  : "Download"}
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* PROJECT HEALTH */}
 
             <div className="form-card client-health-card">
               <div>
@@ -1051,17 +1524,18 @@ function ClientPortal() {
               </div>
             </div>
 
+            {/* WEATHER PLACEHOLDER */}
+
             <div className="form-card">
               <h2>
                 Site Weather
               </h2>
 
               <p className="client-muted-text">
-                Weather, rain
-                probability and
-                site forecast will
-                be added in a later
-                phase.
+                Weather and site
+                forecast integration
+                can be added in a
+                later phase.
               </p>
             </div>
           </>

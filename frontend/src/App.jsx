@@ -32,6 +32,7 @@ import LabourPayments from "./pages/LabourPayments";
 import MaterialRequests from "./pages/MaterialRequests";
 import SitePhotos from "./pages/SitePhotos";
 import SiteIssues from "./pages/SiteIssues";
+import ProjectDocuments from "./pages/ProjectDocuments";
 
 import ClientPortal from "./pages/ClientPortal";
 
@@ -41,6 +42,7 @@ import SupervisorProgress from "./pages/supervisor/SupervisorProgress";
 import SupervisorMaterialRequests from "./pages/supervisor/SupervisorMaterialRequests";
 import SupervisorSitePhotos from "./pages/supervisor/SupervisorSitePhotos";
 import SupervisorSiteIssues from "./pages/supervisor/SupervisorSiteIssues";
+import SupervisorDocuments from "./pages/supervisor/SupervisorDocuments";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -60,11 +62,8 @@ function logoutAndGoToLogin(navigate) {
 function AdminLayout() {
   const navigate = useNavigate();
 
-  const role =
-    localStorage.getItem("role");
-
-  const username =
-    localStorage.getItem("username");
+  const role = localStorage.getItem("role");
+  const username = localStorage.getItem("username");
 
   const handleLogout = () => {
     logoutAndGoToLogin(navigate);
@@ -75,17 +74,11 @@ function AdminLayout() {
       <aside className="sidebar">
         <div className="brand">
           <h2>CPMS</h2>
-
-          <p>
-            Construction Management
-          </p>
+          <p>Construction Management</p>
         </div>
 
         <nav className="nav-menu">
-          <NavLink
-            to="/"
-            end
-          >
+          <NavLink to="/" end>
             Dashboard
           </NavLink>
 
@@ -149,6 +142,10 @@ function AdminLayout() {
             Site Issues
           </NavLink>
 
+          <NavLink to="/documents">
+            Documents
+          </NavLink>
+
           <NavLink to="/accounts">
             Accounts / Payment Register
           </NavLink>
@@ -175,13 +172,8 @@ function AdminLayout() {
         <div className="sidebar-footer">
           {username && (
             <div className="logged-user">
-              <p>
-                {username}
-              </p>
-
-              <span>
-                {role}
-              </span>
+              <p>{username}</p>
+              <span>{role}</span>
             </div>
           )}
 
@@ -199,142 +191,107 @@ function AdminLayout() {
         <Routes>
           <Route
             path="/"
-            element={
-              <Dashboard />
-            }
+            element={<Dashboard />}
           />
 
           <Route
             path="/clients"
-            element={
-              <Clients />
-            }
+            element={<Clients />}
           />
 
           <Route
             path="/projects"
-            element={
-              <Projects />
-            }
+            element={<Projects />}
           />
 
           <Route
             path="/boq"
-            element={
-              <Boq />
-            }
+            element={<Boq />}
           />
 
           <Route
             path="/expenses"
-            element={
-              <Expenses />
-            }
+            element={<Expenses />}
           />
 
           <Route
             path="/payments"
-            element={
-              <Payments />
-            }
+            element={<Payments />}
           />
 
           <Route
             path="/contractors"
-            element={
-              <Contractors />
-            }
+            element={<Contractors />}
           />
 
           <Route
             path="/contractor-bills"
-            element={
-              <ContractorBills />
-            }
+            element={<ContractorBills />}
           />
 
           <Route
             path="/contractor-ledger"
-            element={
-              <ContractorLedger />
-            }
+            element={<ContractorLedger />}
           />
 
           <Route
             path="/subcontractor-payments"
-            element={
-              <SubcontractorPayments />
-            }
+            element={<SubcontractorPayments />}
           />
 
           <Route
             path="/workers"
-            element={
-              <Workers />
-            }
+            element={<Workers />}
           />
 
           <Route
             path="/labour-attendance"
-            element={
-              <LabourAttendance />
-            }
+            element={<LabourAttendance />}
           />
 
           <Route
             path="/labour-payments"
-            element={
-              <LabourPayments />
-            }
+            element={<LabourPayments />}
           />
 
           <Route
             path="/material-requests"
-            element={
-              <MaterialRequests />
-            }
+            element={<MaterialRequests />}
           />
 
           <Route
             path="/site-photos"
-            element={
-              <SitePhotos />
-            }
+            element={<SitePhotos />}
           />
 
           <Route
             path="/site-issues"
-            element={
-              <SiteIssues />
-            }
+            element={<SiteIssues />}
+          />
+
+          <Route
+            path="/documents"
+            element={<ProjectDocuments />}
           />
 
           <Route
             path="/accounts"
-            element={
-              <Accounts />
-            }
+            element={<Accounts />}
           />
 
           <Route
             path="/site-cost-summary"
-            element={
-              <SiteCostSummary />
-            }
+            element={<SiteCostSummary />}
           />
 
           <Route
             path="/site-report"
-            element={
-              <SiteReport />
-            }
+            element={<SiteReport />}
           />
 
           <Route
             path="/progress"
-            element={
-              <DailyProgress />
-            }
+            element={<DailyProgress />}
           />
 
           <Route
@@ -367,17 +324,14 @@ function AdminLayout() {
 }
 
 function RoleBasedProtectedArea() {
-  const role =
-    localStorage.getItem("role");
+  const role = localStorage.getItem("role");
 
   if (role === "CLIENT") {
     return (
       <Routes>
         <Route
           path="/client"
-          element={
-            <ClientPortal />
-          }
+          element={<ClientPortal />}
         />
 
         <Route
@@ -398,43 +352,36 @@ function RoleBasedProtectedArea() {
       <Routes>
         <Route
           path="/supervisor"
-          element={
-            <SupervisorLayout />
-          }
+          element={<SupervisorLayout />}
         >
           <Route
             index
-            element={
-              <SupervisorDashboard />
-            }
+            element={<SupervisorDashboard />}
           />
 
           <Route
             path="progress"
-            element={
-              <SupervisorProgress />
-            }
+            element={<SupervisorProgress />}
           />
 
           <Route
             path="material-requests"
-            element={
-              <SupervisorMaterialRequests />
-            }
+            element={<SupervisorMaterialRequests />}
           />
 
           <Route
             path="site-photos"
-            element={
-              <SupervisorSitePhotos />
-            }
+            element={<SupervisorSitePhotos />}
           />
 
           <Route
             path="site-issues"
-            element={
-              <SupervisorSiteIssues />
-            }
+            element={<SupervisorSiteIssues />}
+          />
+
+          <Route
+            path="documents"
+            element={<SupervisorDocuments />}
           />
         </Route>
 
@@ -455,9 +402,7 @@ function RoleBasedProtectedArea() {
     role === "ADMIN" ||
     role === "MANAGER"
   ) {
-    return (
-      <AdminLayout />
-    );
+    return <AdminLayout />;
   }
 
   return (
@@ -474,9 +419,7 @@ function App() {
       <Routes>
         <Route
           path="/login"
-          element={
-            <Login />
-          }
+          element={<Login />}
         />
 
         <Route
