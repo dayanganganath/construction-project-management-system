@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import {
   NavLink,
   useNavigate,
@@ -9,111 +13,262 @@ import api from "../services/api";
 function ClientPortal() {
   const navigate = useNavigate();
 
-  const [projects, setProjects] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] =
-    useState("");
+  const [projects, setProjects] =
+    useState([]);
+
+  const [
+    selectedProjectId,
+    setSelectedProjectId,
+  ] = useState("");
+
   const [dashboard, setDashboard] =
     useState(null);
+
+  const [photos, setPhotos] =
+    useState([]);
+
+  const [photoUrls, setPhotoUrls] =
+    useState({});
 
   const [loading, setLoading] =
     useState(true);
 
-  const [loadingProject, setLoadingProject] =
-    useState(false);
+  const [
+    loadingProject,
+    setLoadingProject,
+  ] = useState(false);
+
+  const [
+    loadingPhotos,
+    setLoadingPhotos,
+  ] = useState(false);
 
   const [error, setError] =
     useState("");
 
   const username =
-    localStorage.getItem("username");
+    localStorage.getItem(
+      "username"
+    );
 
   const role =
-    localStorage.getItem("role");
+    localStorage.getItem(
+      "role"
+    );
 
   useEffect(() => {
     loadProjects();
+
+    return () => {
+      revokePhotoUrls();
+    };
   }, []);
 
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response =
-        await api.get(
-          "/client/projects"
-        );
-
-      const data =
-        response.data || [];
-
-      setProjects(data);
-
-      if (data.length > 0) {
-        const firstProjectId =
-          data[0].projectId;
-
-        setSelectedProjectId(
-          firstProjectId
-        );
-
-        await loadDashboard(
-          firstProjectId
-        );
-      } else {
-        setDashboard(null);
-      }
-    } catch (error) {
-      console.error(
-        "Error loading projects:",
-        error
-      );
-
-      setError(
-        error.response?.data?.message ||
-          "Unable to load your projects."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadDashboard = async (
-    projectId
+  const revokePhotoUrls = (
+    urls = photoUrls
   ) => {
-    if (!projectId) {
-      setDashboard(null);
-      return;
-    }
+    Object.values(
+      urls
+    ).forEach((url) => {
+      try {
+        URL.revokeObjectURL(
+          url
+        );
+      } catch {
+        // Ignore cleanup errors
+      }
+    });
+  };
 
-    try {
-      setLoadingProject(true);
-      setError("");
+  const loadProjects =
+    async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-      const response =
-        await api.get(
-          `/client/projects/${projectId}/dashboard`
+        const response =
+          await api.get(
+            "/client/projects"
+          );
+
+        const data =
+          response.data || [];
+
+        setProjects(data);
+
+        if (data.length > 0) {
+          const firstProjectId =
+            data[0].projectId ??
+            data[0].id;
+
+          setSelectedProjectId(
+            String(
+              firstProjectId
+            )
+          );
+
+          await loadProjectData(
+            firstProjectId
+          );
+        } else {
+          setDashboard(null);
+          setPhotos([]);
+        }
+      } catch (error) {
+        console.error(
+          "Error loading projects:",
+          error
         );
 
-      setDashboard(
-        response.data
-      );
-    } catch (error) {
-      console.error(
-        "Error loading dashboard:",
-        error
-      );
+        setError(
+          typeof error.response?.data ===
+            "string"
+            ? error.response.data
+            : error.response?.data
+                ?.message ||
+              "Unable to load your projects."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setDashboard(null);
+  const loadProjectData =
+    async (projectId) => {
+      if (!projectId) {
+        setDashboard(null);
+        setPhotos([]);
+        return;
+      }
 
-      setError(
-        error.response?.data?.message ||
-          "Unable to load project dashboard."
+      await Promise.all([
+        loadDashboard(
+          projectId
+        ),
+        loadSitePhotos(
+          projectId
+        ),
+      ]);
+    };
+
+  const loadDashboard =
+    async (projectId) => {
+      try {
+        setLoadingProject(
+          true
+        );
+
+        setError("");
+
+        const response =
+          await api.get(
+            `/client/projects/${projectId}/dashboard`
+          );
+
+        setDashboard(
+          response.data
+        );
+      } catch (error) {
+        console.error(
+          "Error loading dashboard:",
+          error
+        );
+
+        setDashboard(null);
+
+        setError(
+          typeof error.response?.data ===
+            "string"
+            ? error.response.data
+            : error.response?.data
+                ?.message ||
+              "Unable to load project dashboard."
+        );
+      } finally {
+        setLoadingProject(
+          false
+        );
+      }
+    };
+
+  const loadSitePhotos =
+    async (projectId) => {
+      try {
+        setLoadingPhotos(
+          true
+        );
+
+        const response =
+          await api.get(
+            `/client/projects/${projectId}/site-photos`
+          );
+
+        const photoList =
+          response.data || [];
+
+        setPhotos(
+          photoList
+        );
+
+        await loadPhotoFiles(
+          projectId,
+          photoList
+        );
+      } catch (error) {
+        console.error(
+          "Error loading client site photos:",
+          error
+        );
+
+        revokePhotoUrls();
+
+        setPhotoUrls({});
+        setPhotos([]);
+      } finally {
+        setLoadingPhotos(
+          false
+        );
+      }
+    };
+
+  const loadPhotoFiles =
+    async (
+      projectId,
+      photoList
+    ) => {
+      revokePhotoUrls();
+
+      const newUrls = {};
+
+      for (
+        const photo of photoList
+      ) {
+        try {
+          const response =
+            await api.get(
+              `/client/projects/${projectId}/site-photos/${photo.id}/file`,
+              {
+                responseType:
+                  "blob",
+              }
+            );
+
+          newUrls[photo.id] =
+            URL.createObjectURL(
+              response.data
+            );
+        } catch (error) {
+          console.error(
+            `Unable to load photo ${photo.id}:`,
+            error
+          );
+        }
+      }
+
+      setPhotoUrls(
+        newUrls
       );
-    } finally {
-      setLoadingProject(false);
-    }
-  };
+    };
 
   const handleProjectChange =
     async (e) => {
@@ -124,12 +279,14 @@ function ClientPortal() {
         projectId
       );
 
-      await loadDashboard(
+      await loadProjectData(
         projectId
       );
     };
 
   const handleLogout = () => {
+    revokePhotoUrls();
+
     localStorage.removeItem(
       "isAuthenticated"
     );
@@ -146,7 +303,12 @@ function ClientPortal() {
       "token"
     );
 
-    navigate("/login");
+    navigate(
+      "/login",
+      {
+        replace: true,
+      }
+    );
   };
 
   const formatCurrency = (
@@ -177,13 +339,14 @@ function ClientPortal() {
     }
 
     return new Date(
-      value
+      `${value}T00:00:00`
     ).toLocaleDateString();
   };
 
   const physicalProgress =
     Number(
-      dashboard?.physicalProgress ||
+      dashboard
+        ?.physicalProgress ||
         0
     );
 
@@ -198,13 +361,15 @@ function ClientPortal() {
 
   const projectValue =
     Number(
-      dashboard?.projectValue ||
+      dashboard
+        ?.projectValue ||
         0
     );
 
   const totalPaid =
     Number(
-      dashboard?.totalPaid ||
+      dashboard
+        ?.totalPaid ||
         0
     );
 
@@ -223,15 +388,14 @@ function ClientPortal() {
   if (loading) {
     return (
       <div className="dashboard-loading">
-        Loading client portal...
+        Loading client
+        portal...
       </div>
     );
   }
 
   return (
     <div className="app-layout client-portal">
-      {/* SIDEBAR */}
-
       <aside className="sidebar">
         <div className="brand">
           <h2>CPMS</h2>
@@ -253,11 +417,13 @@ function ClientPortal() {
         <div className="sidebar-footer">
           <div className="logged-user">
             <p>
-              {username || "Client"}
+              {username ||
+                "Client"}
             </p>
 
             <span>
-              {role || "CLIENT"}
+              {role ||
+                "CLIENT"}
             </span>
           </div>
 
@@ -273,8 +439,6 @@ function ClientPortal() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
-
       <main className="main-content">
         <div className="dashboard-header">
           <div>
@@ -283,13 +447,15 @@ function ClientPortal() {
             </h1>
 
             <p>
-              View project progress,
-              payments and latest site
+              View project
+              progress, payments
+              and latest site
               information.
             </p>
           </div>
 
-          {projects.length > 0 && (
+          {projects.length >
+            0 && (
             <select
               className="project-filter"
               value={
@@ -300,24 +466,30 @@ function ClientPortal() {
               }
             >
               {projects.map(
-                (project) => (
-                  <option
-                    key={
-                      project.projectId
-                    }
-                    value={
-                      project.projectId
-                    }
-                  >
-                    {
-                      project.projectName
-                    }
+                (project) => {
+                  const projectId =
+                    project.projectId ??
+                    project.id;
 
-                    {project.location
-                      ? ` - ${project.location}`
-                      : ""}
-                  </option>
-                )
+                  return (
+                    <option
+                      key={
+                        projectId
+                      }
+                      value={
+                        projectId
+                      }
+                    >
+                      {
+                        project.projectName
+                      }
+
+                      {project.location
+                        ? ` - ${project.location}`
+                        : ""}
+                    </option>
+                  );
+                }
               )}
             </select>
           )}
@@ -325,7 +497,9 @@ function ClientPortal() {
 
         {error && (
           <div className="alert alert-error">
-            <span>{error}</span>
+            <span>
+              {error}
+            </span>
           </div>
         )}
 
@@ -333,13 +507,15 @@ function ClientPortal() {
         0 ? (
           <div className="form-card">
             <h2>
-              No Projects Assigned
+              No Projects
+              Assigned
             </h2>
 
             <p>
-              There are currently no
-              projects assigned to your
-              account.
+              There are
+              currently no
+              projects assigned
+              to your account.
             </p>
           </div>
         ) : loadingProject ? (
@@ -349,8 +525,6 @@ function ClientPortal() {
           </div>
         ) : dashboard ? (
           <>
-            {/* PROJECT INFO */}
-
             <div className="selected-project-info">
               <div>
                 <h2>
@@ -393,7 +567,8 @@ function ClientPortal() {
 
                 <p>
                   <strong>
-                    Expected Completion:
+                    Expected
+                    Completion:
                   </strong>{" "}
                   {formatDate(
                     dashboard.endDate
@@ -401,8 +576,6 @@ function ClientPortal() {
                 </p>
               </div>
             </div>
-
-            {/* MAIN SUMMARY CARDS */}
 
             <div className="client-summary-grid">
               <div className="client-summary-card blue">
@@ -430,7 +603,8 @@ function ClientPortal() {
 
               <div className="client-summary-card green">
                 <p>
-                  Physical Progress
+                  Physical
+                  Progress
                 </p>
 
                 <h2>
@@ -469,11 +643,7 @@ function ClientPortal() {
               </div>
             </div>
 
-            {/* SECOND ROW */}
-
             <div className="client-detail-grid">
-              {/* PAYMENT */}
-
               <div className="form-card client-section-card">
                 <h2>
                   Payment Summary
@@ -525,12 +695,13 @@ function ClientPortal() {
                 </div>
 
                 <p className="client-muted-text">
-                  {paymentPercentage}% of
-                  project value paid.
+                  {
+                    paymentPercentage
+                  }
+                  % of project value
+                  paid.
                 </p>
               </div>
-
-              {/* PROJECT TIME */}
 
               <div className="form-card client-section-card">
                 <h2>
@@ -539,7 +710,8 @@ function ClientPortal() {
 
                 <div className="client-stat-row">
                   <span>
-                    Total Project Days
+                    Total Project
+                    Days
                   </span>
 
                   <strong>
@@ -571,11 +743,10 @@ function ClientPortal() {
                 </div>
               </div>
 
-              {/* LATEST SITE UPDATE */}
-
               <div className="form-card client-section-card">
                 <h2>
-                  Latest Site Update
+                  Latest Site
+                  Update
                 </h2>
 
                 {dashboard.latestProgressDate ? (
@@ -631,14 +802,189 @@ function ClientPortal() {
                   </>
                 ) : (
                   <p className="client-muted-text">
-                    No daily progress
-                    record available yet.
+                    No daily
+                    progress record
+                    available yet.
                   </p>
                 )}
               </div>
             </div>
 
-            {/* PROJECT HEALTH */}
+            {/* SITE PHOTOS */}
+
+            <div
+              className="form-card"
+              style={{
+                marginTop:
+                  "24px",
+              }}
+            >
+              <div
+                style={{
+                  display:
+                    "flex",
+                  justifyContent:
+                    "space-between",
+                  alignItems:
+                    "center",
+                  gap: "15px",
+                  marginBottom:
+                    "20px",
+                }}
+              >
+                <div>
+                  <h2>
+                    Site Photos
+                  </h2>
+
+                  <p className="client-muted-text">
+                    Latest approved
+                    site progress
+                    photos.
+                  </p>
+                </div>
+
+                {!loadingPhotos && (
+                  <strong>
+                    {photos.length}{" "}
+                    photo(s)
+                  </strong>
+                )}
+              </div>
+
+              {loadingPhotos ? (
+                <p>
+                  Loading site
+                  photos...
+                </p>
+              ) : photos.length ===
+                0 ? (
+                <p className="client-muted-text">
+                  No site photos
+                  are available for
+                  client viewing
+                  yet.
+                </p>
+              ) : (
+                <div
+                  style={{
+                    display:
+                      "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fit, minmax(250px, 1fr))",
+                    gap:
+                      "20px",
+                  }}
+                >
+                  {photos.map(
+                    (photo) => (
+                      <div
+                        key={
+                          photo.id
+                        }
+                        style={{
+                          border:
+                            "1px solid #e5e7eb",
+                          borderRadius:
+                            "12px",
+                          overflow:
+                            "hidden",
+                          background:
+                            "#ffffff",
+                        }}
+                      >
+                        {photoUrls[
+                          photo.id
+                        ] ? (
+                          <img
+                            src={
+                              photoUrls[
+                                photo.id
+                              ]
+                            }
+                            alt={
+                              photo.caption ||
+                              "Site progress"
+                            }
+                            style={{
+                              width:
+                                "100%",
+                              height:
+                                "220px",
+                              objectFit:
+                                "cover",
+                              display:
+                                "block",
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              height:
+                                "220px",
+                              display:
+                                "flex",
+                              alignItems:
+                                "center",
+                              justifyContent:
+                                "center",
+                              background:
+                                "#f3f4f6",
+                            }}
+                          >
+                            Photo
+                            unavailable
+                          </div>
+                        )}
+
+                        <div
+                          style={{
+                            padding:
+                              "16px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display:
+                                "flex",
+                              justifyContent:
+                                "space-between",
+                              alignItems:
+                                "center",
+                              gap:
+                                "10px",
+                              marginBottom:
+                                "10px",
+                            }}
+                          >
+                            <strong>
+                              {photo.category ||
+                                "SITE PHOTO"}
+                            </strong>
+
+                            <span
+                              style={{
+                                fontSize:
+                                  "12px",
+                              }}
+                            >
+                              {formatDate(
+                                photo.photoDate
+                              )}
+                            </span>
+                          </div>
+
+                          <p>
+                            {photo.caption ||
+                              "Project site progress photo."}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
 
             <div className="form-card client-health-card">
               <div>
@@ -705,8 +1051,6 @@ function ClientPortal() {
               </div>
             </div>
 
-            {/* FUTURE WEATHER */}
-
             <div className="form-card">
               <h2>
                 Site Weather
@@ -714,9 +1058,10 @@ function ClientPortal() {
 
               <p className="client-muted-text">
                 Weather, rain
-                probability and site
-                forecast will be added
-                in the next phase.
+                probability and
+                site forecast will
+                be added in a later
+                phase.
               </p>
             </div>
           </>

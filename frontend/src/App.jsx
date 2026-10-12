@@ -29,11 +29,11 @@ import Workers from "./pages/Workers";
 import LabourAttendance from "./pages/LabourAttendance";
 import LabourPayments from "./pages/LabourPayments";
 
+import MaterialRequests from "./pages/MaterialRequests";
+import SitePhotos from "./pages/SitePhotos";
+
 import ClientPortal from "./pages/ClientPortal";
 
-/*
- * NEW SUPERVISOR STRUCTURE
- */
 import SupervisorLayout from "./components/supervisor/SupervisorLayout";
 import SupervisorDashboard from "./pages/supervisor/SupervisorDashboard";
 import SupervisorProgress from "./pages/supervisor/SupervisorProgress";
@@ -45,51 +45,27 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
 function logoutAndGoToLogin(navigate) {
-  localStorage.removeItem(
-    "isAuthenticated"
-  );
-
-  localStorage.removeItem(
-    "username"
-  );
-
-  localStorage.removeItem(
-    "role"
-  );
-
-  localStorage.removeItem(
-    "token"
-  );
+  localStorage.removeItem("isAuthenticated");
+  localStorage.removeItem("username");
+  localStorage.removeItem("role");
+  localStorage.removeItem("token");
 
   navigate("/login", {
     replace: true,
   });
 }
 
-/*
- * =====================================================
- * ADMIN / MANAGER LAYOUT
- * =====================================================
- */
-
 function AdminLayout() {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
   const role =
-    localStorage.getItem(
-      "role"
-    );
+    localStorage.getItem("role");
 
   const username =
-    localStorage.getItem(
-      "username"
-    );
+    localStorage.getItem("username");
 
   const handleLogout = () => {
-    logoutAndGoToLogin(
-      navigate
-    );
+    logoutAndGoToLogin(navigate);
   };
 
   return (
@@ -159,6 +135,14 @@ function AdminLayout() {
             Labour Payments
           </NavLink>
 
+          <NavLink to="/material-requests">
+            Material Requests
+          </NavLink>
+
+          <NavLink to="/site-photos">
+            Site Photos
+          </NavLink>
+
           <NavLink to="/accounts">
             Accounts / Payment Register
           </NavLink>
@@ -198,9 +182,7 @@ function AdminLayout() {
           <button
             type="button"
             className="logout-button"
-            onClick={
-              handleLogout
-            }
+            onClick={handleLogout}
           >
             Logout
           </button>
@@ -301,6 +283,20 @@ function AdminLayout() {
           />
 
           <Route
+            path="/material-requests"
+            element={
+              <MaterialRequests />
+            }
+          />
+
+          <Route
+            path="/site-photos"
+            element={
+              <SitePhotos />
+            }
+          />
+
+          <Route
             path="/accounts"
             element={
               <Accounts />
@@ -357,24 +353,11 @@ function AdminLayout() {
   );
 }
 
-/*
- * =====================================================
- * ROLE BASED AREA
- * =====================================================
- */
-
 function RoleBasedProtectedArea() {
   const role =
-    localStorage.getItem(
-      "role"
-    );
+    localStorage.getItem("role");
 
-  /*
-   * CLIENT
-   */
-  if (
-    role === "CLIENT"
-  ) {
+  if (role === "CLIENT") {
     return (
       <Routes>
         <Route
@@ -397,18 +380,7 @@ function RoleBasedProtectedArea() {
     );
   }
 
-  /*
-   * SUPERVISOR
-   *
-   * New nested layout:
-   *
-   * /supervisor
-   * /supervisor/progress
-   * /supervisor/material-requests
-   */
-  if (
-    role === "SUPERVISOR"
-  ) {
+  if (role === "SUPERVISOR") {
     return (
       <Routes>
         <Route
@@ -439,39 +411,11 @@ function RoleBasedProtectedArea() {
           />
 
           <Route
-  path="/supervisor"
-  element={
-    <SupervisorLayout />
-  }
->
-  <Route
-    index
-    element={
-      <SupervisorDashboard />
-    }
-  />
-
-  <Route
-    path="progress"
-    element={
-      <SupervisorProgress />
-    }
-  />
-
-  <Route
-    path="material-requests"
-    element={
-      <SupervisorMaterialRequests />
-    }
-  />
-
-  <Route
-    path="site-photos"
-    element={
-      <SupervisorSitePhotos />
-    }
-  />
-</Route>
+            path="site-photos"
+            element={
+              <SupervisorSitePhotos />
+            }
+          />
         </Route>
 
         <Route
@@ -487,9 +431,6 @@ function RoleBasedProtectedArea() {
     );
   }
 
-  /*
-   * ADMIN / MANAGER
-   */
   if (
     role === "ADMIN" ||
     role === "MANAGER"
@@ -499,9 +440,6 @@ function RoleBasedProtectedArea() {
     );
   }
 
-  /*
-   * UNKNOWN ROLE
-   */
   return (
     <Navigate
       to="/login"
@@ -509,12 +447,6 @@ function RoleBasedProtectedArea() {
     />
   );
 }
-
-/*
- * =====================================================
- * MAIN APP
- * =====================================================
- */
 
 function App() {
   return (

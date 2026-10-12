@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import {
   NavLink,
   Outlet,
@@ -10,132 +14,200 @@ import api from "../../services/api";
 function SupervisorLayout() {
   const navigate = useNavigate();
 
-  const [projects, setProjects] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] =
+  const [projects, setProjects] =
+    useState([]);
+
+  const [
+    selectedProjectId,
+    setSelectedProjectId,
+  ] = useState("");
+
+  const [
+    selectedProject,
+    setSelectedProject,
+  ] = useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [
+    loadingProject,
+    setLoadingProject,
+  ] = useState(false);
+
+  const [error, setError] =
     useState("");
-  const [selectedProject, setSelectedProject] =
-    useState(null);
-
-  const [loading, setLoading] = useState(true);
-  const [loadingProject, setLoadingProject] =
-    useState(false);
-
-  const [error, setError] = useState("");
 
   const username =
-    localStorage.getItem("username");
-
-  const role =
-    localStorage.getItem("role");
+    localStorage.getItem(
+      "username"
+    );
 
   useEffect(() => {
     loadProjects();
   }, []);
 
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const response =
-        await api.get(
-          "/supervisor/projects"
-        );
-
-      const data =
-        response.data || [];
-
-      setProjects(data);
-
-      if (data.length > 0) {
-        const firstId =
-          data[0].projectId;
-
-        setSelectedProjectId(
-          String(firstId)
-        );
-
-        await loadProject(
-          firstId
-        );
-      } else {
-        setSelectedProject(null);
-      }
-    } catch (error) {
-      console.error(
-        "Error loading supervisor projects:",
-        error
-      );
-
-      setError(
-        typeof error.response?.data ===
-          "string"
-          ? error.response.data
-          : error.response?.data?.message ||
-            "Unable to load assigned sites."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadProject = async (
-    projectId
+  const getProjectId = (
+    project
   ) => {
-    if (!projectId) {
-      setSelectedProject(null);
-      return;
-    }
+    return (
+      project?.projectId ??
+      project?.id ??
+      ""
+    );
+  };
 
-    try {
-      setLoadingProject(true);
-      setError("");
+  const loadProjects =
+    async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-      const response =
-        await api.get(
-          `/supervisor/projects/${projectId}`
+        const response =
+          await api.get(
+            "/supervisor/projects"
+          );
+
+        const data =
+          response.data || [];
+
+        setProjects(data);
+
+        if (data.length > 0) {
+          const firstProjectId =
+            String(
+              getProjectId(
+                data[0]
+              )
+            );
+
+          if (
+            !firstProjectId ||
+            firstProjectId ===
+              "undefined" ||
+            firstProjectId ===
+              "null"
+          ) {
+            setError(
+              "Assigned project ID was not found."
+            );
+
+            setSelectedProjectId(
+              ""
+            );
+
+            setSelectedProject(
+              null
+            );
+
+            return;
+          }
+
+          setSelectedProjectId(
+            firstProjectId
+          );
+
+          await loadProject(
+            firstProjectId
+          );
+        } else {
+          setSelectedProjectId(
+            ""
+          );
+
+          setSelectedProject(
+            null
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Error loading supervisor projects:",
+          error
         );
 
-      setSelectedProject(
-        response.data
-      );
-    } catch (error) {
-      console.error(
-        "Error loading site:",
-        error
-      );
+        setError(
+          typeof error.response
+            ?.data === "string"
+            ? error.response.data
+            : "Unable to load assigned projects."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setSelectedProject(null);
+  const loadProject =
+    async (projectId) => {
+      if (!projectId) {
+        setSelectedProject(
+          null
+        );
+        return;
+      }
 
-      setError(
-        typeof error.response?.data ===
-          "string"
-          ? error.response.data
-          : error.response?.data?.message ||
-            "Unable to load site details."
-      );
-    } finally {
-      setLoadingProject(false);
-    }
-  };
+      try {
+        setLoadingProject(
+          true
+        );
+
+        setError("");
+
+        const response =
+          await api.get(
+            `/supervisor/projects/${projectId}`
+          );
+
+        setSelectedProject(
+          response.data || null
+        );
+      } catch (error) {
+        console.error(
+          "Error loading project:",
+          error
+        );
+
+        setSelectedProject(
+          null
+        );
+
+        setError(
+          typeof error.response
+            ?.data === "string"
+            ? error.response.data
+            : "Unable to load project details."
+        );
+      } finally {
+        setLoadingProject(
+          false
+        );
+      }
+    };
 
   const handleProjectChange =
     async (e) => {
-      const projectId =
+      const value =
         e.target.value;
 
       setSelectedProjectId(
-        projectId
+        value
       );
 
-      await loadProject(
-        projectId
-      );
+      if (value) {
+        await loadProject(
+          value
+        );
+      } else {
+        setSelectedProject(
+          null
+        );
+      }
     };
 
   const refreshSelectedProject =
     async () => {
-      if (selectedProjectId) {
+      if (
+        selectedProjectId
+      ) {
         await loadProject(
           selectedProjectId
         );
@@ -166,14 +238,6 @@ function SupervisorLayout() {
       }
     );
   };
-
-  if (loading) {
-    return (
-      <div className="dashboard-loading">
-        Loading supervisor portal...
-      </div>
-    );
-  }
 
   return (
     <div className="app-layout">
@@ -212,20 +276,19 @@ function SupervisorLayout() {
             Site Photos
           </NavLink>
         </nav>
-        
 
         <div className="sidebar-footer">
-          <div className="logged-user">
-            <p>
-              {username ||
-                "Supervisor"}
-            </p>
+          {username && (
+            <div className="logged-user">
+              <p>
+                {username}
+              </p>
 
-            <span>
-              {role ||
-                "SUPERVISOR"}
-            </span>
-          </div>
+              <span>
+                SUPERVISOR
+              </span>
+            </div>
+          )}
 
           <button
             type="button"
@@ -252,38 +315,56 @@ function SupervisorLayout() {
             </p>
           </div>
 
-          {projects.length > 0 && (
+          <div>
             <select
-              className="project-filter"
               value={
                 selectedProjectId
               }
               onChange={
                 handleProjectChange
               }
+              disabled={
+                loading ||
+                projects.length ===
+                  0
+              }
             >
-              {projects.map(
-                (project) => (
-                  <option
-                    key={
-                      project.projectId
-                    }
-                    value={
-                      project.projectId
-                    }
-                  >
-                    {
-                      project.projectName
-                    }
+              {projects.length ===
+              0 ? (
+                <option value="">
+                  No assigned projects
+                </option>
+              ) : (
+                projects.map(
+                  (project) => {
+                    const projectId =
+                      getProjectId(
+                        project
+                      );
 
-                    {project.location
-                      ? ` - ${project.location}`
-                      : ""}
-                  </option>
+                    return (
+                      <option
+                        key={
+                          projectId
+                        }
+                        value={
+                          projectId
+                        }
+                      >
+                        {project.projectName ||
+                          project.name ||
+                          `Project ${projectId}`}
+
+                        {project.location
+                          ? ` - ${project.location}`
+                          : ""}
+                      </option>
+                    );
+                  }
                 )
               )}
             </select>
-          )}
+          </div>
         </div>
 
         {error && (
@@ -292,27 +373,20 @@ function SupervisorLayout() {
           </div>
         )}
 
-        {projects.length === 0 ? (
+        {loading ? (
           <div className="form-card">
-            <h2>
-              No Sites Assigned
-            </h2>
-
             <p>
-              No project/site is
-              currently assigned to
-              this supervisor account.
+              Loading assigned
+              projects...
             </p>
-          </div>
-        ) : loadingProject ? (
-          <div className="dashboard-loading">
-            Loading site details...
           </div>
         ) : (
           <Outlet
             context={{
+              projects,
               selectedProjectId,
               selectedProject,
+              loadingProject,
               refreshSelectedProject,
             }}
           />
