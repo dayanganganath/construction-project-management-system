@@ -105,9 +105,14 @@ button {
   display: flex;
   align-items: center;
 
+  width: 100%;
+
   min-height: 44px;
 
   padding: 11px 14px;
+
+  border: none;
+  outline: none;
 
   border-radius: 8px;
 
@@ -119,6 +124,8 @@ button {
   font-weight: 500;
 
   line-height: 1.4;
+
+  box-shadow: none;
 
   transition:
     background 0.2s ease,
@@ -132,6 +139,32 @@ button {
 
 .nav-menu a.active {
   background: #2563eb;
+  color: #ffffff !important;
+
+  border: none;
+  outline: none;
+
+  box-shadow: none;
+}
+
+.nav-menu a:focus,
+.nav-menu a:focus-visible,
+.nav-menu a.active:focus,
+.nav-menu a.active:focus-visible {
+  border: none;
+  outline: none;
+
+  box-shadow: none;
+}
+
+/* Notifications uses nested span.
+   Make sure it does not change active-link styling. */
+
+.nav-menu a > span {
+  color: inherit;
+}
+
+.nav-menu a.active > span {
   color: #ffffff !important;
 }
 
@@ -205,8 +238,6 @@ button {
 
   color: #111827;
 }
-
-/* All normal content text */
 
 .main-content h1,
 .main-content h2,
@@ -438,8 +469,6 @@ button {
   align-items: end;
 }
 
-/* All fields */
-
 input,
 select,
 textarea {
@@ -512,8 +541,6 @@ label {
   font-size: 14px;
   font-weight: 600;
 }
-
-/* Checkbox */
 
 .checkbox-label {
   display: flex;
@@ -681,8 +708,6 @@ label {
 .data-table tbody tr:hover td {
   background: #f8fafc;
 }
-
-/* Keep action buttons neat */
 
 .data-table td:last-child {
   white-space: nowrap;
@@ -893,7 +918,6 @@ label {
 
 /* =========================================================
    CLIENT PORTAL
-   SAME STYLE AS ADMIN
    ========================================================= */
 
 .client-portal {
@@ -927,9 +951,7 @@ label {
 
   background: #ffffff;
 
-  border:
-    1px solid
-    #e5e7eb;
+  border: 1px solid #e5e7eb;
 
   border-radius: 12px;
 
@@ -1270,39 +1292,24 @@ label {
    GENERIC TEXT VISIBILITY PROTECTION
    ========================================================= */
 
-.main-content
-  input,
-.main-content
-  select,
-.main-content
-  textarea {
+.main-content input,
+.main-content select,
+.main-content textarea {
   color: #111827 !important;
 }
 
-.main-content
-  input::placeholder,
-.main-content
-  textarea::placeholder {
+.main-content input::placeholder,
+.main-content textarea::placeholder {
   color: #6b7280 !important;
 }
 
-.main-content
-  select
-  option {
+.main-content select option {
   color: #111827 !important;
 }
 
-/* Prevent accidental white/faded headings */
-
-.main-content
-  .form-card
-  h2,
-.main-content
-  .table-card
-  h2,
-.main-content
-  .selected-project-info
-  h2 {
+.main-content .form-card h2,
+.main-content .table-card h2,
+.main-content .selected-project-info h2 {
   color: #111827 !important;
 }
 
@@ -1414,8 +1421,7 @@ label {
   .dashboard-grid,
   .client-summary-grid,
   .client-detail-grid {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
   }
 
   .client-form,
@@ -1425,8 +1431,7 @@ label {
   .payment-form,
   .progress-form,
   .user-form {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
   }
 
   .project-info-details {
@@ -1507,11 +1512,63 @@ label {
   }
 
   .client-health-grid {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
   }
 
   .login-card {
     padding: 24px 20px;
   }
+}
+
+.notification-nav-content {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  color: #e5e7eb !important;
+}
+
+.notification-nav-text {
+  color: #e5e7eb !important;
+}
+
+.nav-menu a:hover .notification-nav-text,
+.nav-menu a.active .notification-nav-text {
+  color: #ffffff !important;
+}
+
+.notification-badge {
+  min-width: 22px;
+  height: 22px;
+
+  padding: 0 6px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+
+  background: #ef4444 !important;
+  color: #ffffff !important;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  line-height: 1;
+}
+
+.nav-menu a.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.nav-menu a:focus,
+.nav-menu a:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }

@@ -1,6 +1,7 @@
 package com.skyward.projectmanagement.service;
 
 import com.skyward.projectmanagement.entity.MaterialRequest;
+import com.skyward.projectmanagement.entity.Notification;
 import com.skyward.projectmanagement.entity.User;
 import com.skyward.projectmanagement.model.Project;
 
@@ -21,12 +22,14 @@ public class MaterialRequestService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final SupervisorPortalService supervisorPortalService;
+    private final NotificationService notificationService;
 
     public MaterialRequestService(
             MaterialRequestRepository materialRequestRepository,
             ProjectRepository projectRepository,
             UserRepository userRepository,
-            SupervisorPortalService supervisorPortalService
+            SupervisorPortalService supervisorPortalService,
+            NotificationService notificationService
     ) {
         this.materialRequestRepository =
                 materialRequestRepository;
@@ -39,6 +42,9 @@ public class MaterialRequestService {
 
         this.supervisorPortalService =
                 supervisorPortalService;
+
+        this.notificationService =
+                notificationService;
     }
 
     /*
@@ -91,10 +97,6 @@ public class MaterialRequestService {
             );
         }
 
-        /*
-         * Never trust frontend status.
-         * Every new request starts as PENDING.
-         */
         request.setStatus(
                 MaterialRequest
                         .RequestStatus
@@ -105,8 +107,26 @@ public class MaterialRequestService {
         request.setReviewedDate(null);
         request.setReviewRemarks(null);
 
-        return materialRequestRepository
-                .save(request);
+        MaterialRequest savedRequest =
+                materialRequestRepository
+                        .save(request);
+
+        notificationService
+                .createNotification(
+                        "New Material Request",
+                        username
+                                + " requested "
+                                + savedRequest.getMaterialName()
+                                + " for "
+                                + project.getProjectName(),
+                        Notification.NotificationType.MATERIAL_REQUEST,
+                        username,
+                        savedRequest.getId(),
+                        "MATERIAL_REQUEST",
+                        project
+                );
+
+        return savedRequest;
     }
 
     public List<MaterialRequest>
@@ -128,7 +148,9 @@ public class MaterialRequestService {
         }
 
         return materialRequestRepository
-                .findByProjectId(projectId);
+                .findByProjectId(
+                        projectId
+                );
     }
 
     /*
@@ -162,7 +184,9 @@ public class MaterialRequestService {
 
         if (
                 !projectRepository
-                        .existsById(projectId)
+                        .existsById(
+                                projectId
+                        )
         ) {
             throw new RuntimeException(
                     "Project not found."
@@ -170,10 +194,13 @@ public class MaterialRequestService {
         }
 
         return materialRequestRepository
-                .findByProjectId(projectId);
+                .findByProjectId(
+                        projectId
+                );
     }
 
-    public MaterialRequest getByIdForManagement(
+    public MaterialRequest
+    getByIdForManagement(
             String username,
             Long requestId
     ) {
@@ -207,6 +234,7 @@ public class MaterialRequestService {
                 newStatus;
 
         try {
+
             newStatus =
                     MaterialRequest
                             .RequestStatus
@@ -215,7 +243,9 @@ public class MaterialRequestService {
                                             .trim()
                                             .toUpperCase()
                             );
+
         } catch (Exception e) {
+
             throw new RuntimeException(
                     "Status must be APPROVED or REJECTED."
             );
@@ -251,13 +281,15 @@ public class MaterialRequestService {
 
         request.setReviewRemarks(
                 remarks == null ||
-                        remarks.isBlank()
+                remarks.isBlank()
                         ? null
                         : remarks.trim()
         );
 
         return materialRequestRepository
-                .save(request);
+                .save(
+                        request
+                );
     }
 
     /*
@@ -266,12 +298,15 @@ public class MaterialRequestService {
      * =========================================================
      */
 
-    private MaterialRequest getRequestById(
+    private MaterialRequest
+    getRequestById(
             Long requestId
     ) {
 
         return materialRequestRepository
-                .findById(requestId)
+                .findById(
+                        requestId
+                )
                 .orElseThrow(() ->
                         new RuntimeException(
                                 "Material request not found."
@@ -279,7 +314,8 @@ public class MaterialRequestService {
                 );
     }
 
-    private User requireManagementUser(
+    private User
+    requireManagementUser(
             String username
     ) {
 
@@ -367,12 +403,14 @@ public class MaterialRequestService {
         }
 
         request.setMaterialName(
-                request.getMaterialName()
+                request
+                        .getMaterialName()
                         .trim()
         );
 
         request.setUnit(
-                request.getUnit()
+                request
+                        .getUnit()
                         .trim()
         );
     }

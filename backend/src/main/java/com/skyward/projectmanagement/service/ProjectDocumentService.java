@@ -1,5 +1,6 @@
 package com.skyward.projectmanagement.service;
 
+import com.skyward.projectmanagement.entity.Notification;
 import com.skyward.projectmanagement.entity.ProjectDocument;
 import com.skyward.projectmanagement.entity.User;
 import com.skyward.projectmanagement.model.Project;
@@ -31,7 +32,8 @@ public class ProjectDocumentService {
     private static final long MAX_FILE_SIZE =
             25L * 1024L * 1024L;
 
-    private static final Set<String> ALLOWED_EXTENSIONS =
+    private static final Set<String>
+            ALLOWED_EXTENSIONS =
             Set.of(
                     ".pdf",
                     ".doc",
@@ -58,6 +60,9 @@ public class ProjectDocumentService {
     private final SupervisorPortalService
             supervisorPortalService;
 
+    private final NotificationService
+            notificationService;
+
     private final Path uploadDirectory;
 
     public ProjectDocumentService(
@@ -65,6 +70,7 @@ public class ProjectDocumentService {
             ProjectRepository projectRepository,
             UserRepository userRepository,
             SupervisorPortalService supervisorPortalService,
+            NotificationService notificationService,
             @Value(
                     "${app.upload.project-documents-dir:uploads/project-documents}"
             )
@@ -83,6 +89,9 @@ public class ProjectDocumentService {
         this.supervisorPortalService =
                 supervisorPortalService;
 
+        this.notificationService =
+                notificationService;
+
         this.uploadDirectory =
                 Paths.get(
                         uploadDirectory
@@ -91,10 +100,13 @@ public class ProjectDocumentService {
                 .normalize();
 
         try {
+
             Files.createDirectories(
                     this.uploadDirectory
             );
+
         } catch (IOException e) {
+
             throw new RuntimeException(
                     "Unable to create project document upload directory.",
                     e
@@ -212,10 +224,6 @@ public class ProjectDocumentService {
                 username
         );
 
-        /*
-         * Supervisor cannot expose
-         * documents to clients directly.
-         */
         document.setClientVisible(
                 false
         );
@@ -224,10 +232,28 @@ public class ProjectDocumentService {
                 project
         );
 
-        return projectDocumentRepository
-                .save(
-                        document
+        ProjectDocument savedDocument =
+                projectDocumentRepository
+                        .save(
+                                document
+                        );
+
+        notificationService
+                .createNotification(
+                        "New Project Document",
+                        username
+                                + " uploaded "
+                                + savedDocument.getTitle()
+                                + " - "
+                                + project.getProjectName(),
+                        Notification.NotificationType.DOCUMENT_UPLOAD,
+                        username,
+                        savedDocument.getId(),
+                        "PROJECT_DOCUMENT",
+                        project
                 );
+
+        return savedDocument;
     }
 
     public List<ProjectDocument>
@@ -483,9 +509,11 @@ public class ProjectDocumentService {
     ) {
 
         if (
-                document.getProject() == null ||
+                document.getProject() == null
+                        ||
                 document.getProject()
-                        .getId() == null ||
+                        .getId() == null
+                        ||
                 !document.getProject()
                         .getId()
                         .equals(
@@ -504,7 +532,8 @@ public class ProjectDocumentService {
     ) {
 
         if (
-                title == null ||
+                title == null
+                        ||
                 title.isBlank()
         ) {
             throw new RuntimeException(
@@ -513,7 +542,8 @@ public class ProjectDocumentService {
         }
 
         if (
-                file == null ||
+                file == null
+                        ||
                 file.isEmpty()
         ) {
             throw new RuntimeException(
@@ -522,7 +552,8 @@ public class ProjectDocumentService {
         }
 
         if (
-                file.getSize() >
+                file.getSize()
+                        >
                 MAX_FILE_SIZE
         ) {
             throw new RuntimeException(
@@ -561,7 +592,8 @@ public class ProjectDocumentService {
                 file.getOriginalFilename();
 
         if (
-                originalName == null ||
+                originalName == null
+                        ||
                 originalName.isBlank()
         ) {
             throw new RuntimeException(
@@ -597,9 +629,10 @@ public class ProjectDocumentService {
                 );
 
         if (
-                index < 0 ||
+                index < 0
+                        ||
                 index ==
-                fileName.length() - 1
+                        fileName.length() - 1
         ) {
             return "";
         }
@@ -685,7 +718,8 @@ public class ProjectDocumentService {
                     );
 
             if (
-                    !resource.exists() ||
+                    !resource.exists()
+                            ||
                     !resource.isReadable()
             ) {
                 throw new RuntimeException(

@@ -7,6 +7,13 @@ import {
   Navigate,
 } from "react-router-dom";
 
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import api from "./services/api";
+
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import Projects from "./pages/Projects";
@@ -33,6 +40,7 @@ import MaterialRequests from "./pages/MaterialRequests";
 import SitePhotos from "./pages/SitePhotos";
 import SiteIssues from "./pages/SiteIssues";
 import ProjectDocuments from "./pages/ProjectDocuments";
+import Notifications from "./pages/Notifications";
 
 import ClientPortal from "./pages/ClientPortal";
 
@@ -49,37 +57,160 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
 function logoutAndGoToLogin(navigate) {
-  localStorage.removeItem("isAuthenticated");
-  localStorage.removeItem("username");
-  localStorage.removeItem("role");
-  localStorage.removeItem("token");
+  localStorage.removeItem(
+    "isAuthenticated"
+  );
 
-  navigate("/login", {
-    replace: true,
-  });
+  localStorage.removeItem(
+    "username"
+  );
+
+  localStorage.removeItem(
+    "role"
+  );
+
+  localStorage.removeItem(
+    "token"
+  );
+
+  navigate(
+    "/login",
+    {
+      replace: true,
+    }
+  );
 }
 
 function AdminLayout() {
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
-  const role = localStorage.getItem("role");
-  const username = localStorage.getItem("username");
+  const role =
+    localStorage.getItem(
+      "role"
+    );
 
-  const handleLogout = () => {
-    logoutAndGoToLogin(navigate);
-  };
+  const username =
+    localStorage.getItem(
+      "username"
+    );
+
+  const [
+    unreadNotificationCount,
+    setUnreadNotificationCount,
+  ] = useState(0);
+
+  useEffect(() => {
+    loadUnreadNotificationCount();
+
+    const handleUpdate =
+      () => {
+        loadUnreadNotificationCount();
+      };
+
+    window.addEventListener(
+      "notifications-updated",
+      handleUpdate
+    );
+
+    const interval =
+      setInterval(
+        () => {
+          loadUnreadNotificationCount();
+        },
+        30000
+      );
+
+    return () => {
+      window.removeEventListener(
+        "notifications-updated",
+        handleUpdate
+      );
+
+      clearInterval(
+        interval
+      );
+    };
+  }, []);
+
+  const loadUnreadNotificationCount =
+    async () => {
+      try {
+        const response =
+          await api.get(
+            "/notifications/unread-count"
+          );
+
+        setUnreadNotificationCount(
+          Number(
+            response.data?.count ||
+              0
+          )
+        );
+      } catch (error) {
+        console.error(
+          "Unable to load notification count:",
+          error
+        );
+
+        setUnreadNotificationCount(
+          0
+        );
+      }
+    };
+
+  const handleLogout =
+    () => {
+      logoutAndGoToLogin(
+        navigate
+      );
+    };
 
   return (
     <div className="app-layout">
       <aside className="sidebar">
         <div className="brand">
-          <h2>CPMS</h2>
-          <p>Construction Management</p>
+          <h2>
+            CPMS
+          </h2>
+
+          <p>
+            Construction
+            Management
+          </p>
         </div>
 
         <nav className="nav-menu">
-          <NavLink to="/" end>
+          <NavLink
+            to="/"
+            end
+          >
             Dashboard
+          </NavLink>
+
+          <NavLink
+            to="/notifications"
+            className={({ isActive }) =>
+              isActive
+                ? "active"
+                : ""
+            }
+          >
+            <div className="notification-nav-content">
+              <span className="notification-nav-text">
+                Notifications
+              </span>
+
+              {unreadNotificationCount >
+                0 && (
+                <span className="notification-badge">
+                  {unreadNotificationCount >
+                  99
+                    ? "99+"
+                    : unreadNotificationCount}
+                </span>
+              )}
+            </div>
           </NavLink>
 
           <NavLink to="/clients">
@@ -172,15 +303,22 @@ function AdminLayout() {
         <div className="sidebar-footer">
           {username && (
             <div className="logged-user">
-              <p>{username}</p>
-              <span>{role}</span>
+              <p>
+                {username}
+              </p>
+
+              <span>
+                {role}
+              </span>
             </div>
           )}
 
           <button
             type="button"
             className="logout-button"
-            onClick={handleLogout}
+            onClick={
+              handleLogout
+            }
           >
             Logout
           </button>
@@ -191,113 +329,163 @@ function AdminLayout() {
         <Routes>
           <Route
             path="/"
-            element={<Dashboard />}
+            element={
+              <Dashboard />
+            }
+          />
+
+          <Route
+            path="/notifications"
+            element={
+              <Notifications />
+            }
           />
 
           <Route
             path="/clients"
-            element={<Clients />}
+            element={
+              <Clients />
+            }
           />
 
           <Route
             path="/projects"
-            element={<Projects />}
+            element={
+              <Projects />
+            }
           />
 
           <Route
             path="/boq"
-            element={<Boq />}
+            element={
+              <Boq />
+            }
           />
 
           <Route
             path="/expenses"
-            element={<Expenses />}
+            element={
+              <Expenses />
+            }
           />
 
           <Route
             path="/payments"
-            element={<Payments />}
+            element={
+              <Payments />
+            }
           />
 
           <Route
             path="/contractors"
-            element={<Contractors />}
+            element={
+              <Contractors />
+            }
           />
 
           <Route
             path="/contractor-bills"
-            element={<ContractorBills />}
+            element={
+              <ContractorBills />
+            }
           />
 
           <Route
             path="/contractor-ledger"
-            element={<ContractorLedger />}
+            element={
+              <ContractorLedger />
+            }
           />
 
           <Route
             path="/subcontractor-payments"
-            element={<SubcontractorPayments />}
+            element={
+              <SubcontractorPayments />
+            }
           />
 
           <Route
             path="/workers"
-            element={<Workers />}
+            element={
+              <Workers />
+            }
           />
 
           <Route
             path="/labour-attendance"
-            element={<LabourAttendance />}
+            element={
+              <LabourAttendance />
+            }
           />
 
           <Route
             path="/labour-payments"
-            element={<LabourPayments />}
+            element={
+              <LabourPayments />
+            }
           />
 
           <Route
             path="/material-requests"
-            element={<MaterialRequests />}
+            element={
+              <MaterialRequests />
+            }
           />
 
           <Route
             path="/site-photos"
-            element={<SitePhotos />}
+            element={
+              <SitePhotos />
+            }
           />
 
           <Route
             path="/site-issues"
-            element={<SiteIssues />}
+            element={
+              <SiteIssues />
+            }
           />
 
           <Route
             path="/documents"
-            element={<ProjectDocuments />}
+            element={
+              <ProjectDocuments />
+            }
           />
 
           <Route
             path="/accounts"
-            element={<Accounts />}
+            element={
+              <Accounts />
+            }
           />
 
           <Route
             path="/site-cost-summary"
-            element={<SiteCostSummary />}
+            element={
+              <SiteCostSummary />
+            }
           />
 
           <Route
             path="/site-report"
-            element={<SiteReport />}
+            element={
+              <SiteReport />
+            }
           />
 
           <Route
             path="/progress"
-            element={<DailyProgress />}
+            element={
+              <DailyProgress />
+            }
           />
 
           <Route
             path="/users"
             element={
-              role === "ADMIN" ? (
+              role ===
+              "ADMIN" ? (
                 <Users />
               ) : (
                 <Navigate
@@ -324,14 +512,21 @@ function AdminLayout() {
 }
 
 function RoleBasedProtectedArea() {
-  const role = localStorage.getItem("role");
+  const role =
+    localStorage.getItem(
+      "role"
+    );
 
-  if (role === "CLIENT") {
+  if (
+    role === "CLIENT"
+  ) {
     return (
       <Routes>
         <Route
           path="/client"
-          element={<ClientPortal />}
+          element={
+            <ClientPortal />
+          }
         />
 
         <Route
@@ -347,41 +542,58 @@ function RoleBasedProtectedArea() {
     );
   }
 
-  if (role === "SUPERVISOR") {
+  if (
+    role ===
+    "SUPERVISOR"
+  ) {
     return (
       <Routes>
         <Route
           path="/supervisor"
-          element={<SupervisorLayout />}
+          element={
+            <SupervisorLayout />
+          }
         >
           <Route
             index
-            element={<SupervisorDashboard />}
+            element={
+              <SupervisorDashboard />
+            }
           />
 
           <Route
             path="progress"
-            element={<SupervisorProgress />}
+            element={
+              <SupervisorProgress />
+            }
           />
 
           <Route
             path="material-requests"
-            element={<SupervisorMaterialRequests />}
+            element={
+              <SupervisorMaterialRequests />
+            }
           />
 
           <Route
             path="site-photos"
-            element={<SupervisorSitePhotos />}
+            element={
+              <SupervisorSitePhotos />
+            }
           />
 
           <Route
             path="site-issues"
-            element={<SupervisorSiteIssues />}
+            element={
+              <SupervisorSiteIssues />
+            }
           />
 
           <Route
             path="documents"
-            element={<SupervisorDocuments />}
+            element={
+              <SupervisorDocuments />
+            }
           />
         </Route>
 
@@ -402,7 +614,9 @@ function RoleBasedProtectedArea() {
     role === "ADMIN" ||
     role === "MANAGER"
   ) {
-    return <AdminLayout />;
+    return (
+      <AdminLayout />
+    );
   }
 
   return (
@@ -419,7 +633,9 @@ function App() {
       <Routes>
         <Route
           path="/login"
-          element={<Login />}
+          element={
+            <Login />
+          }
         />
 
         <Route

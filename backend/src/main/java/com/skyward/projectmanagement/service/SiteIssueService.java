@@ -1,5 +1,6 @@
 package com.skyward.projectmanagement.service;
 
+import com.skyward.projectmanagement.entity.Notification;
 import com.skyward.projectmanagement.entity.SiteIssue;
 import com.skyward.projectmanagement.entity.User;
 import com.skyward.projectmanagement.model.Project;
@@ -20,17 +21,29 @@ public class SiteIssueService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final SupervisorPortalService supervisorPortalService;
+    private final NotificationService notificationService;
 
     public SiteIssueService(
             SiteIssueRepository siteIssueRepository,
             ProjectRepository projectRepository,
             UserRepository userRepository,
-            SupervisorPortalService supervisorPortalService
+            SupervisorPortalService supervisorPortalService,
+            NotificationService notificationService
     ) {
-        this.siteIssueRepository = siteIssueRepository;
-        this.projectRepository = projectRepository;
-        this.userRepository = userRepository;
-        this.supervisorPortalService = supervisorPortalService;
+        this.siteIssueRepository =
+                siteIssueRepository;
+
+        this.projectRepository =
+                projectRepository;
+
+        this.userRepository =
+                userRepository;
+
+        this.supervisorPortalService =
+                supervisorPortalService;
+
+        this.notificationService =
+                notificationService;
     }
 
     /*
@@ -61,7 +74,9 @@ public class SiteIssueService {
 
         Project project =
                 projectRepository
-                        .findById(projectId)
+                        .findById(
+                                projectId
+                        )
                         .orElseThrow(() ->
                                 new RuntimeException(
                                         "Project not found."
@@ -78,11 +93,15 @@ public class SiteIssueService {
         );
 
         newIssue.setTitle(
-                issue.getTitle().trim()
+                issue
+                        .getTitle()
+                        .trim()
         );
 
         newIssue.setDescription(
-                issue.getDescription().trim()
+                issue
+                        .getDescription()
+                        .trim()
         );
 
         newIssue.setPriority(
@@ -115,8 +134,28 @@ public class SiteIssueService {
                 project
         );
 
-        return siteIssueRepository
-                .save(newIssue);
+        SiteIssue savedIssue =
+                siteIssueRepository
+                        .save(
+                                newIssue
+                        );
+
+        notificationService
+                .createNotification(
+                        "New Site Issue",
+                        username
+                                + " reported: "
+                                + savedIssue.getTitle()
+                                + " - "
+                                + project.getProjectName(),
+                        Notification.NotificationType.SITE_ISSUE,
+                        username,
+                        savedIssue.getId(),
+                        "SITE_ISSUE",
+                        project
+                );
+
+        return savedIssue;
     }
 
     public List<SiteIssue>
@@ -190,7 +229,9 @@ public class SiteIssueService {
 
         if (
                 !projectRepository
-                        .existsById(projectId)
+                        .existsById(
+                                projectId
+                        )
         ) {
             throw new RuntimeException(
                     "Project not found."
@@ -217,8 +258,7 @@ public class SiteIssueService {
         );
     }
 
-    public SiteIssue
-    reviewIssue(
+    public SiteIssue reviewIssue(
             String username,
             Long issueId,
             SiteIssue.IssueStatus status,
@@ -229,7 +269,9 @@ public class SiteIssueService {
                 username
         );
 
-        if (status == null) {
+        if (
+                status == null
+        ) {
             throw new RuntimeException(
                     "Issue status is required."
             );
@@ -260,7 +302,9 @@ public class SiteIssueService {
         );
 
         return siteIssueRepository
-                .save(issue);
+                .save(
+                        issue
+                );
     }
 
     /*
@@ -344,8 +388,7 @@ public class SiteIssueService {
         }
     }
 
-    private User
-    requireManagementUser(
+    private User requireManagementUser(
             String username
     ) {
 
