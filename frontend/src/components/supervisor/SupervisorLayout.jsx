@@ -205,7 +205,14 @@ function SupervisorLayout() {
           >
             Material Requests
           </NavLink>
+
+          <NavLink
+            to="/supervisor/site-photos"
+          >
+            Site Photos
+          </NavLink>
         </nav>
+        
 
         <div className="sidebar-footer">
           <div className="logged-user">

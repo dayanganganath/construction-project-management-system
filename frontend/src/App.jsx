@@ -38,6 +38,7 @@ import SupervisorLayout from "./components/supervisor/SupervisorLayout";
 import SupervisorDashboard from "./pages/supervisor/SupervisorDashboard";
 import SupervisorProgress from "./pages/supervisor/SupervisorProgress";
 import SupervisorMaterialRequests from "./pages/supervisor/SupervisorMaterialRequests";
+import SupervisorSitePhotos from "./pages/supervisor/SupervisorSitePhotos";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -436,6 +437,41 @@ function RoleBasedProtectedArea() {
               <SupervisorMaterialRequests />
             }
           />
+
+          <Route
+  path="/supervisor"
+  element={
+    <SupervisorLayout />
+  }
+>
+  <Route
+    index
+    element={
+      <SupervisorDashboard />
+    }
+  />
+
+  <Route
+    path="progress"
+    element={
+      <SupervisorProgress />
+    }
+  />
+
+  <Route
+    path="material-requests"
+    element={
+      <SupervisorMaterialRequests />
+    }
+  />
+
+  <Route
+    path="site-photos"
+    element={
+      <SupervisorSitePhotos />
+    }
+  />
+</Route>
         </Route>
 
         <Route
