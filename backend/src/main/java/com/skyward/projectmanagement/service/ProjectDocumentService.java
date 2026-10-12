@@ -4,6 +4,7 @@ import com.skyward.projectmanagement.entity.Notification;
 import com.skyward.projectmanagement.entity.ProjectDocument;
 import com.skyward.projectmanagement.entity.User;
 import com.skyward.projectmanagement.model.Project;
+
 import com.skyward.projectmanagement.repository.ProjectDocumentRepository;
 import com.skyward.projectmanagement.repository.ProjectRepository;
 import com.skyward.projectmanagement.repository.UserRepository;
@@ -15,11 +16,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+
 import java.time.LocalDate;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -63,6 +67,9 @@ public class ProjectDocumentService {
     private final NotificationService
             notificationService;
 
+    private final AuditLogService
+            auditLogService;
+
     private final Path uploadDirectory;
 
     public ProjectDocumentService(
@@ -71,6 +78,7 @@ public class ProjectDocumentService {
             UserRepository userRepository,
             SupervisorPortalService supervisorPortalService,
             NotificationService notificationService,
+            AuditLogService auditLogService,
             @Value(
                     "${app.upload.project-documents-dir:uploads/project-documents}"
             )
@@ -91,6 +99,9 @@ public class ProjectDocumentService {
 
         this.notificationService =
                 notificationService;
+
+        this.auditLogService =
+                auditLogService;
 
         this.uploadDirectory =
                 Paths.get(
@@ -423,14 +434,38 @@ public class ProjectDocumentService {
                         documentId
                 );
 
+        boolean oldVisibility =
+                Boolean.TRUE.equals(
+                        document.getClientVisible()
+                );
+
         document.setClientVisible(
                 clientVisible
         );
 
-        return projectDocumentRepository
-                .save(
-                        document
-                );
+        ProjectDocument savedDocument =
+                projectDocumentRepository
+                        .save(
+                                document
+                        );
+
+        auditLogService.logAction(
+                username,
+                "PROJECT_DOCUMENT",
+                "CLIENT_VISIBILITY_UPDATE",
+                "Document '"
+                        + savedDocument.getTitle()
+                        + "' client visibility changed from "
+                        + oldVisibility
+                        + " to "
+                        + clientVisible
+                        + ".",
+                savedDocument.getId(),
+                "PROJECT_DOCUMENT",
+                savedDocument.getProject()
+        );
+
+        return savedDocument;
     }
 
     public Resource

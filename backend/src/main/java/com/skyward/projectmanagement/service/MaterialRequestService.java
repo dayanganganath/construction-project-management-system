@@ -23,13 +23,15 @@ public class MaterialRequestService {
     private final UserRepository userRepository;
     private final SupervisorPortalService supervisorPortalService;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     public MaterialRequestService(
             MaterialRequestRepository materialRequestRepository,
             ProjectRepository projectRepository,
             UserRepository userRepository,
             SupervisorPortalService supervisorPortalService,
-            NotificationService notificationService
+            NotificationService notificationService,
+            AuditLogService auditLogService
     ) {
         this.materialRequestRepository =
                 materialRequestRepository;
@@ -45,6 +47,9 @@ public class MaterialRequestService {
 
         this.notificationService =
                 notificationService;
+
+        this.auditLogService =
+                auditLogService;
     }
 
     /*
@@ -286,10 +291,27 @@ public class MaterialRequestService {
                         : remarks.trim()
         );
 
-        return materialRequestRepository
-                .save(
-                        request
-                );
+        MaterialRequest savedRequest =
+                materialRequestRepository
+                        .save(
+                                request
+                        );
+
+        auditLogService.logAction(
+                username,
+                "MATERIAL_REQUEST",
+                newStatus.name(),
+                "Material request '"
+                        + savedRequest.getMaterialName()
+                        + "' was "
+                        + newStatus.name().toLowerCase()
+                        + ".",
+                savedRequest.getId(),
+                "MATERIAL_REQUEST",
+                savedRequest.getProject()
+        );
+
+        return savedRequest;
     }
 
     /*

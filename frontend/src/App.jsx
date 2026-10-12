@@ -41,6 +41,7 @@ import SitePhotos from "./pages/SitePhotos";
 import SiteIssues from "./pages/SiteIssues";
 import ProjectDocuments from "./pages/ProjectDocuments";
 import Notifications from "./pages/Notifications";
+import AuditLogs from "./pages/AuditLogs";
 
 import ClientPortal from "./pages/ClientPortal";
 
@@ -56,7 +57,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 import "./App.css";
 
-function logoutAndGoToLogin(navigate) {
+function logoutAndGoToLogin(
+  navigate
+) {
   localStorage.removeItem(
     "isAuthenticated"
   );
@@ -143,8 +146,8 @@ function AdminLayout() {
 
         setUnreadNotificationCount(
           Number(
-            response.data?.count ||
-              0
+            response.data
+              ?.count || 0
           )
         );
       } catch (error) {
@@ -190,11 +193,6 @@ function AdminLayout() {
 
           <NavLink
             to="/notifications"
-            className={({ isActive }) =>
-              isActive
-                ? "active"
-                : ""
-            }
           >
             <div className="notification-nav-content">
               <span className="notification-nav-text">
@@ -211,6 +209,10 @@ function AdminLayout() {
                 </span>
               )}
             </div>
+          </NavLink>
+
+          <NavLink to="/audit-logs">
+            Audit Logs
           </NavLink>
 
           <NavLink to="/clients">
@@ -338,6 +340,13 @@ function AdminLayout() {
             path="/notifications"
             element={
               <Notifications />
+            }
+          />
+
+          <Route
+            path="/audit-logs"
+            element={
+              <AuditLogs />
             }
           />
 

@@ -4,6 +4,7 @@ import com.skyward.projectmanagement.entity.Notification;
 import com.skyward.projectmanagement.entity.SiteIssue;
 import com.skyward.projectmanagement.entity.User;
 import com.skyward.projectmanagement.model.Project;
+
 import com.skyward.projectmanagement.repository.ProjectRepository;
 import com.skyward.projectmanagement.repository.SiteIssueRepository;
 import com.skyward.projectmanagement.repository.UserRepository;
@@ -22,13 +23,15 @@ public class SiteIssueService {
     private final UserRepository userRepository;
     private final SupervisorPortalService supervisorPortalService;
     private final NotificationService notificationService;
+    private final AuditLogService auditLogService;
 
     public SiteIssueService(
             SiteIssueRepository siteIssueRepository,
             ProjectRepository projectRepository,
             UserRepository userRepository,
             SupervisorPortalService supervisorPortalService,
-            NotificationService notificationService
+            NotificationService notificationService,
+            AuditLogService auditLogService
     ) {
         this.siteIssueRepository =
                 siteIssueRepository;
@@ -44,6 +47,9 @@ public class SiteIssueService {
 
         this.notificationService =
                 notificationService;
+
+        this.auditLogService =
+                auditLogService;
     }
 
     /*
@@ -282,6 +288,9 @@ public class SiteIssueService {
                         issueId
                 );
 
+        SiteIssue.IssueStatus oldStatus =
+                issue.getStatus();
+
         issue.setStatus(
                 status
         );
@@ -301,10 +310,33 @@ public class SiteIssueService {
                         : resolutionNote.trim()
         );
 
-        return siteIssueRepository
-                .save(
-                        issue
-                );
+        SiteIssue savedIssue =
+                siteIssueRepository
+                        .save(
+                                issue
+                        );
+
+        auditLogService.logAction(
+                username,
+                "SITE_ISSUE",
+                "STATUS_UPDATE",
+                "Site issue '"
+                        + savedIssue.getTitle()
+                        + "' changed from "
+                        + (
+                                oldStatus != null
+                                        ? oldStatus.name()
+                                        : "UNKNOWN"
+                        )
+                        + " to "
+                        + status.name()
+                        + ".",
+                savedIssue.getId(),
+                "SITE_ISSUE",
+                savedIssue.getProject()
+        );
+
+        return savedIssue;
     }
 
     /*
