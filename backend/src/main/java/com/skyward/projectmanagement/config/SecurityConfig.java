@@ -59,9 +59,9 @@ public class SecurityConfig {
                         auth -> auth
 
                                 /*
-                                 * =========================================================
+                                 * =====================================================
                                  * CORS
-                                 * =========================================================
+                                 * =====================================================
                                  */
                                 .requestMatchers(
                                         HttpMethod.OPTIONS,
@@ -70,9 +70,9 @@ public class SecurityConfig {
                                 .permitAll()
 
                                 /*
-                                 * =========================================================
-                                 * PUBLIC LOGIN
-                                 * =========================================================
+                                 * =====================================================
+                                 * PUBLIC
+                                 * =====================================================
                                  */
                                 .requestMatchers(
                                         "/api/auth/**"
@@ -80,9 +80,9 @@ public class SecurityConfig {
                                 .permitAll()
 
                                 /*
-                                 * =========================================================
+                                 * =====================================================
                                  * ADMIN ONLY
-                                 * =========================================================
+                                 * =====================================================
                                  */
                                 .requestMatchers(
                                         "/api/users/**",
@@ -93,9 +93,49 @@ public class SecurityConfig {
                                 )
 
                                 /*
-                                 * =========================================================
+                                 * =====================================================
+                                 * CLIENT PORTAL
+                                 * =====================================================
+                                 */
+                                .requestMatchers(
+                                        "/api/client/**"
+                                )
+                                .hasRole(
+                                        "CLIENT"
+                                )
+
+                                /*
+                                 * =====================================================
+                                 * SUPERVISOR PORTAL
+                                 * =====================================================
+                                 */
+                                .requestMatchers(
+                                        "/api/supervisor/**"
+                                )
+                                .hasRole(
+                                        "SUPERVISOR"
+                                )
+
+                                /*
+                                 * =====================================================
+                                 * CONTRACTOR PORTAL
+                                 * =====================================================
+                                 */
+                                .requestMatchers(
+                                        "/api/contractor/**"
+                                )
+                                .hasRole(
+                                        "CONTRACTOR"
+                                )
+
+                                /*
+                                 * =====================================================
                                  * ADMIN / MANAGER
-                                 * =========================================================
+                                 * =====================================================
+                                 */
+
+                                /*
+                                 * Notifications + Audit
                                  */
                                 .requestMatchers(
                                         "/api/notifications/**",
@@ -107,45 +147,90 @@ public class SecurityConfig {
                                 )
 
                                 /*
-                                 * =========================================================
-                                 * CLIENT
-                                 * =========================================================
+                                 * Contractor Management
                                  */
                                 .requestMatchers(
-                                        "/api/client/**"
+                                        "/api/contractors/**",
+                                        "/api/contractor-bills/**",
+                                        "/api/contractor-ledger/**",
+                                        "/api/subcontractor-payments/**",
+                                        "/api/contractor-project-assignments/**"
                                 )
-                                .hasRole(
-                                        "CLIENT"
+                                .hasAnyRole(
+                                        "ADMIN",
+                                        "MANAGER"
                                 )
 
                                 /*
-                                 * =========================================================
-                                 * SUPERVISOR
-                                 * =========================================================
+                                 * Client / Project Management
                                  */
                                 .requestMatchers(
-                                        "/api/supervisor/**"
+                                        "/api/clients/**",
+                                        "/api/projects/**",
+                                        "/api/boq/**"
                                 )
-                                .hasRole(
-                                        "SUPERVISOR"
+                                .hasAnyRole(
+                                        "ADMIN",
+                                        "MANAGER"
                                 )
 
                                 /*
-                                 * =========================================================
-                                 * CONTRACTOR
-                                 * =========================================================
+                                 * Financial Management
                                  */
                                 .requestMatchers(
-                                        "/api/contractor/**"
+                                        "/api/expenses/**",
+                                        "/api/payments/**",
+                                        "/api/accounts/**",
+                                        "/api/site-cost-summary/**",
+                                        "/api/site-report/**"
                                 )
-                                .hasRole(
-                                        "CONTRACTOR"
+                                .hasAnyRole(
+                                        "ADMIN",
+                                        "MANAGER"
                                 )
 
                                 /*
-                                 * =========================================================
-                                 * OTHER AUTHENTICATED API
-                                 * =========================================================
+                                 * Labour Management
+                                 */
+                                .requestMatchers(
+                                        "/api/workers/**",
+                                        "/api/labour-attendance/**",
+                                        "/api/labour-payments/**"
+                                )
+                                .hasAnyRole(
+                                        "ADMIN",
+                                        "MANAGER"
+                                )
+
+                                /*
+                                 * Site / Document Management
+                                 */
+                                .requestMatchers(
+                                        "/api/material-requests/**",
+                                        "/api/site-photos/**",
+                                        "/api/site-issues/**",
+                                        "/api/project-documents/**"
+                                )
+                                .hasAnyRole(
+                                        "ADMIN",
+                                        "MANAGER"
+                                )
+
+                                /*
+                                 * General Daily Progress Management
+                                 */
+                                .requestMatchers(
+                                        "/api/daily-progress/**"
+                                )
+                                .hasAnyRole(
+                                        "ADMIN",
+                                        "MANAGER"
+                                )
+
+                                /*
+                                 * =====================================================
+                                 * ALL OTHER API
+                                 * =====================================================
                                  */
                                 .requestMatchers(
                                         "/api/**"
