@@ -1,7 +1,9 @@
 package com.skyward.projectmanagement.service;
 
 import com.skyward.projectmanagement.dto.UserResponse;
+import com.skyward.projectmanagement.entity.Contractor;
 import com.skyward.projectmanagement.entity.User;
+import com.skyward.projectmanagement.repository.ContractorRepository;
 import com.skyward.projectmanagement.repository.UserProjectAssignmentRepository;
 import com.skyward.projectmanagement.repository.UserRepository;
 
@@ -17,15 +19,18 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserProjectAssignmentRepository assignmentRepository;
+    private final ContractorRepository contractorRepository;
 
     public UserService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            UserProjectAssignmentRepository assignmentRepository
+            UserProjectAssignmentRepository assignmentRepository,
+            ContractorRepository contractorRepository
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.assignmentRepository = assignmentRepository;
+        this.contractorRepository = contractorRepository;
     }
 
     public List<UserResponse> getAllUsers() {
@@ -95,6 +100,7 @@ public class UserService {
         );
     }
 
+    @Transactional
     public UserResponse updateUser(
             Long id,
             User updatedUser
@@ -135,18 +141,41 @@ public class UserService {
             );
         }
 
-        user.setUsername(
-                updatedUser.getUsername()
-        );
+        String newRole = user.getRole();
 
         if (
                 updatedUser.getRole() != null &&
                 !updatedUser.getRole().isBlank()
         ) {
-            user.setRole(
-                    updatedUser.getRole()
-            );
+            newRole = updatedUser.getRole();
         }
+
+        /*
+         * If this user is linked to a contractor
+         * and role is changed away from CONTRACTOR,
+         * unlink the contractor account first.
+         */
+        if (!"CONTRACTOR".equalsIgnoreCase(newRole)) {
+
+            contractorRepository
+                    .findByUserId(id)
+                    .ifPresent(contractor -> {
+
+                        contractor.setUser(null);
+
+                        contractorRepository.save(
+                                contractor
+                        );
+                    });
+        }
+
+        user.setUsername(
+                updatedUser.getUsername()
+        );
+
+        user.setRole(
+                newRole
+        );
 
         if (
                 updatedUser.getActive() != null
@@ -192,12 +221,33 @@ public class UserService {
                                 )
                         );
 
+        /*
+         * Remove CLIENT / SUPERVISOR
+         * project assignments.
+         */
         var assignments =
                 assignmentRepository
                         .findByUserId(id);
 
         assignmentRepository
                 .deleteAll(assignments);
+
+        /*
+         * If user is connected to a contractor,
+         * unlink before deleting the user.
+         *
+         * This prevents foreign-key errors.
+         */
+        contractorRepository
+                .findByUserId(id)
+                .ifPresent(contractor -> {
+
+                    contractor.setUser(null);
+
+                    contractorRepository.save(
+                            contractor
+                    );
+                });
 
         userRepository.delete(user);
     }

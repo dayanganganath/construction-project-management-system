@@ -10,30 +10,32 @@ import java.util.Optional;
 
 @Repository
 public interface ContractorRepository
-        extends JpaRepository<
-        Contractor,
-        Long
-        > {
+        extends JpaRepository<Contractor, Long> {
 
-    List<Contractor>
-    findByActiveTrue();
+    List<Contractor> findByActiveTrue();
 
-    Optional<Contractor>
-    findByNameIgnoreCase(
+    Optional<Contractor> findByNameIgnoreCase(
             String name
     );
 
     /*
-     * Find the contractor connected
-     * to the logged-in user account.
+     * Find contractor linked to
+     * logged-in username.
      */
-    Optional<Contractor>
-    findByUserUsername(
+    Optional<Contractor> findByUserUsername(
             String username
     );
 
     /*
-     * Prevent the same user account
+     * Find contractor linked
+     * to a specific user ID.
+     */
+    Optional<Contractor> findByUserId(
+            Long userId
+    );
+
+    /*
+     * Prevent same user account
      * from being linked twice.
      */
     boolean existsByUserId(
