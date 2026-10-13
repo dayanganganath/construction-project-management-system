@@ -1,5 +1,13 @@
 # Construction Project Management System
 
+![Project Status](https://img.shields.io/badge/Development-88%25%20Complete-brightgreen)
+![Backend](https://img.shields.io/badge/Backend-Spring%20Boot-success)
+![Frontend](https://img.shields.io/badge/Frontend-React-blue)
+![Database](https://img.shields.io/badge/Database-MySQL-orange)
+
+> 🚧 **Overall Project Progress: 88% Complete**  
+> Core modules are operational. Final contractor features, testing, deployment, and documentation are in progress.
+
 A full-stack construction project management application designed to manage projects, tasks, project information, and construction-related workflows in one centralized system.
 
 ## 🚀 Project Overview
@@ -59,3 +67,4 @@ construction-project-management-system/
 │   └── pom.xml
 │
 └── README.md
+```
