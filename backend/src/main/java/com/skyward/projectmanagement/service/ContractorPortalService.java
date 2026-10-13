@@ -18,17 +18,13 @@ import java.util.stream.Collectors;
 @Service
 public class ContractorPortalService {
 
-    private final ContractorRepository
-            contractorRepository;
+    private final ContractorRepository contractorRepository;
 
-    private final ContractorBillRepository
-            contractorBillRepository;
+    private final ContractorBillRepository contractorBillRepository;
 
-    private final SubcontractorPaymentRepository
-            paymentRepository;
+    private final SubcontractorPaymentRepository paymentRepository;
 
-    private final ContractorProjectAssignmentService
-            assignmentService;
+    private final ContractorProjectAssignmentService assignmentService;
 
     public ContractorPortalService(
             ContractorRepository contractorRepository,
@@ -49,8 +45,7 @@ public class ContractorPortalService {
                 assignmentService;
     }
 
-    public Map<String, Object>
-    getMyProfile(
+    public Map<String, Object> getMyProfile(
             String username
     ) {
 
@@ -125,8 +120,7 @@ public class ContractorPortalService {
         return response;
     }
 
-    public List<Map<String, Object>>
-    getMyProjects(
+    public List<Map<String, Object>> getMyProjects(
             String username
     ) {
 
@@ -151,8 +145,7 @@ public class ContractorPortalService {
                 );
     }
 
-    public List<Map<String, Object>>
-    getMyBills(
+    public List<Map<String, Object>> getMyBills(
             String username
     ) {
 
@@ -182,8 +175,7 @@ public class ContractorPortalService {
                 );
     }
 
-    public List<Map<String, Object>>
-    getMyPayments(
+    public List<Map<String, Object>> getMyPayments(
             String username
     ) {
 
@@ -213,8 +205,7 @@ public class ContractorPortalService {
                 );
     }
 
-    public Map<String, Object>
-    getDashboard(
+    public Map<String, Object> getDashboard(
             String username
     ) {
 
@@ -354,8 +345,61 @@ public class ContractorPortalService {
         return response;
     }
 
-    private Contractor
-    getContractor(
+    /*
+     * Secure payment access for contractor slip download.
+     *
+     * Logged-in contractor can only access
+     * a payment that belongs to that contractor.
+     */
+    public SubcontractorPayment getMyPaymentForSlip(
+            String username,
+            Long paymentId
+    ) {
+
+        Contractor contractor =
+                getContractor(
+                        username
+                );
+
+        SubcontractorPayment payment =
+                paymentRepository
+                        .findById(
+                                paymentId
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Payment not found."
+                                )
+                        );
+
+        if (
+                payment.getContractor() == null ||
+                payment.getContractor()
+                        .getId() == null ||
+                !payment.getContractor()
+                        .getId()
+                        .equals(
+                                contractor.getId()
+                        )
+        ) {
+            throw new RuntimeException(
+                    "You do not have access to this payment."
+            );
+        }
+
+        if (
+                payment.getSlipFilePath() == null ||
+                payment.getSlipFilePath().isBlank()
+        ) {
+            throw new RuntimeException(
+                    "No payment slip is available for this payment."
+            );
+        }
+
+        return payment;
+    }
+
+    private Contractor getContractor(
             String username
     ) {
 
@@ -382,8 +426,7 @@ public class ContractorPortalService {
         }
 
         if (
-                contractor.getUser() == null
-                        ||
+                contractor.getUser() == null ||
                 !Boolean.TRUE.equals(
                         contractor
                                 .getUser()
@@ -398,8 +441,7 @@ public class ContractorPortalService {
         return contractor;
     }
 
-    private Map<String, Object>
-    toProjectResponse(
+    private Map<String, Object> toProjectResponse(
             Project project
     ) {
 
@@ -444,8 +486,7 @@ public class ContractorPortalService {
         return response;
     }
 
-    private Map<String, Object>
-    toBillResponse(
+    private Map<String, Object> toBillResponse(
             ContractorBill bill
     ) {
 
@@ -542,8 +583,7 @@ public class ContractorPortalService {
         return response;
     }
 
-    private Map<String, Object>
-    toPaymentResponse(
+    private Map<String, Object> toPaymentResponse(
             SubcontractorPayment payment
     ) {
 
