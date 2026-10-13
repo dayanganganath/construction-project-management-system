@@ -16,7 +16,8 @@ function Users() {
   const [loadingAssignments, setLoadingAssignments] =
     useState(false);
 
-  const [assigning, setAssigning] = useState(false);
+  const [assigning, setAssigning] =
+    useState(false);
 
   const [alert, setAlert] = useState({
     type: "",
@@ -52,9 +53,17 @@ function Users() {
   const loadUsers = async () => {
     try {
       const response = await api.get("/users");
-      setUsers(response.data);
+
+      setUsers(
+        Array.isArray(response.data)
+          ? response.data
+          : []
+      );
     } catch (error) {
-      console.error("Error loading users:", error);
+      console.error(
+        "Error loading users:",
+        error
+      );
 
       showAlert(
         "error",
@@ -65,10 +74,20 @@ function Users() {
 
   const loadProjects = async () => {
     try {
-      const response = await api.get("/projects");
-      setProjects(response.data);
+      const response = await api.get(
+        "/projects"
+      );
+
+      setProjects(
+        Array.isArray(response.data)
+          ? response.data
+          : []
+      );
     } catch (error) {
-      console.error("Error loading projects:", error);
+      console.error(
+        "Error loading projects:",
+        error
+      );
 
       showAlert(
         "error",
@@ -77,7 +96,9 @@ function Users() {
     }
   };
 
-  const loadAssignments = async (userId) => {
+  const loadAssignments = async (
+    userId
+  ) => {
     if (!userId) {
       setAssignments([]);
       return;
@@ -90,7 +111,11 @@ function Users() {
         `/user-project-assignments/user/${userId}`
       );
 
-      setAssignments(response.data);
+      setAssignments(
+        Array.isArray(response.data)
+          ? response.data
+          : []
+      );
     } catch (error) {
       console.error(
         "Error loading assignments:",
@@ -220,6 +245,7 @@ function Users() {
       }
 
       resetForm();
+
       await loadUsers();
     } catch (error) {
       console.error(
@@ -239,10 +265,13 @@ function Users() {
     setEditingId(user.id);
 
     setForm({
-      username: user.username || "",
+      username:
+        user.username || "",
       password: "",
-      role: user.role || "CLIENT",
-      active: user.active ?? true,
+      role:
+        user.role || "CLIENT",
+      active:
+        user.active ?? true,
     });
 
     window.scrollTo({
@@ -262,7 +291,9 @@ function Users() {
     }
 
     try {
-      await api.delete(`/users/${id}`);
+      await api.delete(
+        `/users/${id}`
+      );
 
       if (
         String(selectedUserId) ===
@@ -302,72 +333,82 @@ function Users() {
 
   const handleAssignmentUserChange =
     async (e) => {
-      const userId = e.target.value;
+      const userId =
+        e.target.value;
 
-      setSelectedUserId(userId);
-      setSelectedProjectId("");
-
-      await loadAssignments(userId);
-    };
-
-  const handleAssignProject = async () => {
-    if (!selectedUserId) {
-      showAlert(
-        "error",
-        "Please select a user."
-      );
-
-      return;
-    }
-
-    if (!selectedProjectId) {
-      showAlert(
-        "error",
-        "Please select a project."
-      );
-
-      return;
-    }
-
-    try {
-      setAssigning(true);
-
-      await api.post(
-        "/user-project-assignments",
-        null,
-        {
-          params: {
-            userId: selectedUserId,
-            projectId: selectedProjectId,
-          },
-        }
-      );
-
-      showAlert(
-        "success",
-        "Project assigned successfully."
+      setSelectedUserId(
+        userId
       );
 
       setSelectedProjectId("");
 
       await loadAssignments(
-        selectedUserId
+        userId
       );
-    } catch (error) {
-      console.error(
-        "Error assigning project:",
-        error
-      );
+    };
 
-      showAlert(
-        "error",
-        error.response?.data?.message ||
-          "Unable to assign project."
-      );
-    } finally {
-      setAssigning(false);
-    }
-  };
+  const handleAssignProject =
+    async () => {
+      if (!selectedUserId) {
+        showAlert(
+          "error",
+          "Please select a user."
+        );
+
+        return;
+      }
+
+      if (!selectedProjectId) {
+        showAlert(
+          "error",
+          "Please select a project."
+        );
+
+        return;
+      }
+
+      try {
+        setAssigning(true);
+
+        await api.post(
+          "/user-project-assignments",
+          null,
+          {
+            params: {
+              userId:
+                selectedUserId,
+
+              projectId:
+                selectedProjectId,
+            },
+          }
+        );
+
+        showAlert(
+          "success",
+          "Project assigned successfully."
+        );
+
+        setSelectedProjectId("");
+
+        await loadAssignments(
+          selectedUserId
+        );
+      } catch (error) {
+        console.error(
+          "Error assigning project:",
+          error
+        );
+
+        showAlert(
+          "error",
+          error.response?.data?.message ||
+            "Unable to assign project."
+        );
+      } finally {
+        setAssigning(false);
+      }
+    };
 
   const handleUnassignProject =
     async (projectId) => {
@@ -385,8 +426,11 @@ function Users() {
           "/user-project-assignments",
           {
             params: {
-              userId: selectedUserId,
-              projectId: projectId,
+              userId:
+                selectedUserId,
+
+              projectId:
+                projectId,
             },
           }
         );
@@ -421,8 +465,11 @@ function Users() {
     ) || null;
 
   const assignedProjectIds =
-    assignments.map((assignment) =>
-      String(assignment.projectId)
+    assignments.map(
+      (assignment) =>
+        String(
+          assignment.projectId
+        )
     );
 
   const availableProjects =
@@ -430,6 +477,16 @@ function Users() {
       (project) =>
         !assignedProjectIds.includes(
           String(project.id)
+        )
+    );
+
+  const assignableUsers =
+    users.filter(
+      (user) =>
+        user.active !== false &&
+        (
+          user.role === "CLIENT" ||
+          user.role === "SUPERVISOR"
         )
     );
 
@@ -443,7 +500,8 @@ function Users() {
 
           <p>
             Manage system users,
-            roles and project assignments.
+            roles and project
+            assignments.
           </p>
         </div>
       </div>
@@ -468,14 +526,20 @@ function Users() {
 
         <form
           className="user-form"
-          onSubmit={handleSubmit}
+          onSubmit={
+            handleSubmit
+          }
         >
           <input
             type="text"
             name="username"
             placeholder="Username *"
-            value={form.username}
-            onChange={handleChange}
+            value={
+              form.username
+            }
+            onChange={
+              handleChange
+            }
           />
 
           <input
@@ -486,14 +550,22 @@ function Users() {
                 ? "New Password (leave blank to keep current)"
                 : "Password *"
             }
-            value={form.password}
-            onChange={handleChange}
+            value={
+              form.password
+            }
+            onChange={
+              handleChange
+            }
           />
 
           <select
             name="role"
-            value={form.role}
-            onChange={handleChange}
+            value={
+              form.role
+            }
+            onChange={
+              handleChange
+            }
           >
             <option value="ADMIN">
               Admin
@@ -511,7 +583,8 @@ function Users() {
               Client
             </option>
 
-            <option value="SUBCONTRACTOR">
+            <option value="CONTRACTOR">
+              Contractor /
               Subcontractor
             </option>
           </select>
@@ -520,8 +593,12 @@ function Users() {
             <input
               type="checkbox"
               name="active"
-              checked={form.active}
-              onChange={handleChange}
+              checked={
+                form.active
+              }
+              onChange={
+                handleChange
+              }
             />
 
             Active User
@@ -540,7 +617,9 @@ function Users() {
             <button
               type="button"
               className="cancel-button"
-              onClick={resetForm}
+              onClick={
+                resetForm
+              }
             >
               Cancel
             </button>
@@ -549,7 +628,9 @@ function Users() {
       </div>
 
       <div className="table-card">
-        <h2>System Users</h2>
+        <h2>
+          System Users
+        </h2>
 
         <table className="data-table">
           <thead>
@@ -570,49 +651,61 @@ function Users() {
                 </td>
               </tr>
             ) : (
-              users.map((user) => (
-                <tr key={user.id}>
-                  <td>
-                    {user.id}
-                  </td>
+              users.map(
+                (user) => (
+                  <tr
+                    key={
+                      user.id
+                    }
+                  >
+                    <td>
+                      {user.id}
+                    </td>
 
-                  <td>
-                    {user.username}
-                  </td>
-
-                  <td>
-                    {user.role}
-                  </td>
-
-                  <td>
-                    {user.active
-                      ? "Active"
-                      : "Inactive"}
-                  </td>
-
-                  <td>
-                    <button
-                      type="button"
-                      className="edit-button"
-                      onClick={() =>
-                        handleEdit(user)
+                    <td>
+                      {
+                        user.username
                       }
-                    >
-                      Edit
-                    </button>
+                    </td>
 
-                    <button
-                      type="button"
-                      className="delete-button"
-                      onClick={() =>
-                        handleDelete(user.id)
-                      }
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
+                    <td>
+                      {user.role}
+                    </td>
+
+                    <td>
+                      {user.active
+                        ? "Active"
+                        : "Inactive"}
+                    </td>
+
+                    <td>
+                      <button
+                        type="button"
+                        className="edit-button"
+                        onClick={() =>
+                          handleEdit(
+                            user
+                          )
+                        }
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        type="button"
+                        className="delete-button"
+                        onClick={() =>
+                          handleDelete(
+                            user.id
+                          )
+                        }
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                )
+              )
             )}
           </tbody>
         </table>
@@ -625,8 +718,9 @@ function Users() {
 
         <p>
           Assign projects/sites to
-          Clients, Supervisors and
-          Subcontractors.
+          Clients and Supervisors.
+          Contractor access is managed
+          from the Contractors page.
         </p>
 
         <div
@@ -639,7 +733,9 @@ function Users() {
           }}
         >
           <select
-            value={selectedUserId}
+            value={
+              selectedUserId
+            }
             onChange={
               handleAssignmentUserChange
             }
@@ -648,31 +744,36 @@ function Users() {
               Select User
             </option>
 
-            {users
-              .filter(
-                (user) =>
-                  user.active !== false
-              )
-              .map((user) => (
+            {assignableUsers.map(
+              (user) => (
                 <option
-                  key={user.id}
-                  value={user.id}
+                  key={
+                    user.id
+                  }
+                  value={
+                    user.id
+                  }
                 >
                   {user.username}
                   {" - "}
                   {user.role}
                 </option>
-              ))}
+              )
+            )}
           </select>
 
           <select
-            value={selectedProjectId}
+            value={
+              selectedProjectId
+            }
             onChange={(e) =>
               setSelectedProjectId(
                 e.target.value
               )
             }
-            disabled={!selectedUserId}
+            disabled={
+              !selectedUserId
+            }
           >
             <option value="">
               Select Project / Site
@@ -681,10 +782,16 @@ function Users() {
             {availableProjects.map(
               (project) => (
                 <option
-                  key={project.id}
-                  value={project.id}
+                  key={
+                    project.id
+                  }
+                  value={
+                    project.id
+                  }
                 >
-                  {project.projectName}
+                  {
+                    project.projectName
+                  }
 
                   {project.location
                     ? ` - ${project.location}`
@@ -715,14 +822,21 @@ function Users() {
         {selectedUser && (
           <div
             style={{
-              marginTop: "20px",
+              marginTop:
+                "20px",
             }}
           >
             <strong>
               Selected User:
             </strong>{" "}
-            {selectedUser.username}{" "}
-            ({selectedUser.role})
+            {
+              selectedUser.username
+            }{" "}
+            (
+            {
+              selectedUser.role
+            }
+            )
           </div>
         )}
       </div>
@@ -766,30 +880,35 @@ function Users() {
                   <tr>
                     <td colSpan="4">
                       No projects
-                      assigned to
-                      this user.
+                      assigned.
                     </td>
                   </tr>
                 ) : (
                   assignments.map(
-                    (assignment) => (
+                    (
+                      assignment
+                    ) => (
                       <tr
                         key={
-                          assignment.assignmentId
+                          assignment.id ||
+                          `${assignment.userId}-${assignment.projectId}`
                         }
                       >
                         <td>
                           {assignment.projectName ||
+                            assignment.project?.projectName ||
                             "-"}
                         </td>
 
                         <td>
                           {assignment.location ||
+                            assignment.project?.location ||
                             "-"}
                         </td>
 
                         <td>
                           {assignment.status ||
+                            assignment.project?.status ||
                             "-"}
                         </td>
 
@@ -799,7 +918,8 @@ function Users() {
                             className="delete-button"
                             onClick={() =>
                               handleUnassignProject(
-                                assignment.projectId
+                                assignment.projectId ||
+                                  assignment.project?.id
                               )
                             }
                           >

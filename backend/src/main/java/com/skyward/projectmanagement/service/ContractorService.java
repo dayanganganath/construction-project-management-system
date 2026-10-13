@@ -1,47 +1,83 @@
 package com.skyward.projectmanagement.service;
 
 import com.skyward.projectmanagement.entity.Contractor;
-import com.skyward.projectmanagement.repository.ContractorRepository;
-import org.springframework.stereotype.Service;
+import com.skyward.projectmanagement.entity.User;
 
+import com.skyward.projectmanagement.repository.ContractorRepository;
+import com.skyward.projectmanagement.repository.UserRepository;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ContractorService {
 
-    private final ContractorRepository contractorRepository;
+    private final ContractorRepository
+            contractorRepository;
+
+    private final UserRepository
+            userRepository;
 
     public ContractorService(
-            ContractorRepository contractorRepository
+            ContractorRepository contractorRepository,
+            UserRepository userRepository
     ) {
-        this.contractorRepository = contractorRepository;
+        this.contractorRepository =
+                contractorRepository;
+
+        this.userRepository =
+                userRepository;
     }
 
-    public List<Contractor> getAllContractors() {
-        return contractorRepository.findAll();
+    public List<Contractor>
+    getAllContractors() {
+
+        return contractorRepository
+                .findAll();
     }
 
-    public Contractor getContractorById(Long id) {
-        return contractorRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Contractor not found.")
+    public Contractor
+    getContractorById(
+            Long id
+    ) {
+
+        return contractorRepository
+                .findById(id)
+                .orElseThrow(
+                        () ->
+                                new RuntimeException(
+                                        "Contractor not found."
+                                )
                 );
     }
 
-    public Contractor createContractor(
+    public Contractor
+    createContractor(
             Contractor contractor
     ) {
-        if (contractor.getActive() == null) {
+
+        if (
+                contractor.getActive() == null
+        ) {
             contractor.setActive(true);
         }
 
-        return contractorRepository.save(contractor);
+        contractor.setUser(null);
+
+        return contractorRepository
+                .save(contractor);
     }
 
-    public Contractor updateContractor(
+    public Contractor
+    updateContractor(
             Long id,
             Contractor updatedContractor
     ) {
+
         Contractor contractor =
                 getContractorById(id);
 
@@ -66,7 +102,8 @@ public class ContractorService {
         );
 
         contractor.setNicOrRegistrationNo(
-                updatedContractor.getNicOrRegistrationNo()
+                updatedContractor
+                        .getNicOrRegistrationNo()
         );
 
         contractor.setBankName(
@@ -74,21 +111,216 @@ public class ContractorService {
         );
 
         contractor.setBankAccountName(
-                updatedContractor.getBankAccountName()
+                updatedContractor
+                        .getBankAccountName()
         );
 
         contractor.setBankAccountNumber(
-                updatedContractor.getBankAccountNumber()
+                updatedContractor
+                        .getBankAccountNumber()
         );
 
-        contractor.setActive(
+        if (
                 updatedContractor.getActive()
-        );
+                        != null
+        ) {
+            contractor.setActive(
+                    updatedContractor.getActive()
+            );
+        }
 
-        return contractorRepository.save(contractor);
+        return contractorRepository
+                .save(contractor);
     }
 
-    public void deleteContractor(Long id) {
-        contractorRepository.deleteById(id);
+    @Transactional
+    public Map<String, Object>
+    assignUser(
+            Long contractorId,
+            Long userId
+    ) {
+
+        Contractor contractor =
+                getContractorById(
+                        contractorId
+                );
+
+        User user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(
+                                () ->
+                                        new RuntimeException(
+                                                "User not found."
+                                        )
+                        );
+
+        if (
+                !"CONTRACTOR"
+                        .equalsIgnoreCase(
+                                user.getRole()
+                        )
+        ) {
+            throw new RuntimeException(
+                    "Selected user must have CONTRACTOR role."
+            );
+        }
+
+        if (
+                !Boolean.TRUE.equals(
+                        user.getActive()
+                )
+        ) {
+            throw new RuntimeException(
+                    "Selected user account is inactive."
+            );
+        }
+
+        if (
+                contractorRepository
+                        .existsByUserId(userId)
+                &&
+                (
+                        contractor.getUser() == null
+                        ||
+                        !contractor
+                                .getUser()
+                                .getId()
+                                .equals(userId)
+                )
+        ) {
+            throw new RuntimeException(
+                    "This user is already linked to another contractor."
+            );
+        }
+
+        contractor.setUser(user);
+
+        contractorRepository
+                .save(contractor);
+
+        return buildAccountResponse(
+                contractor
+        );
+    }
+
+    @Transactional
+    public Map<String, Object>
+    removeUser(
+            Long contractorId
+    ) {
+
+        Contractor contractor =
+                getContractorById(
+                        contractorId
+                );
+
+        contractor.setUser(null);
+
+        contractorRepository
+                .save(contractor);
+
+        Map<String, Object> response =
+                new LinkedHashMap<>();
+
+        response.put(
+                "success",
+                true
+        );
+
+        response.put(
+                "message",
+                "Contractor login account removed."
+        );
+
+        response.put(
+                "contractorId",
+                contractor.getId()
+        );
+
+        return response;
+    }
+
+    public Map<String, Object>
+    getLinkedAccount(
+            Long contractorId
+    ) {
+
+        Contractor contractor =
+                getContractorById(
+                        contractorId
+                );
+
+        return buildAccountResponse(
+                contractor
+        );
+    }
+
+    private Map<String, Object>
+    buildAccountResponse(
+            Contractor contractor
+    ) {
+
+        Map<String, Object> response =
+                new LinkedHashMap<>();
+
+        response.put(
+                "contractorId",
+                contractor.getId()
+        );
+
+        response.put(
+                "contractorName",
+                contractor.getName()
+        );
+
+        boolean linked =
+                contractor.getUser() != null;
+
+        response.put(
+                "linked",
+                linked
+        );
+
+        if (linked) {
+
+            response.put(
+                    "userId",
+                    contractor
+                            .getUser()
+                            .getId()
+            );
+
+            response.put(
+                    "username",
+                    contractor
+                            .getUser()
+                            .getUsername()
+            );
+
+            response.put(
+                    "role",
+                    contractor
+                            .getUser()
+                            .getRole()
+            );
+
+            response.put(
+                    "userActive",
+                    contractor
+                            .getUser()
+                            .getActive()
+            );
+        }
+
+        return response;
+    }
+
+    public void deleteContractor(
+            Long id
+    ) {
+
+        contractorRepository
+                .deleteById(id);
     }
 }

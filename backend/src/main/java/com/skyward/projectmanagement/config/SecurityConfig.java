@@ -23,12 +23,14 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationFilter
+            jwtAuthenticationFilter;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter
     ) {
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.jwtAuthenticationFilter =
+                jwtAuthenticationFilter;
     }
 
     @Bean
@@ -37,101 +39,121 @@ public class SecurityConfig {
     ) throws Exception {
 
         http
-                .csrf(csrf -> csrf.disable())
-
-                .cors(Customizer.withDefaults())
-
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS
-                        )
+                .csrf(
+                        csrf ->
+                                csrf.disable()
                 )
 
-                .authorizeHttpRequests(auth -> auth
+                .cors(
+                        Customizer.withDefaults()
+                )
 
-                        /*
-                         * =========================================================
-                         * CORS PREFLIGHT
-                         * =========================================================
-                         */
-                        .requestMatchers(
-                                HttpMethod.OPTIONS,
-                                "/**"
-                        )
-                        .permitAll()
+                .sessionManagement(
+                        session ->
+                                session.sessionCreationPolicy(
+                                        SessionCreationPolicy.STATELESS
+                                )
+                )
 
-                        /*
-                         * =========================================================
-                         * PUBLIC AUTH
-                         * =========================================================
-                         */
-                        .requestMatchers(
-                                "/api/auth/**"
-                        )
-                        .permitAll()
+                .authorizeHttpRequests(
+                        auth -> auth
 
-                        /*
-                         * =========================================================
-                         * ADMIN ONLY
-                         * =========================================================
-                         */
-                        .requestMatchers(
-                                "/api/users/**",
-                                "/api/user-project-assignments/**"
-                        )
-                        .hasRole("ADMIN")
+                                /*
+                                 * =========================================================
+                                 * CORS
+                                 * =========================================================
+                                 */
+                                .requestMatchers(
+                                        HttpMethod.OPTIONS,
+                                        "/**"
+                                )
+                                .permitAll()
 
-                        /*
-                         * =========================================================
-                         * ADMIN / MANAGER ONLY
-                         * =========================================================
-                         */
-                        .requestMatchers(
-                                "/api/notifications/**",
-                                "/api/audit-logs/**"
-                        )
-                        .hasAnyRole(
-                                "ADMIN",
-                                "MANAGER"
-                        )
+                                /*
+                                 * =========================================================
+                                 * PUBLIC LOGIN
+                                 * =========================================================
+                                 */
+                                .requestMatchers(
+                                        "/api/auth/**"
+                                )
+                                .permitAll()
 
-                        /*
-                         * =========================================================
-                         * CLIENT ONLY
-                         * =========================================================
-                         */
-                        .requestMatchers(
-                                "/api/client/**"
-                        )
-                        .hasRole("CLIENT")
+                                /*
+                                 * =========================================================
+                                 * ADMIN ONLY
+                                 * =========================================================
+                                 */
+                                .requestMatchers(
+                                        "/api/users/**",
+                                        "/api/user-project-assignments/**"
+                                )
+                                .hasRole(
+                                        "ADMIN"
+                                )
 
-                        /*
-                         * =========================================================
-                         * SUPERVISOR ONLY
-                         * =========================================================
-                         */
-                        .requestMatchers(
-                                "/api/supervisor/**"
-                        )
-                        .hasRole("SUPERVISOR")
+                                /*
+                                 * =========================================================
+                                 * ADMIN / MANAGER
+                                 * =========================================================
+                                 */
+                                .requestMatchers(
+                                        "/api/notifications/**",
+                                        "/api/audit-logs/**"
+                                )
+                                .hasAnyRole(
+                                        "ADMIN",
+                                        "MANAGER"
+                                )
 
-                        /*
-                         * =========================================================
-                         * ALL OTHER API ENDPOINTS
-                         * =========================================================
-                         */
-                        .requestMatchers(
-                                "/api/**"
-                        )
-                        .authenticated()
+                                /*
+                                 * =========================================================
+                                 * CLIENT
+                                 * =========================================================
+                                 */
+                                .requestMatchers(
+                                        "/api/client/**"
+                                )
+                                .hasRole(
+                                        "CLIENT"
+                                )
 
-                        /*
-                         * =========================================================
-                         * OTHER REQUESTS
-                         * =========================================================
-                         */
-                        .anyRequest()
-                        .permitAll()
+                                /*
+                                 * =========================================================
+                                 * SUPERVISOR
+                                 * =========================================================
+                                 */
+                                .requestMatchers(
+                                        "/api/supervisor/**"
+                                )
+                                .hasRole(
+                                        "SUPERVISOR"
+                                )
+
+                                /*
+                                 * =========================================================
+                                 * CONTRACTOR
+                                 * =========================================================
+                                 */
+                                .requestMatchers(
+                                        "/api/contractor/**"
+                                )
+                                .hasRole(
+                                        "CONTRACTOR"
+                                )
+
+                                /*
+                                 * =========================================================
+                                 * OTHER AUTHENTICATED API
+                                 * =========================================================
+                                 */
+                                .requestMatchers(
+                                        "/api/**"
+                                )
+                                .authenticated()
+
+                                .anyRequest()
+                                .permitAll()
                 )
 
                 .addFilterBefore(
@@ -142,13 +164,9 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /*
-     * =========================================================
-     * CORS CONFIGURATION
-     * =========================================================
-     */
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource
+    corsConfigurationSource() {
 
         CorsConfiguration configuration =
                 new CorsConfiguration();
@@ -173,7 +191,9 @@ public class SecurityConfig {
                 List.of("*")
         );
 
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(
+                true
+        );
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();

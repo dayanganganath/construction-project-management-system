@@ -44,6 +44,7 @@ import Notifications from "./pages/Notifications";
 import AuditLogs from "./pages/AuditLogs";
 
 import ClientPortal from "./pages/ClientPortal";
+import ContractorPortal from "./pages/ContractorPortal";
 
 import SupervisorLayout from "./components/supervisor/SupervisorLayout";
 import SupervisorDashboard from "./pages/supervisor/SupervisorDashboard";
@@ -211,92 +212,137 @@ function AdminLayout() {
             </div>
           </NavLink>
 
-          <NavLink to="/audit-logs">
+          <NavLink
+            to="/audit-logs"
+          >
             Audit Logs
           </NavLink>
 
-          <NavLink to="/clients">
+          <NavLink
+            to="/clients"
+          >
             Clients
           </NavLink>
 
-          <NavLink to="/projects">
+          <NavLink
+            to="/projects"
+          >
             Projects
           </NavLink>
 
-          <NavLink to="/boq">
+          <NavLink
+            to="/boq"
+          >
             BOQ
           </NavLink>
 
-          <NavLink to="/expenses">
+          <NavLink
+            to="/expenses"
+          >
             Expenses
           </NavLink>
 
-          <NavLink to="/payments">
+          <NavLink
+            to="/payments"
+          >
             Client Payments
           </NavLink>
 
-          <NavLink to="/contractors">
+          <NavLink
+            to="/contractors"
+          >
             Contractors
           </NavLink>
 
-          <NavLink to="/contractor-bills">
+          <NavLink
+            to="/contractor-bills"
+          >
             Contractor Bills
           </NavLink>
 
-          <NavLink to="/contractor-ledger">
+          <NavLink
+            to="/contractor-ledger"
+          >
             Contractor Ledger
           </NavLink>
 
-          <NavLink to="/subcontractor-payments">
+          <NavLink
+            to="/subcontractor-payments"
+          >
             Subcontractor Payments
           </NavLink>
 
-          <NavLink to="/workers">
+          <NavLink
+            to="/workers"
+          >
             Workers
           </NavLink>
 
-          <NavLink to="/labour-attendance">
+          <NavLink
+            to="/labour-attendance"
+          >
             Labour Attendance
           </NavLink>
 
-          <NavLink to="/labour-payments">
+          <NavLink
+            to="/labour-payments"
+          >
             Labour Payments
           </NavLink>
 
-          <NavLink to="/material-requests">
+          <NavLink
+            to="/material-requests"
+          >
             Material Requests
           </NavLink>
 
-          <NavLink to="/site-photos">
+          <NavLink
+            to="/site-photos"
+          >
             Site Photos
           </NavLink>
 
-          <NavLink to="/site-issues">
+          <NavLink
+            to="/site-issues"
+          >
             Site Issues
           </NavLink>
 
-          <NavLink to="/documents">
+          <NavLink
+            to="/documents"
+          >
             Documents
           </NavLink>
 
-          <NavLink to="/accounts">
+          <NavLink
+            to="/accounts"
+          >
             Accounts / Payment Register
           </NavLink>
 
-          <NavLink to="/site-cost-summary">
+          <NavLink
+            to="/site-cost-summary"
+          >
             Site Cost Summary
           </NavLink>
 
-          <NavLink to="/site-report">
+          <NavLink
+            to="/site-report"
+          >
             Site Report
           </NavLink>
 
-          <NavLink to="/progress">
+          <NavLink
+            to="/progress"
+          >
             Daily Progress
           </NavLink>
 
-          {role === "ADMIN" && (
-            <NavLink to="/users">
+          {role ===
+            "ADMIN" && (
+            <NavLink
+              to="/users"
+            >
               Users
             </NavLink>
           )}
@@ -526,6 +572,11 @@ function RoleBasedProtectedArea() {
       "role"
     );
 
+  /*
+   * =========================
+   * CLIENT
+   * =========================
+   */
   if (
     role === "CLIENT"
   ) {
@@ -551,6 +602,11 @@ function RoleBasedProtectedArea() {
     );
   }
 
+  /*
+   * =========================
+   * SUPERVISOR
+   * =========================
+   */
   if (
     role ===
     "SUPERVISOR"
@@ -619,6 +675,42 @@ function RoleBasedProtectedArea() {
     );
   }
 
+  /*
+   * =========================
+   * CONTRACTOR
+   * =========================
+   */
+  if (
+    role ===
+    "CONTRACTOR"
+  ) {
+    return (
+      <Routes>
+        <Route
+          path="/contractor"
+          element={
+            <ContractorPortal />
+          }
+        />
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/contractor"
+              replace
+            />
+          }
+        />
+      </Routes>
+    );
+  }
+
+  /*
+   * =========================
+   * ADMIN / MANAGER
+   * =========================
+   */
   if (
     role === "ADMIN" ||
     role === "MANAGER"
@@ -628,6 +720,9 @@ function RoleBasedProtectedArea() {
     );
   }
 
+  /*
+   * Unknown role
+   */
   return (
     <Navigate
       to="/login"

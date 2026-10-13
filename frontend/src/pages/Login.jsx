@@ -10,13 +10,17 @@ function Login() {
     password: "",
   });
 
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [error, setError] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
 
   const handleChange = (e) => {
     setForm({
       ...form,
-      [e.target.name]: e.target.value,
+      [e.target.name]:
+        e.target.value,
     });
 
     setError("");
@@ -25,8 +29,14 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.username.trim() || !form.password.trim()) {
-      setError("Username and password are required.");
+    if (
+      !form.username.trim() ||
+      !form.password.trim()
+    ) {
+      setError(
+        "Username and password are required."
+      );
+
       return;
     }
 
@@ -34,28 +44,105 @@ function Login() {
       setLoading(true);
       setError("");
 
-      const response = await api.post("/auth/login", {
-        username: form.username.trim(),
-        password: form.password,
-      });
+      const response =
+        await api.post(
+          "/auth/login",
+          {
+            username:
+              form.username.trim(),
 
-      if (response.data.success) {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("username", response.data.username);
-        localStorage.setItem("role", response.data.role);
-        localStorage.setItem("token", response.data.token);
+            password:
+              form.password,
+          }
+        );
 
-        navigate("/");
+      if (
+        response.data.success
+      ) {
+        const role =
+          response.data.role;
+
+        localStorage.setItem(
+          "isAuthenticated",
+          "true"
+        );
+
+        localStorage.setItem(
+          "username",
+          response.data.username
+        );
+
+        localStorage.setItem(
+          "role",
+          role
+        );
+
+        localStorage.setItem(
+          "token",
+          response.data.token
+        );
+
+        if (
+          role === "CLIENT"
+        ) {
+          navigate(
+            "/client",
+            {
+              replace: true,
+            }
+          );
+        } else if (
+          role ===
+          "SUPERVISOR"
+        ) {
+          navigate(
+            "/supervisor",
+            {
+              replace: true,
+            }
+          );
+        } else if (
+          role ===
+          "CONTRACTOR"
+        ) {
+          navigate(
+            "/contractor",
+            {
+              replace: true,
+            }
+          );
+        } else {
+          navigate(
+            "/",
+            {
+              replace: true,
+            }
+          );
+        }
       } else {
-        setError(response.data.message || "Login failed.");
+        setError(
+          response.data.message ||
+            "Login failed."
+        );
       }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error(
+        "Login error:",
+        error
+      );
 
-      if (error.response?.data?.message) {
-        setError(error.response.data.message);
+      if (
+        error.response?.data
+          ?.message
+      ) {
+        setError(
+          error.response.data
+            .message
+        );
       } else {
-        setError("Unable to login. Please try again.");
+        setError(
+          "Unable to login. Please try again."
+        );
       }
     } finally {
       setLoading(false);
@@ -66,21 +153,42 @@ function Login() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-brand">
-          <h1>CPMS</h1>
-          <p>Construction Project Management System</p>
+          <h1>
+            CPMS
+          </h1>
+
+          <p>
+            Construction Project
+            Management System
+          </p>
         </div>
 
-        <h2>Login</h2>
+        <h2>
+          Login
+        </h2>
 
-        {error && <div className="login-error">{error}</div>}
+        {error && (
+          <div className="login-error">
+            {error}
+          </div>
+        )}
 
-        <form className="login-form" onSubmit={handleSubmit}>
+        <form
+          className="login-form"
+          onSubmit={
+            handleSubmit
+          }
+        >
           <input
             type="text"
             name="username"
             placeholder="Username"
-            value={form.username}
-            onChange={handleChange}
+            value={
+              form.username
+            }
+            onChange={
+              handleChange
+            }
             autoComplete="username"
           />
 
@@ -88,17 +196,25 @@ function Login() {
             type="password"
             name="password"
             placeholder="Password"
-            value={form.password}
-            onChange={handleChange}
+            value={
+              form.password
+            }
+            onChange={
+              handleChange
+            }
             autoComplete="current-password"
           />
 
           <button
             type="submit"
             className="login-button"
-            disabled={loading}
+            disabled={
+              loading
+            }
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading
+              ? "Logging in..."
+              : "Login"}
           </button>
         </form>
       </div>
