@@ -16,11 +16,20 @@ function ProjectDocuments() {
   const [loading, setLoading] =
     useState(false);
 
-  const [updatingId, setUpdatingId] =
-    useState(null);
+  const [
+    updatingClientId,
+    setUpdatingClientId,
+  ] = useState(null);
 
-  const [downloadingId, setDownloadingId] =
-    useState(null);
+  const [
+    updatingContractorId,
+    setUpdatingContractorId,
+  ] = useState(null);
+
+  const [
+    downloadingId,
+    setDownloadingId,
+  ] = useState(null);
 
   const [error, setError] =
     useState("");
@@ -44,7 +53,9 @@ function ProjectDocuments() {
   const loadProjects = async () => {
     try {
       const response =
-        await api.get("/projects");
+        await api.get(
+          "/projects"
+        );
 
       setProjects(
         response.data || []
@@ -80,7 +91,9 @@ function ProjectDocuments() {
         typeof error.response?.data ===
           "string"
           ? error.response.data
-          : "Unable to load project documents."
+          : error.response?.data
+              ?.message ||
+            "Unable to load project documents."
       );
     } finally {
       setLoading(false);
@@ -133,7 +146,7 @@ function ProjectDocuments() {
 
           if (
             filters.visibility ===
-              "VISIBLE" &&
+              "CLIENT" &&
             !document.clientVisible
           ) {
             return false;
@@ -141,8 +154,19 @@ function ProjectDocuments() {
 
           if (
             filters.visibility ===
+              "CONTRACTOR" &&
+            !document.contractorVisible
+          ) {
+            return false;
+          }
+
+          if (
+            filters.visibility ===
               "INTERNAL" &&
-            document.clientVisible
+            (
+              document.clientVisible ||
+              document.contractorVisible
+            )
           ) {
             return false;
           }
@@ -199,24 +223,34 @@ function ProjectDocuments() {
             Number(a.id || 0)
           );
         });
-    }, [documents, filters]);
+    }, [
+      documents,
+      filters,
+    ]);
 
-  const visibleCount =
+  const clientVisibleCount =
     filteredDocuments.filter(
       (document) =>
         document.clientVisible
     ).length;
 
+  const contractorVisibleCount =
+    filteredDocuments.filter(
+      (document) =>
+        document.contractorVisible
+    ).length;
+
   const internalCount =
     filteredDocuments.filter(
       (document) =>
-        !document.clientVisible
+        !document.clientVisible &&
+        !document.contractorVisible
     ).length;
 
-  const updateVisibility =
+  const updateClientVisibility =
     async (document) => {
       try {
-        setUpdatingId(
+        setUpdatingClientId(
           document.id
         );
 
@@ -256,18 +290,76 @@ function ProjectDocuments() {
         );
       } catch (error) {
         console.error(
-          "Error updating visibility:",
+          "Error updating client visibility:",
           error
         );
 
         setError(
-          typeof error.response?.data ===
-            "string"
-            ? error.response.data
-            : "Unable to update document visibility."
+          error.response?.data
+            ?.message ||
+            "Unable to update client visibility."
         );
       } finally {
-        setUpdatingId(
+        setUpdatingClientId(
+          null
+        );
+      }
+    };
+
+  const updateContractorVisibility =
+    async (document) => {
+      try {
+        setUpdatingContractorId(
+          document.id
+        );
+
+        setError("");
+        setSuccess("");
+
+        const newValue =
+          !document.contractorVisible;
+
+        await api.put(
+          `/project-documents/${document.id}/contractor-visible`,
+          {
+            contractorVisible:
+              newValue,
+          }
+        );
+
+        setDocuments(
+          (current) =>
+            current.map(
+              (item) =>
+                item.id ===
+                document.id
+                  ? {
+                      ...item,
+                      contractorVisible:
+                        newValue,
+                    }
+                  : item
+            )
+        );
+
+        setSuccess(
+          newValue
+            ? "Document is now visible to contractors."
+            : "Document removed from contractor view."
+        );
+      } catch (error) {
+        console.error(
+          "Error updating contractor visibility:",
+          error
+        );
+
+        setError(
+          error.response?.data
+            ?.message ||
+            "Unable to update contractor visibility."
+        );
+      } finally {
+        setUpdatingContractorId(
           null
         );
       }
@@ -296,16 +388,21 @@ function ProjectDocuments() {
 
         const link =
           window.document
-            .createElement("a");
+            .createElement(
+              "a"
+            );
 
-        link.href = url;
+        link.href =
+          url;
 
         link.download =
           document.originalFileName ||
           `document-${document.id}`;
 
         window.document.body
-          .appendChild(link);
+          .appendChild(
+            link
+          );
 
         link.click();
 
@@ -352,14 +449,18 @@ function ProjectDocuments() {
       return "-";
     }
 
-    if (bytes < 1024) {
+    if (
+      bytes < 1024
+    ) {
       return `${bytes} B`;
     }
 
     const kb =
       bytes / 1024;
 
-    if (kb < 1024) {
+    if (
+      kb < 1024
+    ) {
       return `${kb.toFixed(
         1
       )} KB`;
@@ -367,7 +468,9 @@ function ProjectDocuments() {
 
     return `${(
       kb / 1024
-    ).toFixed(2)} MB`;
+    ).toFixed(
+      2
+    )} MB`;
   };
 
   return (
@@ -381,9 +484,20 @@ function ProjectDocuments() {
           <p>
             Review drawings,
             BOQs, reports and
-            project files.
+            control client /
+            contractor visibility.
           </p>
         </div>
+
+        <button
+          type="button"
+          className="primary-button"
+          onClick={
+            loadDocuments
+          }
+        >
+          Refresh
+        </button>
       </div>
 
       {error && (
@@ -519,12 +633,16 @@ function ProjectDocuments() {
                 All
               </option>
 
-              <option value="VISIBLE">
+              <option value="CLIENT">
                 Client Visible
               </option>
 
+              <option value="CONTRACTOR">
+                Contractor Visible
+              </option>
+
               <option value="INTERNAL">
-                Internal
+                Internal Only
               </option>
             </select>
           </div>
@@ -555,7 +673,8 @@ function ProjectDocuments() {
             clearFilters
           }
           style={{
-            marginTop: "15px",
+            marginTop:
+              "15px",
           }}
         >
           Clear Filters
@@ -565,7 +684,8 @@ function ProjectDocuments() {
       <div
         className="dashboard-grid"
         style={{
-          marginTop: "24px",
+          marginTop:
+            "24px",
         }}
       >
         <div className="dashboard-card blue">
@@ -586,17 +706,33 @@ function ProjectDocuments() {
           </p>
 
           <h2>
-            {visibleCount}
+            {
+              clientVisibleCount
+            }
+          </h2>
+        </div>
+
+        <div className="dashboard-card blue">
+          <p>
+            Contractor Visible
+          </p>
+
+          <h2>
+            {
+              contractorVisibleCount
+            }
           </h2>
         </div>
 
         <div className="dashboard-card orange">
           <p>
-            Internal
+            Internal Only
           </p>
 
           <h2>
-            {internalCount}
+            {
+              internalCount
+            }
           </h2>
         </div>
       </div>
@@ -604,7 +740,8 @@ function ProjectDocuments() {
       <div
         className="form-card"
         style={{
-          marginTop: "24px",
+          marginTop:
+            "24px",
         }}
       >
         <h2>
@@ -623,7 +760,8 @@ function ProjectDocuments() {
         ) : (
           <div
             style={{
-              overflowX: "auto",
+              overflowX:
+                "auto",
             }}
           >
             <table className="data-table">
@@ -635,9 +773,18 @@ function ProjectDocuments() {
                   <th>Type</th>
                   <th>File</th>
                   <th>Size</th>
-                  <th>Uploaded By</th>
-                  <th>Visibility</th>
-                  <th>Actions</th>
+                  <th>
+                    Uploaded By
+                  </th>
+                  <th>
+                    Client
+                  </th>
+                  <th>
+                    Contractor
+                  </th>
+                  <th>
+                    Actions
+                  </th>
                 </tr>
               </thead>
 
@@ -726,8 +873,14 @@ function ProjectDocuments() {
 
                       <td>
                         {document.clientVisible
-                          ? "Client Visible"
-                          : "Internal"}
+                          ? "Visible"
+                          : "Hidden"}
+                      </td>
+
+                      <td>
+                        {document.contractorVisible
+                          ? "Visible"
+                          : "Hidden"}
                       </td>
 
                       <td>
@@ -735,7 +888,8 @@ function ProjectDocuments() {
                           style={{
                             display:
                               "flex",
-                            gap: "8px",
+                            gap:
+                              "8px",
                             flexWrap:
                               "wrap",
                           }}
@@ -767,21 +921,46 @@ function ProjectDocuments() {
                                 : "primary-button"
                             }
                             disabled={
-                              updatingId ===
+                              updatingClientId ===
                               document.id
                             }
                             onClick={() =>
-                              updateVisibility(
+                              updateClientVisibility(
                                 document
                               )
                             }
                           >
-                            {updatingId ===
+                            {updatingClientId ===
                             document.id
                               ? "Updating..."
                               : document.clientVisible
-                              ? "Make Internal"
-                              : "Make Client Visible"}
+                              ? "Hide from Client"
+                              : "Show to Client"}
+                          </button>
+
+                          <button
+                            type="button"
+                            className={
+                              document.contractorVisible
+                                ? "cancel-button"
+                                : "primary-button"
+                            }
+                            disabled={
+                              updatingContractorId ===
+                              document.id
+                            }
+                            onClick={() =>
+                              updateContractorVisibility(
+                                document
+                              )
+                            }
+                          >
+                            {updatingContractorId ===
+                            document.id
+                              ? "Updating..."
+                              : document.contractorVisible
+                              ? "Hide from Contractor"
+                              : "Show to Contractor"}
                           </button>
                         </div>
                       </td>
