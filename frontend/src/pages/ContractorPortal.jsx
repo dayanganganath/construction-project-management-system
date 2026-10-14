@@ -20,6 +20,9 @@ function ContractorPortal() {
   const [payments, setPayments] =
     useState([]);
 
+  const [documents, setDocuments] =
+    useState([]);
+
   const [
     materialRequests,
     setMaterialRequests,
@@ -37,6 +40,16 @@ function ContractorPortal() {
     submittingRequest,
     setSubmittingRequest,
   ] = useState(false);
+
+  const [
+    downloadingDocumentId,
+    setDownloadingDocumentId,
+  ] = useState(null);
+
+  const [
+    downloadingPaymentId,
+    setDownloadingPaymentId,
+  ] = useState(null);
 
   const [error, setError] =
     useState("");
@@ -88,7 +101,9 @@ function ContractorPortal() {
   const showSuccess = (
     message
   ) => {
-    setSuccess(message);
+    setSuccess(
+      message
+    );
 
     setTimeout(() => {
       setSuccess("");
@@ -108,6 +123,7 @@ function ContractorPortal() {
           billsResponse,
           paymentsResponse,
           requestsResponse,
+          documentsResponse,
         ] = await Promise.all([
           api.get(
             "/contractor/profile"
@@ -131,6 +147,10 @@ function ContractorPortal() {
 
           api.get(
             "/contractor/material-requests"
+          ),
+
+          api.get(
+            "/contractor/documents"
           ),
         ]);
 
@@ -171,6 +191,14 @@ function ContractorPortal() {
             requestsResponse.data
           )
             ? requestsResponse.data
+            : []
+        );
+
+        setDocuments(
+          Array.isArray(
+            documentsResponse.data
+          )
+            ? documentsResponse.data
             : []
         );
       } catch (error) {
@@ -215,6 +243,38 @@ function ContractorPortal() {
           getErrorMessage(
             error,
             "Unable to load material requests."
+          )
+        );
+      }
+    };
+
+  const loadDocuments =
+    async () => {
+      try {
+        setError("");
+
+        const response =
+          await api.get(
+            "/contractor/documents"
+          );
+
+        setDocuments(
+          Array.isArray(
+            response.data
+          )
+            ? response.data
+            : []
+        );
+      } catch (error) {
+        console.error(
+          "Unable to load documents:",
+          error
+        );
+
+        setError(
+          getErrorMessage(
+            error,
+            "Unable to load project documents."
           )
         );
       }
@@ -352,6 +412,150 @@ function ContractorPortal() {
       }
     };
 
+  const handleDocumentDownload =
+    async (projectDocument) => {
+      try {
+        setDownloadingDocumentId(
+          projectDocument.id
+        );
+
+        setError("");
+
+        const response =
+          await api.get(
+            `/contractor/documents/${projectDocument.id}/file`,
+            {
+              responseType:
+                "blob",
+            }
+          );
+
+        const blob =
+          new Blob([
+            response.data,
+          ]);
+
+        const blobUrl =
+          window.URL.createObjectURL(
+            blob
+          );
+
+        const link =
+          window.document.createElement(
+            "a"
+          );
+
+        link.href =
+          blobUrl;
+
+        link.download =
+          projectDocument.originalFileName ||
+          `project-document-${projectDocument.id}`;
+
+        window.document.body.appendChild(
+          link
+        );
+
+        link.click();
+
+        window.document.body.removeChild(
+          link
+        );
+
+        window.URL.revokeObjectURL(
+          blobUrl
+        );
+      } catch (error) {
+        console.error(
+          "Document download error:",
+          error
+        );
+
+        setError(
+          getErrorMessage(
+            error,
+            "Unable to download document."
+          )
+        );
+      } finally {
+        setDownloadingDocumentId(
+          null
+        );
+      }
+    };
+
+  const handlePaymentSlipDownload =
+    async (payment) => {
+      try {
+        setDownloadingPaymentId(
+          payment.id
+        );
+
+        setError("");
+
+        const response =
+          await api.get(
+            `/contractor/payments/${payment.id}/slip`,
+            {
+              responseType:
+                "blob",
+            }
+          );
+
+        const blob =
+          new Blob([
+            response.data,
+          ]);
+
+        const blobUrl =
+          window.URL.createObjectURL(
+            blob
+          );
+
+        const link =
+          window.document.createElement(
+            "a"
+          );
+
+        link.href =
+          blobUrl;
+
+        link.download =
+          payment.slipFileName ||
+          `payment-slip-${payment.id}`;
+
+        window.document.body.appendChild(
+          link
+        );
+
+        link.click();
+
+        window.document.body.removeChild(
+          link
+        );
+
+        window.URL.revokeObjectURL(
+          blobUrl
+        );
+      } catch (error) {
+        console.error(
+          "Payment slip download error:",
+          error
+        );
+
+        setError(
+          getErrorMessage(
+            error,
+            "Unable to download payment slip."
+          )
+        );
+      } finally {
+        setDownloadingPaymentId(
+          null
+        );
+      }
+    };
+
   const handleLogout = () => {
     localStorage.removeItem(
       "isAuthenticated"
@@ -411,6 +615,45 @@ function ContractorPortal() {
     );
   };
 
+  const formatFileSize = (
+    bytes
+  ) => {
+    const size =
+      Number(
+        bytes || 0
+      );
+
+    if (
+      size <= 0
+    ) {
+      return "-";
+    }
+
+    if (
+      size < 1024
+    ) {
+      return `${size} B`;
+    }
+
+    if (
+      size <
+      1024 * 1024
+    ) {
+      return `${(
+        size / 1024
+      ).toFixed(
+        1
+      )} KB`;
+    }
+
+    return `${(
+      size /
+      (1024 * 1024)
+    ).toFixed(
+      1
+    )} MB`;
+  };
+
   const getStatusStyle =
     (status) => {
       const normalized =
@@ -423,8 +666,10 @@ function ContractorPortal() {
         "APPROVED"
       ) {
         return {
-          background: "#dcfce7",
-          color: "#166534",
+          background:
+            "#dcfce7",
+          color:
+            "#166534",
         };
       }
 
@@ -433,14 +678,18 @@ function ContractorPortal() {
         "REJECTED"
       ) {
         return {
-          background: "#fee2e2",
-          color: "#991b1b",
+          background:
+            "#fee2e2",
+          color:
+            "#991b1b",
         };
       }
 
       return {
-        background: "#fef3c7",
-        color: "#92400e",
+        background:
+          "#fef3c7",
+        color:
+          "#92400e",
       };
     };
 
@@ -467,7 +716,8 @@ function ContractorPortal() {
     return (
       <div
         style={{
-          padding: "40px",
+          padding:
+            "40px",
         }}
       >
         Loading contractor
@@ -520,6 +770,22 @@ function ContractorPortal() {
             }
           >
             My Projects
+          </button>
+
+          <button
+            type="button"
+            style={
+              sidebarButtonStyle(
+                "documents"
+              )
+            }
+            onClick={() =>
+              setActiveTab(
+                "documents"
+              )
+            }
+          >
+            My Documents
           </button>
 
           <button
@@ -649,8 +915,7 @@ function ContractorPortal() {
             <div className="page-header">
               <div>
                 <h1>
-                  Contractor
-                  Dashboard
+                  Contractor Dashboard
                 </h1>
 
                 <p>
@@ -675,13 +940,10 @@ function ContractorPortal() {
               style={{
                 display:
                   "grid",
-
                 gridTemplateColumns:
                   "repeat(auto-fit, minmax(200px, 1fr))",
-
                 gap:
                   "20px",
-
                 marginBottom:
                   "25px",
               }}
@@ -699,6 +961,18 @@ function ContractorPortal() {
 
               <div className="form-card">
                 <h3>
+                  Documents
+                </h3>
+
+                <h2>
+                  {
+                    documents.length
+                  }
+                </h2>
+              </div>
+
+              <div className="form-card">
+                <h3>
                   Total Bills
                 </h3>
 
@@ -710,8 +984,7 @@ function ContractorPortal() {
 
               <div className="form-card">
                 <h3>
-                  Pending Material
-                  Requests
+                  Pending Material Requests
                 </h3>
 
                 <h2>
@@ -814,8 +1087,7 @@ function ContractorPortal() {
                       <td
                         colSpan="6"
                       >
-                        No bills
-                        available.
+                        No bills available.
                       </td>
                     </tr>
                   ) : (
@@ -825,9 +1097,7 @@ function ContractorPortal() {
                         5
                       )
                       .map(
-                        (
-                          bill
-                        ) => (
+                        (bill) => (
                           <tr
                             key={
                               bill.id
@@ -925,8 +1195,7 @@ function ContractorPortal() {
                       <td
                         colSpan="5"
                       >
-                        No projects
-                        found.
+                        No projects found.
                       </td>
                     </tr>
                   ) : (
@@ -964,6 +1233,162 @@ function ContractorPortal() {
                           <td>
                             {project.status ||
                               "-"}
+                          </td>
+                        </tr>
+                      )
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
+        {activeTab ===
+          "documents" && (
+          <>
+            <div className="page-header">
+              <div>
+                <h1>
+                  My Documents
+                </h1>
+
+                <p>
+                  Drawings,
+                  approvals,
+                  reports and other
+                  documents shared
+                  with you.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="primary-button"
+                onClick={
+                  loadDocuments
+                }
+              >
+                Refresh
+              </button>
+            </div>
+
+            <div className="table-card">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>
+                      Date
+                    </th>
+
+                    <th>
+                      Project
+                    </th>
+
+                    <th>
+                      Title
+                    </th>
+
+                    <th>
+                      Type
+                    </th>
+
+                    <th>
+                      File
+                    </th>
+
+                    <th>
+                      Size
+                    </th>
+
+                    <th>
+                      Description
+                    </th>
+
+                    <th>
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {documents.length ===
+                  0 ? (
+                    <tr>
+                      <td
+                        colSpan="8"
+                      >
+                        No documents
+                        have been shared
+                        with you.
+                      </td>
+                    </tr>
+                  ) : (
+                    documents.map(
+                      (
+                        projectDocument
+                      ) => (
+                        <tr
+                          key={
+                            projectDocument.id
+                          }
+                        >
+                          <td>
+                            {formatDate(
+                              projectDocument.documentDate
+                            )}
+                          </td>
+
+                          <td>
+                            {projectDocument.projectName ||
+                              "-"}
+                          </td>
+
+                          <td>
+                            {projectDocument.title ||
+                              "-"}
+                          </td>
+
+                          <td>
+                            {projectDocument.documentType ||
+                              "-"}
+                          </td>
+
+                          <td>
+                            {projectDocument.originalFileName ||
+                              "-"}
+                          </td>
+
+                          <td>
+                            {formatFileSize(
+                              projectDocument.fileSize
+                            )}
+                          </td>
+
+                          <td>
+                            {projectDocument.description ||
+                              "-"}
+                          </td>
+
+                          <td>
+                            <button
+                              type="button"
+                              className="primary-button"
+                              disabled={
+                                downloadingDocumentId ===
+                                projectDocument.id
+                              }
+                              onClick={() =>
+                                handleDocumentDownload(
+                                  projectDocument
+                                )
+                              }
+                            >
+                              {downloadingDocumentId ===
+                              projectDocument.id
+                                ? "Downloading..."
+                                : "Download"}
+                            </button>
                           </td>
                         </tr>
                       )
@@ -1252,6 +1677,7 @@ function ContractorPortal() {
                           <td>
                             {request.project
                               ?.projectName ||
+                              request.projectName ||
                               "-"}
                           </td>
 
@@ -1528,6 +1954,10 @@ function ContractorPortal() {
                     <th>
                       Notes
                     </th>
+
+                    <th>
+                      Slip
+                    </th>
                   </tr>
                 </thead>
 
@@ -1536,7 +1966,7 @@ function ContractorPortal() {
                   0 ? (
                     <tr>
                       <td
-                        colSpan="7"
+                        colSpan="8"
                       >
                         No payments
                         found.
@@ -1587,6 +2017,31 @@ function ContractorPortal() {
                           <td>
                             {payment.notes ||
                               "-"}
+                          </td>
+
+                          <td>
+                            {payment.slipFileName ? (
+                              <button
+                                type="button"
+                                className="primary-button"
+                                disabled={
+                                  downloadingPaymentId ===
+                                  payment.id
+                                }
+                                onClick={() =>
+                                  handlePaymentSlipDownload(
+                                    payment
+                                  )
+                                }
+                              >
+                                {downloadingPaymentId ===
+                                payment.id
+                                  ? "Downloading..."
+                                  : "Download Slip"}
+                              </button>
+                            ) : (
+                              "-"
+                            )}
                           </td>
                         </tr>
                       )
@@ -1675,8 +2130,7 @@ function ContractorPortal() {
 
                   <tr>
                     <th>
-                      NIC /
-                      Registration
+                      NIC / Registration
                     </th>
 
                     <td>
