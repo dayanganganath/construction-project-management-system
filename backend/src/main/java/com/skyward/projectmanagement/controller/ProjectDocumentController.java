@@ -240,6 +240,38 @@ public class ProjectDocumentController {
         }
     }
 
+    @PutMapping(
+            "/api/project-documents/{documentId}/contractor-visible"
+    )
+    public ResponseEntity<?>
+    updateContractorVisibility(
+            Authentication authentication,
+            @PathVariable Long documentId,
+            @RequestBody
+            ContractorVisibilityBody body
+    ) {
+
+        try {
+
+            return ResponseEntity.ok(
+                    projectDocumentService
+                            .updateContractorVisibility(
+                                    authentication.getName(),
+                                    documentId,
+                                    body.isContractorVisible()
+                            )
+            );
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            e.getMessage()
+                    );
+        }
+    }
+
     @GetMapping(
             "/api/project-documents/{documentId}/file"
     )
@@ -308,6 +340,14 @@ public class ProjectDocumentController {
                         .replace(
                                 "\"",
                                 ""
+                        )
+                        .replace(
+                                "\r",
+                                ""
+                        )
+                        .replace(
+                                "\n",
+                                ""
                         );
 
         return ResponseEntity
@@ -317,9 +357,9 @@ public class ProjectDocumentController {
                 )
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" +
-                                safeFileName +
-                                "\""
+                        "attachment; filename=\""
+                                + safeFileName
+                                + "\""
                 )
                 .body(
                         resource
@@ -343,6 +383,26 @@ public class ProjectDocumentController {
         ) {
             this.clientVisible =
                     clientVisible;
+        }
+    }
+
+    public static class
+    ContractorVisibilityBody {
+
+        private boolean
+                contractorVisible;
+
+        public boolean
+        isContractorVisible() {
+            return contractorVisible;
+        }
+
+        public void
+        setContractorVisible(
+                boolean contractorVisible
+        ) {
+            this.contractorVisible =
+                    contractorVisible;
         }
     }
 }

@@ -49,6 +49,9 @@ public class ProjectDocument {
     @Column(nullable = false)
     private Boolean clientVisible = false;
 
+    @Column(nullable = false)
+    private Boolean contractorVisible = false;
+
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;

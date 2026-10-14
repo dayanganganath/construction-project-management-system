@@ -1,5 +1,6 @@
 package com.skyward.projectmanagement.controller;
 
+import com.skyward.projectmanagement.entity.ProjectDocument;
 import com.skyward.projectmanagement.entity.SubcontractorPayment;
 import com.skyward.projectmanagement.service.ContractorPortalService;
 
@@ -36,6 +37,12 @@ public class ContractorPortalController {
                 contractorPortalService;
     }
 
+    /*
+     * =========================================================
+     * PROFILE
+     * =========================================================
+     */
+
     @GetMapping(
             "/profile"
     )
@@ -52,6 +59,12 @@ public class ContractorPortalController {
                         )
         );
     }
+
+    /*
+     * =========================================================
+     * DASHBOARD
+     * =========================================================
+     */
 
     @GetMapping(
             "/dashboard"
@@ -70,6 +83,12 @@ public class ContractorPortalController {
         );
     }
 
+    /*
+     * =========================================================
+     * PROJECTS
+     * =========================================================
+     */
+
     @GetMapping(
             "/projects"
     )
@@ -87,6 +106,12 @@ public class ContractorPortalController {
         );
     }
 
+    /*
+     * =========================================================
+     * BILLS
+     * =========================================================
+     */
+
     @GetMapping(
             "/bills"
     )
@@ -103,6 +128,12 @@ public class ContractorPortalController {
                         )
         );
     }
+
+    /*
+     * =========================================================
+     * PAYMENTS
+     * =========================================================
+     */
 
     @GetMapping(
             "/payments"
@@ -123,9 +154,6 @@ public class ContractorPortalController {
 
     /*
      * Secure payment slip download.
-     *
-     * Contractor can only download
-     * a slip that belongs to their own payment.
      */
     @GetMapping(
             "/payments/{paymentId}/slip"
@@ -148,10 +176,12 @@ public class ContractorPortalController {
                     Paths.get(
                             payment.getSlipFilePath()
                     )
+                    .toAbsolutePath()
                     .normalize();
 
             if (
-                    !Files.exists(filePath) ||
+                    !Files.exists(filePath)
+                            ||
                     !Files.isRegularFile(filePath)
             ) {
                 return ResponseEntity
@@ -164,58 +194,28 @@ public class ContractorPortalController {
                             filePath.toUri()
                     );
 
-            if (!resource.exists()) {
+            if (
+                    !resource.exists()
+                            ||
+                    !resource.isReadable()
+            ) {
                 return ResponseEntity
                         .notFound()
                         .build();
             }
 
-            String contentType;
-
-            try {
-
-                contentType =
-                        Files.probeContentType(
-                                filePath
-                        );
-
-            } catch (IOException e) {
-
-                contentType = null;
-            }
-
-            if (
-                    contentType == null ||
-                    contentType.isBlank()
-            ) {
-
-                String fileName =
-                        payment.getSlipFileName();
-
-                if (
-                        fileName != null &&
-                        fileName
-                                .toLowerCase()
-                                .endsWith(".pdf")
-                ) {
-
-                    contentType =
-                            MediaType
-                                    .APPLICATION_PDF_VALUE;
-
-                } else {
-
-                    contentType =
-                            MediaType
-                                    .APPLICATION_OCTET_STREAM_VALUE;
-                }
-            }
+            String contentType =
+                    detectContentType(
+                            filePath,
+                            payment.getSlipFileName()
+                    );
 
             String downloadFileName =
                     payment.getSlipFileName();
 
             if (
-                    downloadFileName == null ||
+                    downloadFileName == null
+                            ||
                     downloadFileName.isBlank()
             ) {
 
@@ -261,16 +261,273 @@ public class ContractorPortalController {
             return ResponseEntity
                     .badRequest()
                     .body(
+                            errorResponse(
+                                    e,
+                                    "Unable to download payment slip."
+                            )
+                    );
+        }
+    }
+
+    /*
+     * =========================================================
+     * PROJECT DOCUMENTS
+     * =========================================================
+     */
+
+    @GetMapping(
+            "/documents"
+    )
+    public ResponseEntity<?> getMyDocuments(
+            Authentication authentication
+    ) {
+
+        try {
+
+            return ResponseEntity.ok(
+                    contractorPortalService
+                            .getMyDocuments(
+                                    authentication.getName()
+                            )
+            );
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            errorResponse(
+                                    e,
+                                    "Unable to load project documents."
+                            )
+                    );
+        }
+    }
+
+    @GetMapping(
+            "/projects/{projectId}/documents"
+    )
+    public ResponseEntity<?> getMyProjectDocuments(
+            Authentication authentication,
+            @PathVariable Long projectId
+    ) {
+
+        try {
+
+            return ResponseEntity.ok(
+                    contractorPortalService
+                            .getMyProjectDocuments(
+                                    authentication.getName(),
+                                    projectId
+                            )
+            );
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            errorResponse(
+                                    e,
+                                    "Unable to load project documents."
+                            )
+                    );
+        }
+    }
+
+    /*
+     * Secure contractor document download.
+     *
+     * Contractor can download only:
+     * 1. contractorVisible = true document
+     * 2. document belonging to an actively assigned project
+     */
+    @GetMapping(
+            "/documents/{documentId}/file"
+    )
+    public ResponseEntity<?> downloadProjectDocument(
+            Authentication authentication,
+            @PathVariable Long documentId
+    ) {
+
+        try {
+
+            ProjectDocument document =
+                    contractorPortalService
+                            .getMyDocumentForDownload(
+                                    authentication.getName(),
+                                    documentId
+                            );
+
+            Path filePath =
+                    Paths.get(
+                            document.getFilePath()
+                    )
+                    .toAbsolutePath()
+                    .normalize();
+
+            if (
+                    !Files.exists(filePath)
+                            ||
+                    !Files.isRegularFile(filePath)
+            ) {
+                return ResponseEntity
+                        .notFound()
+                        .build();
+            }
+
+            Resource resource =
+                    new UrlResource(
+                            filePath.toUri()
+                    );
+
+            if (
+                    !resource.exists()
+                            ||
+                    !resource.isReadable()
+            ) {
+                return ResponseEntity
+                        .notFound()
+                        .build();
+            }
+
+            String contentType =
+                    detectContentType(
+                            filePath,
+                            document.getOriginalFileName()
+                    );
+
+            String downloadFileName =
+                    document.getOriginalFileName();
+
+            if (
+                    downloadFileName == null
+                            ||
+                    downloadFileName.isBlank()
+            ) {
+
+                downloadFileName =
+                        "project-document-"
+                                + document.getId();
+            }
+
+            return ResponseEntity
+                    .ok()
+                    .contentType(
+                            MediaType.parseMediaType(
+                                    contentType
+                            )
+                    )
+                    .header(
+                            HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\""
+                                    + sanitizeFileName(
+                                            downloadFileName
+                                    )
+                                    + "\""
+                    )
+                    .body(
+                            resource
+                    );
+
+        } catch (MalformedURLException e) {
+
+            return ResponseEntity
+                    .internalServerError()
+                    .body(
                             Map.of(
                                     "success",
                                     false,
                                     "message",
-                                    e.getMessage() != null
-                                            ? e.getMessage()
-                                            : "Unable to download payment slip."
+                                    "Unable to read project document file."
+                            )
+                    );
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            errorResponse(
+                                    e,
+                                    "Unable to download project document."
                             )
                     );
         }
+    }
+
+    /*
+     * =========================================================
+     * HELPERS
+     * =========================================================
+     */
+
+    private String detectContentType(
+            Path filePath,
+            String fileName
+    ) {
+
+        String contentType;
+
+        try {
+
+            contentType =
+                    Files.probeContentType(
+                            filePath
+                    );
+
+        } catch (IOException e) {
+
+            contentType = null;
+        }
+
+        if (
+                contentType != null
+                        &&
+                !contentType.isBlank()
+        ) {
+            return contentType;
+        }
+
+        if (fileName != null) {
+
+            String lower =
+                    fileName.toLowerCase();
+
+            if (
+                    lower.endsWith(
+                            ".pdf"
+                    )
+            ) {
+                return MediaType
+                        .APPLICATION_PDF_VALUE;
+            }
+
+            if (
+                    lower.endsWith(
+                            ".jpg"
+                    )
+                            ||
+                    lower.endsWith(
+                            ".jpeg"
+                    )
+            ) {
+                return MediaType
+                        .IMAGE_JPEG_VALUE;
+            }
+
+            if (
+                    lower.endsWith(
+                            ".png"
+                    )
+            ) {
+                return MediaType
+                        .IMAGE_PNG_VALUE;
+            }
+        }
+
+        return MediaType
+                .APPLICATION_OCTET_STREAM_VALUE;
     }
 
     private String sanitizeFileName(
@@ -290,5 +547,25 @@ public class ContractorPortalController {
                         "\n",
                         ""
                 );
+    }
+
+    private Map<String, Object> errorResponse(
+            RuntimeException e,
+            String fallbackMessage
+    ) {
+
+        String message =
+                e.getMessage() != null
+                        &&
+                !e.getMessage().isBlank()
+                        ? e.getMessage()
+                        : fallbackMessage;
+
+        return Map.of(
+                "success",
+                false,
+                "message",
+                message
+        );
     }
 }

@@ -2,11 +2,13 @@ package com.skyward.projectmanagement.service;
 
 import com.skyward.projectmanagement.entity.Contractor;
 import com.skyward.projectmanagement.entity.ContractorBill;
+import com.skyward.projectmanagement.entity.ProjectDocument;
 import com.skyward.projectmanagement.entity.SubcontractorPayment;
 import com.skyward.projectmanagement.model.Project;
 
 import com.skyward.projectmanagement.repository.ContractorBillRepository;
 import com.skyward.projectmanagement.repository.ContractorRepository;
+import com.skyward.projectmanagement.repository.ProjectDocumentRepository;
 import com.skyward.projectmanagement.repository.SubcontractorPaymentRepository;
 
 import org.springframework.stereotype.Service;
@@ -24,14 +26,18 @@ public class ContractorPortalService {
 
     private final SubcontractorPaymentRepository paymentRepository;
 
+    private final ProjectDocumentRepository projectDocumentRepository;
+
     private final ContractorProjectAssignmentService assignmentService;
 
     public ContractorPortalService(
             ContractorRepository contractorRepository,
             ContractorBillRepository contractorBillRepository,
             SubcontractorPaymentRepository paymentRepository,
+            ProjectDocumentRepository projectDocumentRepository,
             ContractorProjectAssignmentService assignmentService
     ) {
+
         this.contractorRepository =
                 contractorRepository;
 
@@ -41,9 +47,18 @@ public class ContractorPortalService {
         this.paymentRepository =
                 paymentRepository;
 
+        this.projectDocumentRepository =
+                projectDocumentRepository;
+
         this.assignmentService =
                 assignmentService;
     }
+
+    /*
+     * =========================================================
+     * PROFILE
+     * =========================================================
+     */
 
     public Map<String, Object> getMyProfile(
             String username
@@ -120,6 +135,12 @@ public class ContractorPortalService {
         return response;
     }
 
+    /*
+     * =========================================================
+     * PROJECTS
+     * =========================================================
+     */
+
     public List<Map<String, Object>> getMyProjects(
             String username
     ) {
@@ -144,6 +165,12 @@ public class ContractorPortalService {
                         Collectors.toList()
                 );
     }
+
+    /*
+     * =========================================================
+     * BILLS
+     * =========================================================
+     */
 
     public List<Map<String, Object>> getMyBills(
             String username
@@ -175,6 +202,12 @@ public class ContractorPortalService {
                 );
     }
 
+    /*
+     * =========================================================
+     * PAYMENTS
+     * =========================================================
+     */
+
     public List<Map<String, Object>> getMyPayments(
             String username
     ) {
@@ -204,6 +237,258 @@ public class ContractorPortalService {
                         Collectors.toList()
                 );
     }
+
+    /*
+     * Secure payment access for contractor slip download.
+     */
+    public SubcontractorPayment getMyPaymentForSlip(
+            String username,
+            Long paymentId
+    ) {
+
+        Contractor contractor =
+                getContractor(
+                        username
+                );
+
+        SubcontractorPayment payment =
+                paymentRepository
+                        .findById(
+                                paymentId
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Payment not found."
+                                )
+                        );
+
+        if (
+                payment.getContractor() == null
+                        ||
+                payment.getContractor()
+                        .getId() == null
+                        ||
+                !payment.getContractor()
+                        .getId()
+                        .equals(
+                                contractor.getId()
+                        )
+        ) {
+            throw new RuntimeException(
+                    "You do not have access to this payment."
+            );
+        }
+
+        if (
+                payment.getSlipFilePath() == null
+                        ||
+                payment.getSlipFilePath().isBlank()
+        ) {
+            throw new RuntimeException(
+                    "No payment slip is available for this payment."
+            );
+        }
+
+        return payment;
+    }
+
+    /*
+     * =========================================================
+     * PROJECT DOCUMENTS
+     * =========================================================
+     */
+
+    public List<Map<String, Object>> getMyDocuments(
+            String username
+    ) {
+
+        Contractor contractor =
+                getContractor(
+                        username
+                );
+
+        List<Project> assignedProjects =
+                assignmentService
+                        .getAssignedProjects(
+                                contractor.getId()
+                        );
+
+        List<ProjectDocument> documents =
+                new ArrayList<>();
+
+        for (Project project : assignedProjects) {
+
+            if (
+                    project == null
+                            ||
+                    project.getId() == null
+            ) {
+                continue;
+            }
+
+            documents.addAll(
+                    projectDocumentRepository
+                            .findByProjectIdAndContractorVisibleTrue(
+                                    project.getId()
+                            )
+            );
+        }
+
+        return documents
+                .stream()
+                .sorted(
+                        Comparator
+                                .comparing(
+                                        ProjectDocument::getDocumentDate,
+                                        Comparator.nullsLast(
+                                                Comparator.reverseOrder()
+                                        )
+                                )
+                                .thenComparing(
+                                        ProjectDocument::getId,
+                                        Comparator.nullsLast(
+                                                Comparator.reverseOrder()
+                                        )
+                                )
+                )
+                .map(
+                        this::toDocumentResponse
+                )
+                .collect(
+                        Collectors.toList()
+                );
+    }
+
+    public List<Map<String, Object>> getMyProjectDocuments(
+            String username,
+            Long projectId
+    ) {
+
+        Contractor contractor =
+                getContractor(
+                        username
+                );
+
+        if (
+                !assignmentService
+                        .hasProjectAccess(
+                                contractor.getId(),
+                                projectId
+                        )
+        ) {
+            throw new RuntimeException(
+                    "You do not have access to this project."
+            );
+        }
+
+        return projectDocumentRepository
+                .findByProjectIdAndContractorVisibleTrue(
+                        projectId
+                )
+                .stream()
+                .sorted(
+                        Comparator
+                                .comparing(
+                                        ProjectDocument::getDocumentDate,
+                                        Comparator.nullsLast(
+                                                Comparator.reverseOrder()
+                                        )
+                                )
+                                .thenComparing(
+                                        ProjectDocument::getId,
+                                        Comparator.nullsLast(
+                                                Comparator.reverseOrder()
+                                        )
+                                )
+                )
+                .map(
+                        this::toDocumentResponse
+                )
+                .collect(
+                        Collectors.toList()
+                );
+    }
+
+    /*
+     * Used by secure document download endpoint.
+     */
+    public ProjectDocument getMyDocumentForDownload(
+            String username,
+            Long documentId
+    ) {
+
+        Contractor contractor =
+                getContractor(
+                        username
+                );
+
+        ProjectDocument document =
+                projectDocumentRepository
+                        .findById(
+                                documentId
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Project document not found."
+                                )
+                        );
+
+        if (
+                !Boolean.TRUE.equals(
+                        document.getContractorVisible()
+                )
+        ) {
+            throw new RuntimeException(
+                    "You do not have access to this document."
+            );
+        }
+
+        if (
+                document.getProject() == null
+                        ||
+                document.getProject()
+                        .getId() == null
+        ) {
+            throw new RuntimeException(
+                    "Document project information is missing."
+            );
+        }
+
+        Long projectId =
+                document
+                        .getProject()
+                        .getId();
+
+        if (
+                !assignmentService
+                        .hasProjectAccess(
+                                contractor.getId(),
+                                projectId
+                        )
+        ) {
+            throw new RuntimeException(
+                    "You do not have access to this document."
+            );
+        }
+
+        if (
+                document.getFilePath() == null
+                        ||
+                document.getFilePath().isBlank()
+        ) {
+            throw new RuntimeException(
+                    "Document file is not available."
+            );
+        }
+
+        return document;
+    }
+
+    /*
+     * =========================================================
+     * DASHBOARD
+     * =========================================================
+     */
 
     public Map<String, Object> getDashboard(
             String username
@@ -346,58 +631,10 @@ public class ContractorPortalService {
     }
 
     /*
-     * Secure payment access for contractor slip download.
-     *
-     * Logged-in contractor can only access
-     * a payment that belongs to that contractor.
+     * =========================================================
+     * CONTRACTOR VALIDATION
+     * =========================================================
      */
-    public SubcontractorPayment getMyPaymentForSlip(
-            String username,
-            Long paymentId
-    ) {
-
-        Contractor contractor =
-                getContractor(
-                        username
-                );
-
-        SubcontractorPayment payment =
-                paymentRepository
-                        .findById(
-                                paymentId
-                        )
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Payment not found."
-                                )
-                        );
-
-        if (
-                payment.getContractor() == null ||
-                payment.getContractor()
-                        .getId() == null ||
-                !payment.getContractor()
-                        .getId()
-                        .equals(
-                                contractor.getId()
-                        )
-        ) {
-            throw new RuntimeException(
-                    "You do not have access to this payment."
-            );
-        }
-
-        if (
-                payment.getSlipFilePath() == null ||
-                payment.getSlipFilePath().isBlank()
-        ) {
-            throw new RuntimeException(
-                    "No payment slip is available for this payment."
-            );
-        }
-
-        return payment;
-    }
 
     private Contractor getContractor(
             String username
@@ -426,7 +663,8 @@ public class ContractorPortalService {
         }
 
         if (
-                contractor.getUser() == null ||
+                contractor.getUser() == null
+                        ||
                 !Boolean.TRUE.equals(
                         contractor
                                 .getUser()
@@ -440,6 +678,12 @@ public class ContractorPortalService {
 
         return contractor;
     }
+
+    /*
+     * =========================================================
+     * RESPONSE MAPPERS
+     * =========================================================
+     */
 
     private Map<String, Object> toProjectResponse(
             Project project
@@ -658,6 +902,78 @@ public class ContractorPortalService {
                     payment
                             .getContractorBill()
                             .getBillNumber()
+            );
+        }
+
+        return response;
+    }
+
+    private Map<String, Object> toDocumentResponse(
+            ProjectDocument document
+    ) {
+
+        Map<String, Object> response =
+                new LinkedHashMap<>();
+
+        response.put(
+                "id",
+                document.getId()
+        );
+
+        response.put(
+                "documentDate",
+                document.getDocumentDate()
+        );
+
+        response.put(
+                "title",
+                document.getTitle()
+        );
+
+        response.put(
+                "description",
+                document.getDescription()
+        );
+
+        response.put(
+                "documentType",
+                document.getDocumentType()
+        );
+
+        response.put(
+                "originalFileName",
+                document.getOriginalFileName()
+        );
+
+        response.put(
+                "contentType",
+                document.getContentType()
+        );
+
+        response.put(
+                "fileSize",
+                document.getFileSize()
+        );
+
+        response.put(
+                "uploadedBy",
+                document.getUploadedBy()
+        );
+
+        if (
+                document.getProject() != null
+        ) {
+
+            response.put(
+                    "projectId",
+                    document.getProject()
+                            .getId()
+            );
+
+            response.put(
+                    "projectName",
+                    document.getProject()
+                            .getProjectName()
             );
         }
 

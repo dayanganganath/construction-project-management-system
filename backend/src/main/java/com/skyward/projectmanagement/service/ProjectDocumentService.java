@@ -239,6 +239,10 @@ public class ProjectDocumentService {
                 false
         );
 
+        document.setContractorVisible(
+                false
+        );
+
         document.setProject(
                 project
         );
@@ -459,6 +463,56 @@ public class ProjectDocumentService {
                         + oldVisibility
                         + " to "
                         + clientVisible
+                        + ".",
+                savedDocument.getId(),
+                "PROJECT_DOCUMENT",
+                savedDocument.getProject()
+        );
+
+        return savedDocument;
+    }
+
+    public ProjectDocument
+    updateContractorVisibility(
+            String username,
+            Long documentId,
+            boolean contractorVisible
+    ) {
+
+        requireManagementUser(
+                username
+        );
+
+        ProjectDocument document =
+                getDocumentById(
+                        documentId
+                );
+
+        boolean oldVisibility =
+                Boolean.TRUE.equals(
+                        document.getContractorVisible()
+                );
+
+        document.setContractorVisible(
+                contractorVisible
+        );
+
+        ProjectDocument savedDocument =
+                projectDocumentRepository
+                        .save(
+                                document
+                        );
+
+        auditLogService.logAction(
+                username,
+                "PROJECT_DOCUMENT",
+                "CONTRACTOR_VISIBILITY_UPDATE",
+                "Document '"
+                        + savedDocument.getTitle()
+                        + "' contractor visibility changed from "
+                        + oldVisibility
+                        + " to "
+                        + contractorVisible
                         + ".",
                 savedDocument.getId(),
                 "PROJECT_DOCUMENT",

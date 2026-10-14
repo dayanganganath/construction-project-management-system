@@ -8,9 +8,15 @@ import java.util.List;
 public interface ProjectDocumentRepository
         extends JpaRepository<ProjectDocument, Long> {
 
-    List<ProjectDocument> findByProjectId(Long projectId);
+    List<ProjectDocument> findByProjectId(
+            Long projectId
+    );
 
     List<ProjectDocument> findByProjectIdAndClientVisibleTrue(
+            Long projectId
+    );
+
+    List<ProjectDocument> findByProjectIdAndContractorVisibleTrue(
             Long projectId
     );
 
