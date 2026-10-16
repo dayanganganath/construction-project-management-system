@@ -39,7 +39,7 @@ public class MaterialRequest {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private RequestStatus status = RequestStatus.PENDING;
+    private RequestStatus status;
 
     private String requestedBy;
 
@@ -53,6 +53,13 @@ public class MaterialRequest {
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
+
+    @PrePersist
+    private void setDefaultStatus() {
+        if (status == null) {
+            status = RequestStatus.PENDING;
+        }
+    }
 
     public enum RequestStatus {
         PENDING,

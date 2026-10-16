@@ -27,13 +27,13 @@ public class LabourAttendance {
     private AttendanceType attendanceType;
 
     @Column(nullable = false)
-    private BigDecimal dailyRate = BigDecimal.ZERO;
+    private BigDecimal dailyRate;
 
     @Column(nullable = false)
-    private BigDecimal otAmount = BigDecimal.ZERO;
+    private BigDecimal otAmount;
 
     @Column(nullable = false)
-    private BigDecimal totalEarned = BigDecimal.ZERO;
+    private BigDecimal totalEarned;
 
     private String notes;
 
@@ -44,6 +44,13 @@ public class LabourAttendance {
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
+
+    @PrePersist
+    private void applyDefaultAmounts() {
+        if (dailyRate == null) dailyRate = BigDecimal.ZERO;
+        if (otAmount == null) otAmount = BigDecimal.ZERO;
+        if (totalEarned == null) totalEarned = BigDecimal.ZERO;
+    }
 
     public enum AttendanceType {
         FULL_DAY,

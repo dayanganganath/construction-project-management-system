@@ -11,7 +11,6 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class ProjectDocument {
 
     @Id
@@ -55,6 +54,26 @@ public class ProjectDocument {
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
+
+    public ProjectDocument(Long id, LocalDate documentDate, String title, String description,
+                           DocumentType documentType, String originalFileName, String storedFileName,
+                           String filePath, String contentType, Long fileSize, String uploadedBy,
+                           Boolean clientVisible, Boolean contractorVisible, Project project) {
+        this.id = id;
+        this.documentDate = documentDate;
+        this.title = title;
+        this.description = description;
+        this.documentType = documentType;
+        this.originalFileName = originalFileName;
+        this.storedFileName = storedFileName;
+        this.filePath = filePath;
+        this.contentType = contentType;
+        this.fileSize = fileSize;
+        this.uploadedBy = uploadedBy;
+        this.clientVisible = clientVisible;
+        this.contractorVisible = contractorVisible;
+        this.project = project;
+    }
 
     public enum DocumentType {
         DRAWING,

@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 @Table(name = "workers")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 public class Worker {
 
@@ -27,8 +26,13 @@ public class Worker {
     private String tradeType;
 
     @Column(nullable = false)
-    private BigDecimal defaultDailyRate = BigDecimal.ZERO;
+    private BigDecimal defaultDailyRate;
 
     @Column(nullable = false)
-    private Boolean active = true;
+    private Boolean active;
+
+    public Worker() {
+        this.defaultDailyRate = BigDecimal.ZERO;
+        this.active = true;
+    }
 }

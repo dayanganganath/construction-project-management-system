@@ -10,9 +10,13 @@ import java.time.LocalDate;
 @Table(name = "site_issues")
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 public class SiteIssue {
+
+    public SiteIssue() {
+        this.priority = Priority.MEDIUM;
+        this.status = IssueStatus.OPEN;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,11 +33,11 @@ public class SiteIssue {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Priority priority = Priority.MEDIUM;
+    private Priority priority;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private IssueStatus status = IssueStatus.OPEN;
+    private IssueStatus status;
 
     private String reportedBy;
 

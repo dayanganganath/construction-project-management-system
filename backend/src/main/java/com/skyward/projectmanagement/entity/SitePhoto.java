@@ -36,9 +36,16 @@ public class SitePhoto {
     private String uploadedBy;
 
     @Column(nullable = false)
-    private Boolean clientVisible = false;
+    private Boolean clientVisible;
 
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
+
+    @PrePersist
+    private void applyDefaultClientVisibility() {
+        if (clientVisible == null) {
+            clientVisible = false;
+        }
+    }
 }
