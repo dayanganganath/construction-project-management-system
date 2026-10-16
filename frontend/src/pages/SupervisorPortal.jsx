@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import {
   NavLink,
   useNavigate,
@@ -7,7 +11,8 @@ import {
 import api from "../services/api";
 
 function SupervisorPortal() {
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
   const [projects, setProjects] =
     useState([]);
@@ -32,6 +37,11 @@ function SupervisorPortal() {
     setMaterialRequests,
   ] = useState([]);
 
+  const [
+    documents,
+    setDocuments,
+  ] = useState([]);
+
   const [loading, setLoading] =
     useState(true);
 
@@ -50,6 +60,21 @@ function SupervisorPortal() {
     setSavingMaterial,
   ] = useState(false);
 
+  const [
+    savingDocument,
+    setSavingDocument,
+  ] = useState(false);
+
+  const [
+    downloadingDocumentId,
+    setDownloadingDocumentId,
+  ] = useState(null);
+
+  const [
+    activeSection,
+    setActiveSection,
+  ] = useState("dashboard");
+
   const [error, setError] =
     useState("");
 
@@ -57,24 +82,37 @@ function SupervisorPortal() {
     useState("");
 
   const username =
-    localStorage.getItem("username");
+    localStorage.getItem(
+      "username"
+    );
 
   const role =
-    localStorage.getItem("role");
+    localStorage.getItem(
+      "role"
+    );
 
   const getToday = () => {
-    const now = new Date();
+    const now =
+      new Date();
 
     const year =
       now.getFullYear();
 
-    const month = String(
-      now.getMonth() + 1
-    ).padStart(2, "0");
+    const month =
+      String(
+        now.getMonth() + 1
+      ).padStart(
+        2,
+        "0"
+      );
 
-    const day = String(
-      now.getDate()
-    ).padStart(2, "0");
+    const day =
+      String(
+        now.getDate()
+      ).padStart(
+        2,
+        "0"
+      );
 
     return `${year}-${month}-${day}`;
   };
@@ -98,6 +136,13 @@ function SupervisorPortal() {
     notes: "",
   };
 
+  const initialDocumentForm = {
+    title: "",
+    description: "",
+    documentType: "DRAWING",
+    file: null,
+  };
+
   const [
     progressForm,
     setProgressForm,
@@ -112,125 +157,239 @@ function SupervisorPortal() {
     initialMaterialForm
   );
 
+  const [
+    documentForm,
+    setDocumentForm,
+  ] = useState(
+    initialDocumentForm
+  );
+
   useEffect(() => {
     loadProjects();
   }, []);
 
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const getErrorMessage = (
+    error,
+    fallback
+  ) => {
+    const data =
+      error.response?.data;
 
-      const response =
-        await api.get(
-          "/supervisor/projects"
+    if (
+      typeof data ===
+      "string"
+    ) {
+      return data;
+    }
+
+    if (
+      data?.message
+    ) {
+      return data.message;
+    }
+
+    if (
+      data?.error
+    ) {
+      return data.error;
+    }
+
+    return fallback;
+  };
+
+  const showSuccess = (
+    message
+  ) => {
+    setSuccess(
+      message
+    );
+
+    setTimeout(() => {
+      setSuccess("");
+    }, 4000);
+  };
+
+  const loadProjects =
+    async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response =
+          await api.get(
+            "/supervisor/projects"
+          );
+
+        const data =
+          Array.isArray(
+            response.data
+          )
+            ? response.data
+            : [];
+
+        setProjects(
+          data
         );
 
-      const data =
-        response.data || [];
+        if (
+          data.length > 0
+        ) {
+          const firstProjectId =
+            data[0].projectId;
 
-      setProjects(data);
+          setSelectedProjectId(
+            String(
+              firstProjectId
+            )
+          );
 
-      if (data.length > 0) {
-        const firstProjectId =
-          data[0].projectId;
+          setSelectedProject(
+            data[0]
+          );
 
-        setSelectedProjectId(
-          String(firstProjectId)
+          await Promise.all([
+            loadProgressHistory(
+              firstProjectId
+            ),
+
+            loadMaterialRequests(
+              firstProjectId
+            ),
+
+            loadDocuments(
+              firstProjectId
+            ),
+          ]);
+        } else {
+          setSelectedProject(
+            null
+          );
+
+          setProgressHistory(
+            []
+          );
+
+          setMaterialRequests(
+            []
+          );
+
+          setDocuments(
+            []
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Error loading supervisor projects:",
+          error
         );
+
+        setError(
+          getErrorMessage(
+            error,
+            "Unable to load assigned sites."
+          )
+        );
+      } finally {
+        setLoading(
+          false
+        );
+      }
+    };
+
+  const loadProject =
+    async (
+      projectId
+    ) => {
+      if (
+        !projectId
+      ) {
+        setSelectedProject(
+          null
+        );
+
+        setProgressHistory(
+          []
+        );
+
+        setMaterialRequests(
+          []
+        );
+
+        setDocuments(
+          []
+        );
+
+        return;
+      }
+
+      try {
+        setLoadingProject(
+          true
+        );
+
+        setError("");
+
+        const response =
+          await api.get(
+            `/supervisor/projects/${projectId}`
+          );
 
         setSelectedProject(
-          data[0]
+          response.data
         );
 
         await Promise.all([
           loadProgressHistory(
-            firstProjectId
+            projectId
           ),
+
           loadMaterialRequests(
-            firstProjectId
+            projectId
+          ),
+
+          loadDocuments(
+            projectId
           ),
         ]);
-      } else {
-        setSelectedProject(null);
-        setProgressHistory([]);
-        setMaterialRequests([]);
-      }
-    } catch (error) {
-      console.error(
-        "Error loading supervisor projects:",
-        error
-      );
-
-      setError(
-        typeof error.response?.data ===
-          "string"
-          ? error.response.data
-          : error.response?.data
-              ?.message ||
-            "Unable to load assigned sites."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadProject = async (
-    projectId
-  ) => {
-    if (!projectId) {
-      setSelectedProject(null);
-      setProgressHistory([]);
-      setMaterialRequests([]);
-      return;
-    }
-
-    try {
-      setLoadingProject(true);
-      setError("");
-
-      const response =
-        await api.get(
-          `/supervisor/projects/${projectId}`
+      } catch (error) {
+        console.error(
+          "Error loading project:",
+          error
         );
 
-      setSelectedProject(
-        response.data
-      );
+        setSelectedProject(
+          null
+        );
 
-      await Promise.all([
-        loadProgressHistory(
-          projectId
-        ),
-        loadMaterialRequests(
-          projectId
-        ),
-      ]);
-    } catch (error) {
-      console.error(
-        "Error loading project:",
-        error
-      );
+        setProgressHistory(
+          []
+        );
 
-      setSelectedProject(null);
-      setProgressHistory([]);
-      setMaterialRequests([]);
+        setMaterialRequests(
+          []
+        );
 
-      setError(
-        typeof error.response?.data ===
-          "string"
-          ? error.response.data
-          : error.response?.data
-              ?.message ||
+        setDocuments(
+          []
+        );
+
+        setError(
+          getErrorMessage(
+            error,
             "Unable to load site details."
-      );
-    } finally {
-      setLoadingProject(false);
-    }
-  };
+          )
+        );
+      } finally {
+        setLoadingProject(
+          false
+        );
+      }
+    };
 
   const loadProgressHistory =
-    async (projectId) => {
+    async (
+      projectId
+    ) => {
       try {
         const response =
           await api.get(
@@ -238,26 +397,47 @@ function SupervisorPortal() {
           );
 
         const data =
-          response.data || [];
+          Array.isArray(
+            response.data
+          )
+            ? response.data
+            : [];
 
-        const sortedData = [
-          ...data,
-        ].sort((a, b) => {
-          const dateCompare =
-            new Date(b.date) -
-            new Date(a.date);
+        const sortedData =
+          [
+            ...data,
+          ].sort(
+            (
+              a,
+              b
+            ) => {
+              const dateCompare =
+                new Date(
+                  b.date
+                ) -
+                new Date(
+                  a.date
+                );
 
-          if (
-            dateCompare !== 0
-          ) {
-            return dateCompare;
-          }
+              if (
+                dateCompare !==
+                0
+              ) {
+                return dateCompare;
+              }
 
-          return (
-            (b.id || 0) -
-            (a.id || 0)
+              return (
+                Number(
+                  b.id ||
+                    0
+                ) -
+                Number(
+                  a.id ||
+                    0
+                )
+              );
+            }
           );
-        });
 
         setProgressHistory(
           sortedData
@@ -268,12 +448,16 @@ function SupervisorPortal() {
           error
         );
 
-        setProgressHistory([]);
+        setProgressHistory(
+          []
+        );
       }
     };
 
   const loadMaterialRequests =
-    async (projectId) => {
+    async (
+      projectId
+    ) => {
       try {
         const response =
           await api.get(
@@ -281,32 +465,50 @@ function SupervisorPortal() {
           );
 
         const data =
-          response.data || [];
+          Array.isArray(
+            response.data
+          )
+            ? response.data
+            : [];
 
-        const sortedData = [
-          ...data,
-        ].sort((a, b) => {
-          const dateCompare =
-            String(
-              b.requestDate || ""
-            ).localeCompare(
-              String(
-                a.requestDate ||
-                  ""
-              )
-            );
+        const sortedData =
+          [
+            ...data,
+          ].sort(
+            (
+              a,
+              b
+            ) => {
+              const dateCompare =
+                String(
+                  b.requestDate ||
+                    ""
+                ).localeCompare(
+                  String(
+                    a.requestDate ||
+                      ""
+                  )
+                );
 
-          if (
-            dateCompare !== 0
-          ) {
-            return dateCompare;
-          }
+              if (
+                dateCompare !==
+                  0
+              ) {
+                return dateCompare;
+              }
 
-          return (
-            Number(b.id || 0) -
-            Number(a.id || 0)
+              return (
+                Number(
+                  b.id ||
+                    0
+                ) -
+                Number(
+                  a.id ||
+                    0
+                )
+              );
+            }
           );
-        });
 
         setMaterialRequests(
           sortedData
@@ -317,12 +519,87 @@ function SupervisorPortal() {
           error
         );
 
-        setMaterialRequests([]);
+        setMaterialRequests(
+          []
+        );
+      }
+    };
+
+  const loadDocuments =
+    async (
+      projectId
+    ) => {
+      try {
+        const response =
+          await api.get(
+            `/supervisor/projects/${projectId}/documents`
+          );
+
+        const data =
+          Array.isArray(
+            response.data
+          )
+            ? response.data
+            : [];
+
+        const sortedData =
+          [
+            ...data,
+          ].sort(
+            (
+              a,
+              b
+            ) => {
+              const dateCompare =
+                String(
+                  b.documentDate ||
+                    ""
+                ).localeCompare(
+                  String(
+                    a.documentDate ||
+                      ""
+                  )
+                );
+
+              if (
+                dateCompare !==
+                  0
+              ) {
+                return dateCompare;
+              }
+
+              return (
+                Number(
+                  b.id ||
+                    0
+                ) -
+                Number(
+                  a.id ||
+                    0
+                )
+              );
+            }
+          );
+
+        setDocuments(
+          sortedData
+        );
+      } catch (error) {
+        console.error(
+          "Error loading documents:",
+          error
+        );
+
+        setDocuments(
+          []
+        );
       }
     };
 
   const handleProjectChange =
-    async (e) => {
+    async (
+      e
+    ) => {
       const projectId =
         e.target.value;
 
@@ -339,16 +616,22 @@ function SupervisorPortal() {
     };
 
   const handleProgressChange =
-    (e) => {
+    (
+      e
+    ) => {
       const {
         name,
         value,
-      } = e.target;
+      } =
+        e.target;
 
       setProgressForm(
-        (previous) => ({
+        (
+          previous
+        ) => ({
           ...previous,
-          [name]: value,
+          [name]:
+            value,
         })
       );
 
@@ -357,18 +640,65 @@ function SupervisorPortal() {
     };
 
   const handleMaterialChange =
-    (e) => {
+    (
+      e
+    ) => {
       const {
         name,
         value,
-      } = e.target;
+      } =
+        e.target;
 
       setMaterialForm(
-        (previous) => ({
+        (
+          previous
+        ) => ({
           ...previous,
-          [name]: value,
+          [name]:
+            value,
         })
       );
+
+      setError("");
+      setSuccess("");
+    };
+
+  const handleDocumentChange =
+    (
+      e
+    ) => {
+      const {
+        name,
+        value,
+        files,
+      } =
+        e.target;
+
+      if (
+        name ===
+        "file"
+      ) {
+        setDocumentForm(
+          (
+            previous
+          ) => ({
+            ...previous,
+            file:
+              files?.[0] ||
+              null,
+          })
+        );
+      } else {
+        setDocumentForm(
+          (
+            previous
+          ) => ({
+            ...previous,
+            [name]:
+              value,
+          })
+        );
+      }
 
       setError("");
       setSuccess("");
@@ -411,7 +741,9 @@ function SupervisorPortal() {
       }
 
       if (
-        Number.isNaN(progress) ||
+        Number.isNaN(
+          progress
+        ) ||
         progress < 0 ||
         progress > 100
       ) {
@@ -433,7 +765,9 @@ function SupervisorPortal() {
       }
 
       if (
-        Number.isNaN(workers) ||
+        Number.isNaN(
+          workers
+        ) ||
         workers < 0
       ) {
         return "Workers count cannot be negative.";
@@ -473,14 +807,17 @@ function SupervisorPortal() {
       if (
         materialForm.quantity ===
           "" ||
-        Number.isNaN(quantity) ||
+        Number.isNaN(
+          quantity
+        ) ||
         quantity <= 0
       ) {
         return "Quantity must be greater than zero.";
       }
 
       if (
-        !materialForm.unit.trim()
+        !materialForm.unit
+          .trim()
       ) {
         return "Unit is required.";
       }
@@ -488,22 +825,74 @@ function SupervisorPortal() {
       return null;
     };
 
+  const validateDocumentForm =
+    () => {
+      if (
+        !selectedProjectId
+      ) {
+        return "Please select a project.";
+      }
+
+      if (
+        !documentForm.title
+          .trim()
+      ) {
+        return "Document title is required.";
+      }
+
+      if (
+        !documentForm
+          .documentType
+      ) {
+        return "Document type is required.";
+      }
+
+      if (
+        !documentForm.file
+      ) {
+        return "Please select a file.";
+      }
+
+      const maxSize =
+        25 *
+        1024 *
+        1024;
+
+      if (
+        documentForm.file
+          .size >
+        maxSize
+      ) {
+        return "File size must be 25 MB or less.";
+      }
+
+      return null;
+    };
+
   const handleProgressSubmit =
-    async (e) => {
+    async (
+      e
+    ) => {
       e.preventDefault();
 
       const validationError =
         validateProgressForm();
 
-      if (validationError) {
+      if (
+        validationError
+      ) {
         setError(
           validationError
         );
+
         return;
       }
 
       try {
-        setSavingProgress(true);
+        setSavingProgress(
+          true
+        );
+
         setError("");
         setSuccess("");
 
@@ -549,13 +938,14 @@ function SupervisorPortal() {
           payload
         );
 
-        setSuccess(
+        showSuccess(
           "Daily progress saved successfully."
         );
 
         setProgressForm({
           ...initialProgressForm,
-          date: getToday(),
+          date:
+            getToday(),
         });
 
         await loadProject(
@@ -568,13 +958,10 @@ function SupervisorPortal() {
         );
 
         setError(
-          typeof error.response
-            ?.data ===
-            "string"
-            ? error.response.data
-            : error.response
-                ?.data?.message ||
-              "Unable to save daily progress."
+          getErrorMessage(
+            error,
+            "Unable to save daily progress."
+          )
         );
       } finally {
         setSavingProgress(
@@ -584,22 +971,28 @@ function SupervisorPortal() {
     };
 
   const handleMaterialSubmit =
-    async (e) => {
+    async (
+      e
+    ) => {
       e.preventDefault();
 
       const validationError =
         validateMaterialForm();
 
-      if (validationError) {
+      if (
+        validationError
+      ) {
         setError(
           validationError
         );
+
         return;
       }
 
       const payload = {
         requestDate:
-          materialForm.requestDate,
+          materialForm
+            .requestDate,
 
         materialName:
           materialForm
@@ -608,19 +1001,26 @@ function SupervisorPortal() {
 
         quantity:
           Number(
-            materialForm.quantity
+            materialForm
+              .quantity
           ),
 
         unit:
-          materialForm.unit.trim(),
+          materialForm
+            .unit
+            .trim(),
 
         purpose:
-          materialForm.purpose
-            .trim() || null,
+          materialForm
+            .purpose
+            .trim() ||
+          null,
 
         notes:
-          materialForm.notes
-            .trim() || null,
+          materialForm
+            .notes
+            .trim() ||
+          null,
       };
 
       try {
@@ -636,7 +1036,7 @@ function SupervisorPortal() {
           payload
         );
 
-        setSuccess(
+        showSuccess(
           "Material request submitted successfully."
         );
 
@@ -656,13 +1056,10 @@ function SupervisorPortal() {
         );
 
         setError(
-          typeof error.response
-            ?.data ===
-            "string"
-            ? error.response.data
-            : error.response
-                ?.data?.message ||
-              "Unable to submit material request."
+          getErrorMessage(
+            error,
+            "Unable to submit material request."
+          )
         );
       } finally {
         setSavingMaterial(
@@ -671,65 +1068,326 @@ function SupervisorPortal() {
       }
     };
 
-  const handleLogout = () => {
-    localStorage.removeItem(
-      "isAuthenticated"
-    );
+  const handleDocumentSubmit =
+    async (
+      e
+    ) => {
+      e.preventDefault();
 
-    localStorage.removeItem(
-      "username"
-    );
+      const validationError =
+        validateDocumentForm();
 
-    localStorage.removeItem(
-      "role"
-    );
+      if (
+        validationError
+      ) {
+        setError(
+          validationError
+        );
 
-    localStorage.removeItem(
-      "token"
-    );
-
-    navigate(
-      "/login",
-      {
-        replace: true,
+        return;
       }
-    );
-  };
 
-  const formatDate = (
-    value
-  ) => {
-    if (!value) {
-      return "-";
-    }
+      try {
+        setSavingDocument(
+          true
+        );
 
-    return new Date(
-      `${value}T00:00:00`
-    ).toLocaleDateString();
-  };
+        setError("");
+        setSuccess("");
 
-  const getStatusLabel = (
-    status
-  ) => {
-    if (
-      status === "APPROVED"
-    ) {
-      return "Approved";
-    }
+        const formData =
+          new FormData();
 
-    if (
-      status === "REJECTED"
-    ) {
-      return "Rejected";
-    }
+        formData.append(
+          "title",
+          documentForm.title
+            .trim()
+        );
 
-    return "Pending";
-  };
+        formData.append(
+          "description",
+          documentForm.description
+            .trim()
+        );
 
-  if (loading) {
+        formData.append(
+          "documentType",
+          documentForm.documentType
+        );
+
+        formData.append(
+          "file",
+          documentForm.file
+        );
+
+        await api.post(
+          `/supervisor/projects/${selectedProjectId}/documents`,
+          formData
+        );
+
+        showSuccess(
+          "Project document uploaded successfully."
+        );
+
+        setDocumentForm({
+          ...initialDocumentForm,
+        });
+
+        const fileInput =
+          window.document.getElementById(
+            "supervisor-document-file"
+          );
+
+        if (
+          fileInput
+        ) {
+          fileInput.value =
+            "";
+        }
+
+        await loadDocuments(
+          selectedProjectId
+        );
+      } catch (error) {
+        console.error(
+          "Error uploading document:",
+          error
+        );
+
+        setError(
+          getErrorMessage(
+            error,
+            "Unable to upload project document."
+          )
+        );
+      } finally {
+        setSavingDocument(
+          false
+        );
+      }
+    };
+
+  const downloadDocument =
+    async (
+      projectDocument
+    ) => {
+      try {
+        setDownloadingDocumentId(
+          projectDocument.id
+        );
+
+        setError("");
+
+        const response =
+          await api.get(
+            `/supervisor/projects/${selectedProjectId}/documents/${projectDocument.id}/file`,
+            {
+              responseType:
+                "blob",
+            }
+          );
+
+        const blob =
+          new Blob([
+            response.data,
+          ]);
+
+        const url =
+          window.URL
+            .createObjectURL(
+              blob
+            );
+
+        const link =
+          window.document
+            .createElement(
+              "a"
+            );
+
+        link.href =
+          url;
+
+        link.download =
+          projectDocument
+            .originalFileName ||
+          `document-${projectDocument.id}`;
+
+        window.document.body
+          .appendChild(
+            link
+          );
+
+        link.click();
+
+        link.remove();
+
+        window.URL
+          .revokeObjectURL(
+            url
+          );
+      } catch (error) {
+        console.error(
+          "Error downloading document:",
+          error
+        );
+
+        setError(
+          getErrorMessage(
+            error,
+            "Unable to download document."
+          )
+        );
+      } finally {
+        setDownloadingDocumentId(
+          null
+        );
+      }
+    };
+
+  const handleLogout =
+    () => {
+      localStorage.removeItem(
+        "isAuthenticated"
+      );
+
+      localStorage.removeItem(
+        "username"
+      );
+
+      localStorage.removeItem(
+        "role"
+      );
+
+      localStorage.removeItem(
+        "token"
+      );
+
+      navigate(
+        "/login",
+        {
+          replace:
+            true,
+        }
+      );
+    };
+
+  const formatDate =
+    (
+      value
+    ) => {
+      if (
+        !value
+      ) {
+        return "-";
+      }
+
+      return new Date(
+        `${value}T00:00:00`
+      ).toLocaleDateString(
+        "en-LK"
+      );
+    };
+
+  const formatFileSize =
+    (
+      bytes
+    ) => {
+      const size =
+        Number(
+          bytes ||
+            0
+        );
+
+      if (
+        size <=
+        0
+      ) {
+        return "-";
+      }
+
+      if (
+        size <
+        1024
+      ) {
+        return `${size} B`;
+      }
+
+      if (
+        size <
+        1024 *
+          1024
+      ) {
+        return `${(
+          size /
+          1024
+        ).toFixed(
+          1
+        )} KB`;
+      }
+
+      return `${(
+        size /
+        (1024 *
+          1024)
+      ).toFixed(
+        1
+      )} MB`;
+    };
+
+  const getStatusLabel =
+    (
+      status
+    ) => {
+      if (
+        status ===
+        "APPROVED"
+      ) {
+        return "Approved";
+      }
+
+      if (
+        status ===
+        "REJECTED"
+      ) {
+        return "Rejected";
+      }
+
+      return "Pending";
+    };
+
+  const menuButtonStyle =
+    (
+      section
+    ) => ({
+      width: "100%",
+      textAlign:
+        "left",
+      border:
+        "none",
+      borderRadius:
+        "6px",
+      padding:
+        "12px 16px",
+      marginBottom:
+        "5px",
+      cursor:
+        "pointer",
+      color:
+        "#e5e7eb",
+      background:
+        activeSection ===
+        section
+          ? "#2563eb"
+          : "transparent",
+    });
+
+  if (
+    loading
+  ) {
     return (
       <div className="dashboard-loading">
-        Loading supervisor portal...
+        Loading supervisor
+        portal...
       </div>
     );
   }
@@ -738,10 +1396,13 @@ function SupervisorPortal() {
     <div className="app-layout">
       <aside className="sidebar">
         <div className="brand">
-          <h2>CPMS</h2>
+          <h2>
+            CPMS
+          </h2>
 
           <p>
-            Construction Management
+            Construction
+            Management
           </p>
         </div>
 
@@ -749,9 +1410,77 @@ function SupervisorPortal() {
           <NavLink
             to="/supervisor"
             end
+            style={{
+              display:
+                "none",
+            }}
           >
             Dashboard
           </NavLink>
+
+          <button
+            type="button"
+            style={
+              menuButtonStyle(
+                "dashboard"
+              )
+            }
+            onClick={() =>
+              setActiveSection(
+                "dashboard"
+              )
+            }
+          >
+            Dashboard
+          </button>
+
+          <button
+            type="button"
+            style={
+              menuButtonStyle(
+                "progress"
+              )
+            }
+            onClick={() =>
+              setActiveSection(
+                "progress"
+              )
+            }
+          >
+            Daily Progress
+          </button>
+
+          <button
+            type="button"
+            style={
+              menuButtonStyle(
+                "materials"
+              )
+            }
+            onClick={() =>
+              setActiveSection(
+                "materials"
+              )
+            }
+          >
+            Material Requests
+          </button>
+
+          <button
+            type="button"
+            style={
+              menuButtonStyle(
+                "documents"
+              )
+            }
+            onClick={() =>
+              setActiveSection(
+                "documents"
+              )
+            }
+          >
+            Project Documents
+          </button>
         </nav>
 
         <div className="sidebar-footer">
@@ -783,14 +1512,16 @@ function SupervisorPortal() {
         <div className="dashboard-header">
           <div>
             <h1>
-              Supervisor Dashboard
+              Supervisor
+              Dashboard
             </h1>
 
             <p>
-              View assigned sites,
-              submit daily progress,
-              request materials and
-              track site activity.
+              Manage assigned
+              sites, progress,
+              material requests
+              and project
+              documents.
             </p>
           </div>
 
@@ -806,7 +1537,9 @@ function SupervisorPortal() {
               }
             >
               {projects.map(
-                (project) => (
+                (
+                  project
+                ) => (
                   <option
                     key={
                       project.projectId
@@ -830,18 +1563,26 @@ function SupervisorPortal() {
         </div>
 
         {error && (
-          <div className="alert alert-error">
-            <span>
-              {error}
-            </span>
+          <div
+            className="alert alert-error"
+            style={{
+              marginBottom:
+                "20px",
+            }}
+          >
+            {error}
           </div>
         )}
 
         {success && (
-          <div className="alert alert-success">
-            <span>
-              {success}
-            </span>
+          <div
+            className="alert alert-success"
+            style={{
+              marginBottom:
+                "20px",
+            }}
+          >
+            {success}
           </div>
         )}
 
@@ -849,158 +1590,196 @@ function SupervisorPortal() {
         0 ? (
           <div className="form-card">
             <h2>
-              No Sites Assigned
+              No Assigned
+              Projects
             </h2>
 
             <p>
-              No project/site is
-              currently assigned to
-              this supervisor account.
+              No project is
+              currently assigned
+              to your supervisor
+              account.
             </p>
           </div>
         ) : loadingProject ? (
-          <div className="dashboard-loading">
-            Loading site details...
+          <div className="form-card">
+            Loading project...
           </div>
         ) : (
-          selectedProject && (
-            <>
-              <div className="selected-project-info">
-                <h2>
-                  {
-                    selectedProject.projectName
-                  }
-                </h2>
-
-                <p>
-                  {selectedProject.description ||
-                    "No project description available."}
-                </p>
-
-                <div className="project-info-details">
-                  <p>
-                    <strong>
-                      Location:
-                    </strong>{" "}
-                    {selectedProject.location ||
-                      "-"}
-                  </p>
-
-                  <p>
-                    <strong>
-                      Status:
-                    </strong>{" "}
-                    {selectedProject.status ||
-                      "-"}
-                  </p>
-
-                  <p>
-                    <strong>
-                      Start Date:
-                    </strong>{" "}
-                    {formatDate(
-                      selectedProject.startDate
-                    )}
-                  </p>
-
-                  <p>
-                    <strong>
-                      End Date:
-                    </strong>{" "}
-                    {formatDate(
-                      selectedProject.endDate
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              <div className="dashboard-grid">
-                <div className="dashboard-card blue">
-                  <p>
-                    Latest Progress
-                  </p>
-
-                  <h2>
-                    {selectedProject.latestProgressPercentage ??
-                      0}
-                    %
-                  </h2>
-                </div>
-
-                <div className="dashboard-card green">
-                  <p>
-                    Workers on Site
-                  </p>
-
-                  <h2>
-                    {selectedProject.latestWorkersCount ??
-                      0}
-                  </h2>
-                </div>
-
-                <div className="dashboard-card orange">
-                  <p>
-                    Last Update
-                  </p>
-
-                  <h2 className="date-value">
-                    {formatDate(
-                      selectedProject.latestProgressDate
-                    )}
-                  </h2>
-                </div>
-
-                <div className="dashboard-card purple">
-                  <p>
-                    Site Status
-                  </p>
-
-                  <h2>
-                    {selectedProject.status ||
-                      "-"}
-                  </h2>
-                </div>
-              </div>
-
-              <div
-                className="form-card"
-                style={{
-                  marginTop:
-                    "24px",
-                }}
-              >
-                <h2>
-                  Latest Work
-                </h2>
-
-                <p>
-                  {selectedProject.latestWorkDescription ||
-                    "No daily progress record available."}
-                </p>
-              </div>
-
-              <div className="form-card">
-                <h2>
-                  Latest Remarks
-                </h2>
-
-                <p>
-                  {selectedProject.latestRemarks ||
-                    "No remarks available."}
-                </p>
-              </div>
-
-              <div className="form-card">
-                <h2>
-                  Add Daily Progress
-                </h2>
-
-                <form
-                  onSubmit={
-                    handleProgressSubmit
-                  }
+          <>
+            {activeSection ===
+              "dashboard" && (
+              <>
+                <div
+                  className="dashboard-grid"
+                  style={{
+                    marginBottom:
+                      "24px",
+                  }}
                 >
-                  <div className="progress-form">
+                  <div className="dashboard-card blue">
+                    <p>
+                      Project
+                    </p>
+
+                    <h2>
+                      {selectedProject
+                        ?.projectName ||
+                        "-"}
+                    </h2>
+                  </div>
+
+                  <div className="dashboard-card green">
+                    <p>
+                      Progress
+                    </p>
+
+                    <h2>
+                      {selectedProject
+                        ?.latestProgressPercentage ??
+                        0}
+                      %
+                    </h2>
+                  </div>
+
+                  <div className="dashboard-card orange">
+                    <p>
+                      Workers
+                    </p>
+
+                    <h2>
+                      {selectedProject
+                        ?.latestWorkersCount ??
+                        0}
+                    </h2>
+                  </div>
+
+                  <div className="dashboard-card blue">
+                    <p>
+                      Documents
+                    </p>
+
+                    <h2>
+                      {
+                        documents.length
+                      }
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="form-card">
+                  <h2>
+                    Site Overview
+                  </h2>
+
+                  <table className="data-table">
+                    <tbody>
+                      <tr>
+                        <th>
+                          Project
+                        </th>
+
+                        <td>
+                          {selectedProject
+                            ?.projectName ||
+                            "-"}
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <th>
+                          Location
+                        </th>
+
+                        <td>
+                          {selectedProject
+                            ?.location ||
+                            "-"}
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <th>
+                          Status
+                        </th>
+
+                        <td>
+                          {selectedProject
+                            ?.status ||
+                            "-"}
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <th>
+                          Start Date
+                        </th>
+
+                        <td>
+                          {formatDate(
+                            selectedProject
+                              ?.startDate
+                          )}
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <th>
+                          End Date
+                        </th>
+
+                        <td>
+                          {formatDate(
+                            selectedProject
+                              ?.endDate
+                          )}
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <th>
+                          Latest Work
+                        </th>
+
+                        <td>
+                          {selectedProject
+                            ?.latestWorkDescription ||
+                            "-"}
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <th>
+                          Latest Remarks
+                        </th>
+
+                        <td>
+                          {selectedProject
+                            ?.latestRemarks ||
+                            "-"}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+
+            {activeSection ===
+              "progress" && (
+              <>
+                <div className="form-card">
+                  <h2>
+                    Add Daily
+                    Progress
+                  </h2>
+
+                  <form
+                    className="client-form"
+                    onSubmit={
+                      handleProgressSubmit
+                    }
+                  >
                     <input
                       type="date"
                       name="date"
@@ -1012,14 +1791,29 @@ function SupervisorPortal() {
                       }
                     />
 
+                    <textarea
+                      name="workDescription"
+                      placeholder="Today's work description *"
+                      value={
+                        progressForm
+                          .workDescription
+                      }
+                      onChange={
+                        handleProgressChange
+                      }
+                      rows="4"
+                    />
+
                     <input
                       type="number"
                       name="progressPercentage"
+                      placeholder="Progress % *"
                       min="0"
                       max="100"
-                      placeholder="Progress % *"
+                      step="0.01"
                       value={
-                        progressForm.progressPercentage
+                        progressForm
+                          .progressPercentage
                       }
                       onChange={
                         handleProgressChange
@@ -1029,249 +1823,178 @@ function SupervisorPortal() {
                     <input
                       type="number"
                       name="workersCount"
-                      min="0"
                       placeholder="Workers Count *"
+                      min="0"
                       value={
-                        progressForm.workersCount
+                        progressForm
+                          .workersCount
                       }
                       onChange={
                         handleProgressChange
                       }
                     />
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop:
-                        "15px",
-                    }}
-                  >
-                    <label>
-                      Today&apos;s Work *
-                    </label>
-
-                    <textarea
-                      name="workDescription"
-                      placeholder="Describe work completed today..."
-                      value={
-                        progressForm.workDescription
-                      }
-                      onChange={
-                        handleProgressChange
-                      }
-                    />
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop:
-                        "15px",
-                    }}
-                  >
-                    <label>
-                      Remarks
-                    </label>
 
                     <textarea
                       name="remarks"
-                      placeholder="Site remarks, notes or observations..."
+                      placeholder="Remarks"
                       value={
-                        progressForm.remarks
+                        progressForm
+                          .remarks
                       }
                       onChange={
                         handleProgressChange
                       }
+                      rows="3"
                     />
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop:
-                        "15px",
-                    }}
-                  >
-                    <label>
-                      Tomorrow Plan
-                    </label>
 
                     <textarea
                       name="tomorrowPlan"
-                      placeholder="Planned work for tomorrow..."
+                      placeholder="Tomorrow Plan"
                       value={
-                        progressForm.tomorrowPlan
+                        progressForm
+                          .tomorrowPlan
                       }
                       onChange={
                         handleProgressChange
                       }
+                      rows="3"
                     />
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop:
-                        "15px",
-                    }}
-                  >
-                    <label>
-                      Issues / Blockers
-                    </label>
 
                     <textarea
                       name="issuesBlockers"
-                      placeholder="Material delays, design issues, access problems, weather impact, etc..."
+                      placeholder="Issues / Blockers"
                       value={
-                        progressForm.issuesBlockers
+                        progressForm
+                          .issuesBlockers
                       }
                       onChange={
                         handleProgressChange
                       }
+                      rows="3"
                     />
-                  </div>
 
-                  <button
-                    type="submit"
-                    className="primary-button"
-                    disabled={
-                      savingProgress
-                    }
-                    style={{
-                      marginTop:
-                        "18px",
-                    }}
-                  >
-                    {savingProgress
-                      ? "Saving..."
-                      : "Save Daily Progress"}
-                  </button>
-                </form>
-              </div>
+                    <button
+                      type="submit"
+                      className="primary-button"
+                      disabled={
+                        savingProgress
+                      }
+                    >
+                      {savingProgress
+                        ? "Saving..."
+                        : "Save Progress"}
+                    </button>
+                  </form>
+                </div>
 
-              <div className="form-card">
-                <h2>
-                  Recent Progress History
-                </h2>
+                <div className="table-card">
+                  <h2>
+                    Progress History
+                  </h2>
 
-                {progressHistory.length ===
-                0 ? (
-                  <p>
-                    No progress records
-                    available.
-                  </p>
-                ) : (
-                  <div className="table-card">
-                    <table className="data-table">
-                      <thead>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>
+                          Date
+                        </th>
+
+                        <th>
+                          Work
+                        </th>
+
+                        <th>
+                          Progress
+                        </th>
+
+                        <th>
+                          Workers
+                        </th>
+
+                        <th>
+                          Remarks
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {progressHistory.length ===
+                      0 ? (
                         <tr>
-                          <th>
-                            Date
-                          </th>
-
-                          <th>
-                            Work
-                          </th>
-
-                          <th>
-                            Progress
-                          </th>
-
-                          <th>
-                            Workers
-                          </th>
-
-                          <th>
-                            Tomorrow Plan
-                          </th>
-
-                          <th>
-                            Issues /
-                            Blockers
-                          </th>
+                          <td
+                            colSpan="5"
+                          >
+                            No progress
+                            records found.
+                          </td>
                         </tr>
-                      </thead>
+                      ) : (
+                        progressHistory.map(
+                          (
+                            item
+                          ) => (
+                            <tr
+                              key={
+                                item.id
+                              }
+                            >
+                              <td>
+                                {formatDate(
+                                  item.date
+                                )}
+                              </td>
 
-                      <tbody>
-                        {progressHistory
-                          .slice(
-                            0,
-                            10
+                              <td>
+                                {item.workDescription ||
+                                  "-"}
+                              </td>
+
+                              <td>
+                                {item.progressPercentage ??
+                                  0}
+                                %
+                              </td>
+
+                              <td>
+                                {item.workersCount ??
+                                  0}
+                              </td>
+
+                              <td>
+                                {item.remarks ||
+                                  "-"}
+                              </td>
+                            </tr>
                           )
-                          .map(
-                            (
-                              item
-                            ) => (
-                              <tr
-                                key={
-                                  item.id
-                                }
-                              >
-                                <td>
-                                  {formatDate(
-                                    item.date
-                                  )}
-                                </td>
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
 
-                                <td>
-                                  {item.workDescription ||
-                                    "-"}
-                                </td>
+            {activeSection ===
+              "materials" && (
+              <>
+                <div className="form-card">
+                  <h2>
+                    New Material
+                    Request
+                  </h2>
 
-                                <td>
-                                  {item.progressPercentage ??
-                                    0}
-                                  %
-                                </td>
-
-                                <td>
-                                  {item.workersCount ??
-                                    0}
-                                </td>
-
-                                <td>
-                                  {item.tomorrowPlan ||
-                                    "-"}
-                                </td>
-
-                                <td>
-                                  {item.issuesBlockers ||
-                                    "-"}
-                                </td>
-                              </tr>
-                            )
-                          )}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-
-              <div
-                className="form-card"
-                style={{
-                  marginTop:
-                    "24px",
-                }}
-              >
-                <h2>
-                  Request Materials
-                </h2>
-
-                <p>
-                  Submit material
-                  requirements for this
-                  project / site.
-                </p>
-
-                <form
-                  onSubmit={
-                    handleMaterialSubmit
-                  }
-                >
-                  <div className="progress-form">
+                  <form
+                    className="client-form"
+                    onSubmit={
+                      handleMaterialSubmit
+                    }
+                  >
                     <input
                       type="date"
                       name="requestDate"
                       value={
-                        materialForm.requestDate
+                        materialForm
+                          .requestDate
                       }
                       onChange={
                         handleMaterialChange
@@ -1283,7 +2006,8 @@ function SupervisorPortal() {
                       name="materialName"
                       placeholder="Material Name *"
                       value={
-                        materialForm.materialName
+                        materialForm
+                          .materialName
                       }
                       onChange={
                         handleMaterialChange
@@ -1293,11 +2017,12 @@ function SupervisorPortal() {
                     <input
                       type="number"
                       name="quantity"
+                      placeholder="Quantity *"
                       min="0.01"
                       step="0.01"
-                      placeholder="Quantity *"
                       value={
-                        materialForm.quantity
+                        materialForm
+                          .quantity
                       }
                       onChange={
                         handleMaterialChange
@@ -1317,159 +2042,134 @@ function SupervisorPortal() {
                         Select Unit *
                       </option>
 
-                      <option value="BAG">
-                        Bag
-                      </option>
-
-                      <option value="KG">
-                        Kg
-                      </option>
-
-                      <option value="TON">
-                        Ton
-                      </option>
-
-                      <option value="M3">
-                        m³
-                      </option>
-
-                      <option value="SQFT">
-                        Sq.ft
-                      </option>
-
-                      <option value="LFT">
-                        L.ft
-                      </option>
-
-                      <option value="NOS">
+                      <option value="Nos">
                         Nos
                       </option>
 
-                      <option value="PCS">
-                        Pieces
+                      <option value="Kg">
+                        Kg
                       </option>
 
-                      <option value="LITER">
-                        Liter
+                      <option value="Bags">
+                        Bags
                       </option>
 
-                      <option value="OTHER">
-                        Other
+                      <option value="Boxes">
+                        Boxes
+                      </option>
+
+                      <option value="Lengths">
+                        Lengths
+                      </option>
+
+                      <option value="Meters">
+                        Meters
+                      </option>
+
+                      <option value="Sqft">
+                        Sqft
+                      </option>
+
+                      <option value="Liters">
+                        Liters
+                      </option>
+
+                      <option value="m3">
+                        m³
+                      </option>
+
+                      <option value="Sets">
+                        Sets
                       </option>
                     </select>
-                  </div>
 
-                  <div
-                    style={{
-                      marginTop:
-                        "15px",
-                    }}
-                  >
-                    <label>
-                      Purpose
-                    </label>
-
-                    <textarea
+                    <input
+                      type="text"
                       name="purpose"
-                      placeholder="Example: Ground floor plastering..."
+                      placeholder="Purpose"
                       value={
-                        materialForm.purpose
+                        materialForm
+                          .purpose
                       }
                       onChange={
                         handleMaterialChange
                       }
                     />
-                  </div>
-
-                  <div
-                    style={{
-                      marginTop:
-                        "15px",
-                    }}
-                  >
-                    <label>
-                      Notes
-                    </label>
 
                     <textarea
                       name="notes"
-                      placeholder="Urgency, preferred specification, brand, delivery notes, etc..."
+                      placeholder="Notes"
                       value={
-                        materialForm.notes
+                        materialForm
+                          .notes
                       }
                       onChange={
                         handleMaterialChange
                       }
+                      rows="3"
                     />
-                  </div>
 
-                  <button
-                    type="submit"
-                    className="primary-button"
-                    disabled={
-                      savingMaterial
-                    }
-                    style={{
-                      marginTop:
-                        "18px",
-                    }}
-                  >
-                    {savingMaterial
-                      ? "Submitting..."
-                      : "Submit Material Request"}
-                  </button>
-                </form>
-              </div>
+                    <button
+                      type="submit"
+                      className="primary-button"
+                      disabled={
+                        savingMaterial
+                      }
+                    >
+                      {savingMaterial
+                        ? "Submitting..."
+                        : "Submit Request"}
+                    </button>
+                  </form>
+                </div>
 
-              <div className="form-card">
-                <h2>
-                  Material Request History
-                </h2>
+                <div className="table-card">
+                  <h2>
+                    Material Requests
+                  </h2>
 
-                {materialRequests.length ===
-                0 ? (
-                  <p>
-                    No material requests
-                    submitted for this
-                    site.
-                  </p>
-                ) : (
-                  <div className="table-card">
-                    <table className="data-table">
-                      <thead>
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>
+                          Date
+                        </th>
+
+                        <th>
+                          Material
+                        </th>
+
+                        <th>
+                          Quantity
+                        </th>
+
+                        <th>
+                          Purpose
+                        </th>
+
+                        <th>
+                          Status
+                        </th>
+
+                        <th>
+                          Remarks
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {materialRequests.length ===
+                      0 ? (
                         <tr>
-                          <th>
-                            Date
-                          </th>
-
-                          <th>
-                            Material
-                          </th>
-
-                          <th>
-                            Quantity
-                          </th>
-
-                          <th>
-                            Purpose
-                          </th>
-
-                          <th>
-                            Status
-                          </th>
-
-                          <th>
-                            Reviewed By
-                          </th>
-
-                          <th>
-                            Review Remarks
-                          </th>
+                          <td
+                            colSpan="6"
+                          >
+                            No material
+                            requests found.
+                          </td>
                         </tr>
-                      </thead>
-
-                      <tbody>
-                        {materialRequests.map(
+                      ) : (
+                        materialRequests.map(
                           (
                             request
                           ) => (
@@ -1485,36 +2185,24 @@ function SupervisorPortal() {
                               </td>
 
                               <td>
-                                <strong>
-                                  {request.materialName ||
-                                    "-"}
-                                </strong>
+                                {request.materialName ||
+                                  "-"}
                               </td>
 
                               <td>
-                                {request.quantity ??
-                                  0}{" "}
-                                {request.unit ||
-                                  ""}
+                                {request.quantity}{" "}
+                                {request.unit}
                               </td>
 
                               <td>
                                 {request.purpose ||
-                                  request.notes ||
                                   "-"}
                               </td>
 
                               <td>
-                                <strong>
-                                  {getStatusLabel(
-                                    request.status
-                                  )}
-                                </strong>
-                              </td>
-
-                              <td>
-                                {request.reviewedBy ||
-                                  "-"}
+                                {getStatusLabel(
+                                  request.status
+                                )}
                               </td>
 
                               <td>
@@ -1523,14 +2211,338 @@ function SupervisorPortal() {
                               </td>
                             </tr>
                           )
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+
+            {activeSection ===
+              "documents" && (
+              <>
+                <div className="form-card">
+                  <h2>
+                    Upload Project
+                    Document
+                  </h2>
+
+                  <p>
+                    Upload drawings,
+                    BOQs, reports,
+                    approvals or other
+                    project files.
+                  </p>
+
+                  <form
+                    className="client-form"
+                    onSubmit={
+                      handleDocumentSubmit
+                    }
+                  >
+                    <input
+                      type="text"
+                      name="title"
+                      placeholder="Document Title *"
+                      value={
+                        documentForm.title
+                      }
+                      onChange={
+                        handleDocumentChange
+                      }
+                    />
+
+                    <select
+                      name="documentType"
+                      value={
+                        documentForm
+                          .documentType
+                      }
+                      onChange={
+                        handleDocumentChange
+                      }
+                    >
+                      <option value="DRAWING">
+                        Drawing
+                      </option>
+
+                      <option value="BOQ">
+                        BOQ
+                      </option>
+
+                      <option value="METHOD_STATEMENT">
+                        Method Statement
+                      </option>
+
+                      <option value="APPROVAL">
+                        Approval
+                      </option>
+
+                      <option value="REPORT">
+                        Report
+                      </option>
+
+                      <option value="CONTRACT">
+                        Contract
+                      </option>
+
+                      <option value="INVOICE">
+                        Invoice
+                      </option>
+
+                      <option value="SITE_INSTRUCTION">
+                        Site Instruction
+                      </option>
+
+                      <option value="OTHER">
+                        Other
+                      </option>
+                    </select>
+
+                    <textarea
+                      name="description"
+                      placeholder="Description"
+                      value={
+                        documentForm
+                          .description
+                      }
+                      onChange={
+                        handleDocumentChange
+                      }
+                      rows="3"
+                    />
+
+                    <input
+                      id="supervisor-document-file"
+                      type="file"
+                      name="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.dwg,.dxf"
+                      onChange={
+                        handleDocumentChange
+                      }
+                    />
+
+                    {documentForm.file && (
+                      <p>
+                        Selected:{" "}
+                        <strong>
+                          {
+                            documentForm
+                              .file
+                              .name
+                          }
+                        </strong>
+                      </p>
+                    )}
+
+                    <button
+                      type="submit"
+                      className="primary-button"
+                      disabled={
+                        savingDocument
+                      }
+                    >
+                      {savingDocument
+                        ? "Uploading..."
+                        : "Upload Document"}
+                    </button>
+                  </form>
+                </div>
+
+                <div className="table-card">
+                  <div
+                    style={{
+                      display:
+                        "flex",
+                      justifyContent:
+                        "space-between",
+                      alignItems:
+                        "center",
+                      gap:
+                        "10px",
+                      flexWrap:
+                        "wrap",
+                    }}
+                  >
+                    <h2>
+                      Project Documents
+                    </h2>
+
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={() =>
+                        loadDocuments(
+                          selectedProjectId
+                        )
+                      }
+                    >
+                      Refresh
+                    </button>
+                  </div>
+
+                  <div
+                    style={{
+                      overflowX:
+                        "auto",
+                    }}
+                  >
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>
+                            Date
+                          </th>
+
+                          <th>
+                            Title
+                          </th>
+
+                          <th>
+                            Type
+                          </th>
+
+                          <th>
+                            File
+                          </th>
+
+                          <th>
+                            Size
+                          </th>
+
+                          <th>
+                            Uploaded By
+                          </th>
+
+                          <th>
+                            Client
+                          </th>
+
+                          <th>
+                            Contractor
+                          </th>
+
+                          <th>
+                            Action
+                          </th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {documents.length ===
+                        0 ? (
+                          <tr>
+                            <td
+                              colSpan="9"
+                            >
+                              No documents
+                              found.
+                            </td>
+                          </tr>
+                        ) : (
+                          documents.map(
+                            (
+                              projectDocument
+                            ) => (
+                              <tr
+                                key={
+                                  projectDocument.id
+                                }
+                              >
+                                <td>
+                                  {formatDate(
+                                    projectDocument
+                                      .documentDate
+                                  )}
+                                </td>
+
+                                <td>
+                                  <strong>
+                                    {projectDocument.title ||
+                                      "-"}
+                                  </strong>
+
+                                  {projectDocument.description && (
+                                    <div
+                                      style={{
+                                        marginTop:
+                                          "4px",
+                                        fontSize:
+                                          "12px",
+                                      }}
+                                    >
+                                      {
+                                        projectDocument.description
+                                      }
+                                    </div>
+                                  )}
+                                </td>
+
+                                <td>
+                                  {projectDocument.documentType ||
+                                    "-"}
+                                </td>
+
+                                <td>
+                                  {projectDocument.originalFileName ||
+                                    "-"}
+                                </td>
+
+                                <td>
+                                  {formatFileSize(
+                                    projectDocument.fileSize
+                                  )}
+                                </td>
+
+                                <td>
+                                  {projectDocument.uploadedBy ||
+                                    "-"}
+                                </td>
+
+                                <td>
+                                  {projectDocument.clientVisible
+                                    ? "Visible"
+                                    : "Hidden"}
+                                </td>
+
+                                <td>
+                                  {projectDocument.contractorVisible
+                                    ? "Visible"
+                                    : "Hidden"}
+                                </td>
+
+                                <td>
+                                  <button
+                                    type="button"
+                                    className="primary-button"
+                                    disabled={
+                                      downloadingDocumentId ===
+                                      projectDocument.id
+                                    }
+                                    onClick={() =>
+                                      downloadDocument(
+                                        projectDocument
+                                      )
+                                    }
+                                  >
+                                    {downloadingDocumentId ===
+                                    projectDocument.id
+                                      ? "Downloading..."
+                                      : "Download"}
+                                  </button>
+                                </td>
+                              </tr>
+                            )
+                          )
                         )}
                       </tbody>
                     </table>
                   </div>
-                )}
-              </div>
-            </>
-          )
+                </div>
+              </>
+            )}
+          </>
         )}
       </main>
     </div>
