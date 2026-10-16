@@ -14,7 +14,12 @@ import com.skyward.projectmanagement.repository.SubcontractorPaymentRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -316,7 +321,10 @@ public class ContractorPortalService {
         List<ProjectDocument> documents =
                 new ArrayList<>();
 
-        for (Project project : assignedProjects) {
+        for (
+                Project project :
+                assignedProjects
+        ) {
 
             if (
                     project == null
@@ -543,8 +551,50 @@ public class ContractorPortalService {
                                 BigDecimal::add
                         );
 
+        /*
+         * Only money allocated to contractor bills.
+         */
         BigDecimal totalPaid =
+                bills.stream()
+                        .map(
+                                ContractorBill::getPaidAmount
+                        )
+                        .filter(
+                                Objects::nonNull
+                        )
+                        .reduce(
+                                BigDecimal.ZERO,
+                                BigDecimal::add
+                        );
+
+        /*
+         * All payment transactions recorded
+         * for this contractor.
+         */
+        BigDecimal totalPayments =
                 payments.stream()
+                        .map(
+                                SubcontractorPayment::getAmount
+                        )
+                        .filter(
+                                Objects::nonNull
+                        )
+                        .reduce(
+                                BigDecimal.ZERO,
+                                BigDecimal::add
+                        );
+
+        /*
+         * Payments that have not yet been
+         * allocated to a contractor bill.
+         */
+        BigDecimal unallocatedPayments =
+                payments.stream()
+                        .filter(
+                                payment ->
+                                        payment.getContractorBill()
+                                                == null
+                        )
                         .map(
                                 SubcontractorPayment::getAmount
                         )
@@ -620,6 +670,16 @@ public class ContractorPortalService {
         response.put(
                 "totalPaid",
                 totalPaid
+        );
+
+        response.put(
+                "totalPayments",
+                totalPayments
+        );
+
+        response.put(
+                "unallocatedPayments",
+                unallocatedPayments
         );
 
         response.put(
