@@ -162,12 +162,14 @@ public class SecurityConfig {
                                 )
 
                                 /*
-                                 * Client / Project Management
+                                 * Client / Project / BOQ / Dashboard Management
                                  */
                                 .requestMatchers(
                                         "/api/clients/**",
                                         "/api/projects/**",
-                                        "/api/boq/**"
+                                        "/api/boq/**",
+                                        "/api/boq-items/**",
+                                        "/api/dashboard/**"
                                 )
                                 .hasAnyRole(
                                         "ADMIN",
@@ -217,9 +219,10 @@ public class SecurityConfig {
                                 )
 
                                 /*
-                                 * General Daily Progress Management
+                                 * Daily Progress Management
                                  */
                                 .requestMatchers(
+                                        "/api/progress/**",
                                         "/api/daily-progress/**"
                                 )
                                 .hasAnyRole(
