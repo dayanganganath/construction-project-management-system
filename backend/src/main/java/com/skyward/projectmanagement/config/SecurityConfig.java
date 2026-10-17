@@ -2,6 +2,7 @@ package com.skyward.projectmanagement.config;
 
 import com.skyward.projectmanagement.security.JwtAuthenticationFilter;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,19 +19,21 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter
-            jwtAuthenticationFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Value("${app.cors.allowed-origins:http://localhost:5173}")
+    private String allowedOrigins;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter
     ) {
-        this.jwtAuthenticationFilter =
-                jwtAuthenticationFilter;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     @Bean
@@ -40,8 +43,7 @@ public class SecurityConfig {
 
         http
                 .csrf(
-                        csrf ->
-                                csrf.disable()
+                        csrf -> csrf.disable()
                 )
 
                 .cors(
@@ -59,9 +61,9 @@ public class SecurityConfig {
                         auth -> auth
 
                                 /*
-                                 * =====================================================
-                                 * CORS
-                                 * =====================================================
+                                 * ==========================================
+                                 * CORS / PREFLIGHT
+                                 * ==========================================
                                  */
                                 .requestMatchers(
                                         HttpMethod.OPTIONS,
@@ -70,9 +72,9 @@ public class SecurityConfig {
                                 .permitAll()
 
                                 /*
-                                 * =====================================================
+                                 * ==========================================
                                  * PUBLIC
-                                 * =====================================================
+                                 * ==========================================
                                  */
                                 .requestMatchers(
                                         "/api/auth/**"
@@ -80,62 +82,50 @@ public class SecurityConfig {
                                 .permitAll()
 
                                 /*
-                                 * =====================================================
+                                 * ==========================================
                                  * ADMIN ONLY
-                                 * =====================================================
+                                 * ==========================================
                                  */
                                 .requestMatchers(
                                         "/api/users/**",
                                         "/api/user-project-assignments/**"
                                 )
-                                .hasRole(
-                                        "ADMIN"
-                                )
+                                .hasRole("ADMIN")
 
                                 /*
-                                 * =====================================================
+                                 * ==========================================
                                  * CLIENT PORTAL
-                                 * =====================================================
+                                 * ==========================================
                                  */
                                 .requestMatchers(
                                         "/api/client/**"
                                 )
-                                .hasRole(
-                                        "CLIENT"
-                                )
+                                .hasRole("CLIENT")
 
                                 /*
-                                 * =====================================================
+                                 * ==========================================
                                  * SUPERVISOR PORTAL
-                                 * =====================================================
+                                 * ==========================================
                                  */
                                 .requestMatchers(
                                         "/api/supervisor/**"
                                 )
-                                .hasRole(
-                                        "SUPERVISOR"
-                                )
+                                .hasRole("SUPERVISOR")
 
                                 /*
-                                 * =====================================================
+                                 * ==========================================
                                  * CONTRACTOR PORTAL
-                                 * =====================================================
+                                 * ==========================================
                                  */
                                 .requestMatchers(
                                         "/api/contractor/**"
                                 )
-                                .hasRole(
-                                        "CONTRACTOR"
-                                )
+                                .hasRole("CONTRACTOR")
 
                                 /*
-                                 * =====================================================
-                                 * ADMIN / MANAGER
-                                 * =====================================================
-                                 */
-
-                                /*
-                                 * Notifications + Audit
+                                 * ==========================================
+                                 * NOTIFICATIONS + AUDIT
+                                 * ==========================================
                                  */
                                 .requestMatchers(
                                         "/api/notifications/**",
@@ -147,7 +137,9 @@ public class SecurityConfig {
                                 )
 
                                 /*
-                                 * Contractor Management
+                                 * ==========================================
+                                 * CONTRACTOR MANAGEMENT
+                                 * ==========================================
                                  */
                                 .requestMatchers(
                                         "/api/contractors/**",
@@ -162,7 +154,9 @@ public class SecurityConfig {
                                 )
 
                                 /*
-                                 * Client / Project / BOQ / Dashboard Management
+                                 * ==========================================
+                                 * CLIENT / PROJECT / BOQ / DASHBOARD
+                                 * ==========================================
                                  */
                                 .requestMatchers(
                                         "/api/clients/**",
@@ -177,7 +171,9 @@ public class SecurityConfig {
                                 )
 
                                 /*
-                                 * Financial Management
+                                 * ==========================================
+                                 * FINANCIAL MANAGEMENT
+                                 * ==========================================
                                  */
                                 .requestMatchers(
                                         "/api/expenses/**",
@@ -192,7 +188,9 @@ public class SecurityConfig {
                                 )
 
                                 /*
-                                 * Labour Management
+                                 * ==========================================
+                                 * LABOUR MANAGEMENT
+                                 * ==========================================
                                  */
                                 .requestMatchers(
                                         "/api/workers/**",
@@ -205,7 +203,9 @@ public class SecurityConfig {
                                 )
 
                                 /*
-                                 * Site / Document Management
+                                 * ==========================================
+                                 * SITE / DOCUMENT MANAGEMENT
+                                 * ==========================================
                                  */
                                 .requestMatchers(
                                         "/api/material-requests/**",
@@ -219,7 +219,9 @@ public class SecurityConfig {
                                 )
 
                                 /*
-                                 * Daily Progress Management
+                                 * ==========================================
+                                 * DAILY PROGRESS
+                                 * ==========================================
                                  */
                                 .requestMatchers(
                                         "/api/progress/**",
@@ -231,9 +233,9 @@ public class SecurityConfig {
                                 )
 
                                 /*
-                                 * =====================================================
-                                 * ALL OTHER API
-                                 * =====================================================
+                                 * ==========================================
+                                 * ALL OTHER API ENDPOINTS
+                                 * ==========================================
                                  */
                                 .requestMatchers(
                                         "/api/**"
@@ -253,16 +255,24 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource
-    corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration configuration =
                 new CorsConfiguration();
 
+        List<String> origins =
+                Arrays.stream(
+                                allowedOrigins.split(",")
+                        )
+                        .map(String::trim)
+                        .filter(
+                                value ->
+                                        !value.isEmpty()
+                        )
+                        .toList();
+
         configuration.setAllowedOrigins(
-                List.of(
-                        "http://localhost:5173"
-                )
+                origins
         );
 
         configuration.setAllowedMethods(
