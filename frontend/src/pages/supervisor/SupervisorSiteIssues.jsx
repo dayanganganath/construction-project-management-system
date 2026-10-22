@@ -9,24 +9,29 @@ import {
 
 import api from "../../services/api";
 
+import "../../styles/supervisor-site-polish.css";
+
 function SupervisorSiteIssues() {
   const {
     selectedProjectId,
   } = useOutletContext();
 
   const getToday = () => {
-    const now = new Date();
+    const now =
+      new Date();
 
     const year =
       now.getFullYear();
 
-    const month = String(
-      now.getMonth() + 1
-    ).padStart(2, "0");
+    const month =
+      String(
+        now.getMonth() + 1
+      ).padStart(2, "0");
 
-    const day = String(
-      now.getDate()
-    ).padStart(2, "0");
+    const day =
+      String(
+        now.getDate()
+      ).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
   };
@@ -64,54 +69,56 @@ function SupervisorSiteIssues() {
     }
   }, [selectedProjectId]);
 
-  const loadIssues = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const loadIssues =
+    async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-      const response =
-        await api.get(
-          `/supervisor/projects/${selectedProjectId}/site-issues`
+        const response =
+          await api.get(
+            `/supervisor/projects/${selectedProjectId}/site-issues`
+          );
+
+        setIssues(
+          response.data || []
+        );
+      } catch (error) {
+        console.error(
+          "Error loading site issues:",
+          error
         );
 
-      setIssues(
-        response.data || []
-      );
-    } catch (error) {
-      console.error(
-        "Error loading site issues:",
-        error
-      );
+        setError(
+          typeof error.response
+            ?.data === "string"
+            ? error.response.data
+            : "Unable to load site issues."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setError(
-        typeof error.response?.data ===
-          "string"
-          ? error.response.data
-          : "Unable to load site issues."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleChange =
+    (event) => {
+      const {
+        name,
+        value,
+      } = event.target;
 
-  const handleChange = (e) => {
-    const {
-      name,
-      value,
-    } = e.target;
+      setForm({
+        ...form,
+        [name]: value,
+      });
 
-    setForm({
-      ...form,
-      [name]: value,
-    });
-
-    setError("");
-    setSuccess("");
-  };
+      setError("");
+      setSuccess("");
+    };
 
   const handleSubmit =
-    async (e) => {
-      e.preventDefault();
+    async (event) => {
+      event.preventDefault();
 
       if (!selectedProjectId) {
         setError(
@@ -187,8 +194,8 @@ function SupervisorSiteIssues() {
         );
 
         setError(
-          typeof error.response?.data ===
-            "string"
+          typeof error.response
+            ?.data === "string"
             ? error.response.data
             : "Unable to create site issue."
         );
@@ -206,75 +213,30 @@ function SupervisorSiteIssues() {
 
     return new Date(
       `${value}T00:00:00`
-    ).toLocaleDateString();
+    ).toLocaleDateString(
+      "en-GB"
+    );
   };
 
-  const getPriorityStyle = (
+  const getPriorityClass = (
     priority
   ) => {
-    switch (priority) {
-      case "CRITICAL":
-        return {
-          background:
-            "#fee2e2",
-          color:
-            "#991b1b",
-        };
-
-      case "HIGH":
-        return {
-          background:
-            "#ffedd5",
-          color:
-            "#9a3412",
-        };
-
-      case "MEDIUM":
-        return {
-          background:
-            "#fef3c7",
-          color:
-            "#92400e",
-        };
-
-      default:
-        return {
-          background:
-            "#e0f2fe",
-          color:
-            "#075985",
-        };
-    }
+    return String(
+      priority || "MEDIUM"
+    ).toLowerCase();
   };
 
-  const getStatusStyle = (
+  const getStatusClass = (
     status
   ) => {
-    switch (status) {
-      case "RESOLVED":
-        return {
-          background:
-            "#dcfce7",
-          color:
-            "#166534",
-        };
-
-      case "IN_PROGRESS":
-        return {
-          background:
-            "#dbeafe",
-          color:
-            "#1e40af",
-        };
-
-      default:
-        return {
-          background:
-            "#fee2e2",
-          color:
-            "#991b1b",
-        };
-    }
+    return String(
+      status || "OPEN"
+    )
+      .toLowerCase()
+      .replaceAll(
+        "_",
+        "-"
+      );
   };
 
   const openCount =
@@ -298,46 +260,116 @@ function SupervisorSiteIssues() {
     ).length;
 
   return (
-    <div>
-      <div className="page-header">
+    <div className="supervisor-page">
+      <div className="supervisor-page-heading">
         <div>
-          <h1>
+          <span className="supervisor-eyebrow">
+            Site Management
+          </span>
+
+          <h2>
             Site Issues
-          </h1>
+          </h2>
 
           <p>
-            Report site problems,
-            instructions and
-            blockers for the
-            selected project.
+            Report construction
+            problems, blockers and
+            site instructions for
+            management review.
           </p>
+        </div>
+
+        <div className="supervisor-mini-status">
+          <span>
+            Open Issues
+          </span>
+
+          <strong>
+            {openCount}
+          </strong>
         </div>
       </div>
 
       {error && (
-        <div className="alert alert-error">
+        <div className="supervisor-form-alert supervisor-form-alert-error">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="alert alert-success">
+        <div className="supervisor-form-alert supervisor-form-alert-success">
           {success}
         </div>
       )}
 
-      <div className="form-card">
-        <h2>
-          Report New Issue
-        </h2>
+      <div className="supervisor-issue-summary-grid">
+        <div className="supervisor-issue-summary-card open">
+          <span>
+            Open
+          </span>
+
+          <strong>
+            {openCount}
+          </strong>
+        </div>
+
+        <div className="supervisor-issue-summary-card progress">
+          <span>
+            In Progress
+          </span>
+
+          <strong>
+            {inProgressCount}
+          </strong>
+        </div>
+
+        <div className="supervisor-issue-summary-card resolved">
+          <span>
+            Resolved
+          </span>
+
+          <strong>
+            {resolvedCount}
+          </strong>
+        </div>
+
+        <div className="supervisor-issue-summary-card total">
+          <span>
+            Total Issues
+          </span>
+
+          <strong>
+            {issues.length}
+          </strong>
+        </div>
+      </div>
+
+      <section className="supervisor-form-card">
+        <div className="supervisor-form-card-heading">
+          <div>
+            <h3>
+              Report New Issue
+            </h3>
+
+            <p>
+              Record an issue or
+              blocker requiring
+              management attention.
+            </p>
+          </div>
+
+          <span className="supervisor-form-badge">
+            New Issue
+          </span>
+        </div>
 
         <form
           onSubmit={
             handleSubmit
           }
         >
-          <div className="progress-form">
-            <div>
+          <div className="supervisor-form-grid supervisor-form-grid-two">
+            <div className="supervisor-field">
               <label>
                 Issue Date
               </label>
@@ -354,7 +386,7 @@ function SupervisorSiteIssues() {
               />
             </div>
 
-            <div>
+            <div className="supervisor-field">
               <label>
                 Priority
               </label>
@@ -387,14 +419,9 @@ function SupervisorSiteIssues() {
             </div>
           </div>
 
-          <div
-            style={{
-              marginTop:
-                "15px",
-            }}
-          >
+          <div className="supervisor-field supervisor-field-full">
             <label>
-              Issue Title
+              Issue Title *
             </label>
 
             <input
@@ -410,14 +437,9 @@ function SupervisorSiteIssues() {
             />
           </div>
 
-          <div
-            style={{
-              marginTop:
-                "15px",
-            }}
-          >
+          <div className="supervisor-field supervisor-field-full">
             <label>
-              Description
+              Description *
             </label>
 
             <textarea
@@ -428,133 +450,78 @@ function SupervisorSiteIssues() {
               onChange={
                 handleChange
               }
-              placeholder="Describe the issue, location and required action..."
+              placeholder="Describe the issue, exact location and required action..."
             />
           </div>
 
-          <button
-            type="submit"
-            className="primary-button"
-            disabled={
-              saving
-            }
-            style={{
-              marginTop:
-                "18px",
-            }}
-          >
-            {saving
-              ? "Submitting..."
-              : "Report Issue"}
-          </button>
+          <div className="supervisor-form-actions">
+            <button
+              type="submit"
+              className="supervisor-primary-button"
+              disabled={
+                saving ||
+                !selectedProjectId
+              }
+            >
+              {saving
+                ? "Submitting..."
+                : "Report Site Issue"}
+            </button>
+          </div>
         </form>
-      </div>
+      </section>
 
-      <div
-        className="dashboard-grid"
-        style={{
-          marginTop:
-            "24px",
-        }}
-      >
-        <div className="dashboard-card red">
-          <p>
-            Open
-          </p>
+      <section className="supervisor-form-card">
+        <div className="supervisor-form-card-heading">
+          <div>
+            <h3>
+              Issue History
+            </h3>
 
-          <h2>
-            {openCount}
-          </h2>
+            <p>
+              Track management
+              action and issue
+              resolution status.
+            </p>
+          </div>
+
+          {!loading && (
+            <span className="supervisor-count-badge">
+              {issues.length} issues
+            </span>
+          )}
         </div>
-
-        <div className="dashboard-card blue">
-          <p>
-            In Progress
-          </p>
-
-          <h2>
-            {
-              inProgressCount
-            }
-          </h2>
-        </div>
-
-        <div className="dashboard-card green">
-          <p>
-            Resolved
-          </p>
-
-          <h2>
-            {resolvedCount}
-          </h2>
-        </div>
-
-        <div className="dashboard-card">
-          <p>
-            Total Issues
-          </p>
-
-          <h2>
-            {issues.length}
-          </h2>
-        </div>
-      </div>
-
-      <div
-        className="form-card"
-        style={{
-          marginTop:
-            "24px",
-        }}
-      >
-        <h2>
-          Issue History
-        </h2>
 
         {loading ? (
-          <p>
-            Loading site
-            issues...
-          </p>
+          <div className="supervisor-table-loading">
+            Loading site issues...
+          </div>
         ) : issues.length ===
           0 ? (
-          <p>
-            No site issues
-            found.
-          </p>
+          <div className="supervisor-table-empty">
+            <h4>
+              No site issues
+            </h4>
+
+            <p>
+              Reported issues will
+              appear here.
+            </p>
+          </div>
         ) : (
-          <div
-            style={{
-              overflowX:
-                "auto",
-            }}
-          >
-            <table className="data-table">
+          <div className="supervisor-table-scroll">
+            <table className="supervisor-table">
               <thead>
                 <tr>
-                  <th>
-                    Date
-                  </th>
-
-                  <th>
-                    Issue
-                  </th>
-
-                  <th>
-                    Priority
-                  </th>
-
-                  <th>
-                    Status
-                  </th>
-
+                  <th>Date</th>
+                  <th>Issue</th>
+                  <th>Priority</th>
+                  <th>Status</th>
                   <th>
                     Reported By
                   </th>
-
                   <th>
-                    Management
-                    Review
+                    Management Review
                   </th>
                 </tr>
               </thead>
@@ -574,18 +541,11 @@ function SupervisorSiteIssues() {
                       </td>
 
                       <td>
-                        <strong>
+                        <strong className="supervisor-table-primary">
                           {issue.title}
                         </strong>
 
-                        <div
-                          style={{
-                            marginTop:
-                              "6px",
-                            maxWidth:
-                              "420px",
-                          }}
-                        >
+                        <div className="supervisor-issue-description">
                           {
                             issue.description
                           }
@@ -594,22 +554,9 @@ function SupervisorSiteIssues() {
 
                       <td>
                         <span
-                          style={{
-                            display:
-                              "inline-block",
-                            padding:
-                              "5px 9px",
-                            borderRadius:
-                              "999px",
-                            fontSize:
-                              "12px",
-                            fontWeight:
-                              "700",
-
-                            ...getPriorityStyle(
-                              issue.priority
-                            ),
-                          }}
+                          className={`supervisor-priority-badge ${getPriorityClass(
+                            issue.priority
+                          )}`}
                         >
                           {issue.priority ||
                             "MEDIUM"}
@@ -618,22 +565,9 @@ function SupervisorSiteIssues() {
 
                       <td>
                         <span
-                          style={{
-                            display:
-                              "inline-block",
-                            padding:
-                              "5px 9px",
-                            borderRadius:
-                              "999px",
-                            fontSize:
-                              "12px",
-                            fontWeight:
-                              "700",
-
-                            ...getStatusStyle(
-                              issue.status
-                            ),
-                          }}
+                          className={`supervisor-status-badge ${getStatusClass(
+                            issue.status
+                          )}`}
                         >
                           {issue.status ||
                             "OPEN"}
@@ -647,41 +581,32 @@ function SupervisorSiteIssues() {
 
                       <td>
                         {issue.reviewedBy ? (
-                          <>
-                            <div>
-                              <strong>
-                                {
-                                  issue.reviewedBy
-                                }
-                              </strong>
-                            </div>
+                          <div className="supervisor-review-info">
+                            <strong>
+                              {
+                                issue.reviewedBy
+                              }
+                            </strong>
 
-                            <div
-                              style={{
-                                marginTop:
-                                  "4px",
-                              }}
-                            >
+                            <span>
                               {formatDate(
                                 issue.reviewedDate
                               )}
-                            </div>
+                            </span>
 
                             {issue.resolutionNote && (
-                              <div
-                                style={{
-                                  marginTop:
-                                    "6px",
-                                }}
-                              >
+                              <p>
                                 {
                                   issue.resolutionNote
                                 }
-                              </div>
+                              </p>
                             )}
-                          </>
+                          </div>
                         ) : (
-                          "Awaiting management review"
+                          <span className="supervisor-awaiting-review">
+                            Awaiting management
+                            review
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -691,7 +616,7 @@ function SupervisorSiteIssues() {
             </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
