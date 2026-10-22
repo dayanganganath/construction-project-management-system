@@ -1,0 +1,438 @@
+/* =========================================================
+   SITE SUMMARY CARDS
+   ========================================================= */
+
+.supervisor-site-summary-grid,
+.supervisor-issue-summary-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      4,
+      minmax(0, 1fr)
+    );
+
+  gap: 14px;
+
+  margin-bottom: 20px;
+}
+
+.supervisor-site-summary-grid {
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+}
+
+.supervisor-site-summary-card,
+.supervisor-issue-summary-card {
+  padding: 17px;
+
+  border:
+    1px solid #e2e8f0;
+
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 4px 16px
+    rgba(
+      15,
+      23,
+      42,
+      0.035
+    );
+}
+
+.supervisor-site-summary-card span,
+.supervisor-issue-summary-card span {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #64748b;
+
+  font-size: 8px;
+  font-weight: 850;
+
+  letter-spacing: 0.05em;
+
+  text-transform: uppercase;
+}
+
+.supervisor-site-summary-card strong,
+.supervisor-issue-summary-card strong {
+  display: block;
+
+  color: #0f172a;
+
+  font-size: 20px;
+  font-weight: 850;
+}
+
+.supervisor-site-summary-card small {
+  display: block;
+
+  margin-top: 5px;
+
+  color: #94a3b8;
+
+  font-size: 9px;
+}
+
+/* =========================================================
+   ISSUE SUMMARY COLORS
+   ========================================================= */
+
+.supervisor-issue-summary-card.open {
+  border-left:
+    3px solid #ef4444;
+}
+
+.supervisor-issue-summary-card.progress {
+  border-left:
+    3px solid #3b82f6;
+}
+
+.supervisor-issue-summary-card.resolved {
+  border-left:
+    3px solid #22c55e;
+}
+
+.supervisor-issue-summary-card.total {
+  border-left:
+    3px solid #64748b;
+}
+
+/* =========================================================
+   PHOTO GRID
+   ========================================================= */
+
+.supervisor-photo-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+
+  gap: 16px;
+
+  padding: 20px;
+}
+
+.supervisor-photo-card {
+  overflow: hidden;
+
+  border:
+    1px solid #e2e8f0;
+
+  border-radius: 13px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 4px 16px
+    rgba(
+      15,
+      23,
+      42,
+      0.04
+    );
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.supervisor-photo-card:hover {
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 9px 24px
+    rgba(
+      15,
+      23,
+      42,
+      0.08
+    );
+}
+
+.supervisor-photo-image-wrap {
+  position: relative;
+
+  height: 190px;
+
+  overflow: hidden;
+
+  background: #f1f5f9;
+}
+
+.supervisor-photo-image-wrap img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+.supervisor-photo-category {
+  position: absolute;
+
+  left: 10px;
+  bottom: 10px;
+
+  padding:
+    5px
+    8px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(
+      15,
+      23,
+      42,
+      0.78
+    );
+
+  color: #ffffff;
+
+  font-size: 8px;
+  font-weight: 850;
+
+  letter-spacing: 0.05em;
+}
+
+.supervisor-photo-card-body {
+  padding: 13px;
+}
+
+.supervisor-photo-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-bottom: 8px;
+
+  color: #64748b;
+
+  font-size: 9px;
+}
+
+.supervisor-photo-card-body p {
+  min-height: 34px;
+
+  margin:
+    0
+    0
+    10px;
+
+  color: #334155;
+
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.supervisor-photo-card-body small {
+  color: #94a3b8;
+
+  font-size: 8px;
+}
+
+.supervisor-photo-card-body small strong {
+  color: #64748b;
+}
+
+.supervisor-visibility-badge {
+  display: inline-flex;
+
+  padding:
+    4px
+    7px;
+
+  border-radius: 999px;
+
+  font-size: 7px;
+  font-weight: 850;
+
+  text-transform: uppercase;
+}
+
+.supervisor-visibility-badge.visible {
+  background: #ecfdf5;
+
+  color: #15803d;
+}
+
+.supervisor-visibility-badge.internal {
+  background: #f1f5f9;
+
+  color: #475569;
+}
+
+/* =========================================================
+   PRIORITY BADGES
+   ========================================================= */
+
+.supervisor-priority-badge,
+.supervisor-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding:
+    4px
+    8px;
+
+  border-radius: 999px;
+
+  font-size: 8px;
+  font-weight: 850;
+
+  letter-spacing: 0.04em;
+
+  text-transform: uppercase;
+}
+
+.supervisor-priority-badge.low {
+  background: #e0f2fe;
+
+  color: #0369a1;
+}
+
+.supervisor-priority-badge.medium {
+  background: #fef3c7;
+
+  color: #92400e;
+}
+
+.supervisor-priority-badge.high {
+  background: #ffedd5;
+
+  color: #c2410c;
+}
+
+.supervisor-priority-badge.critical {
+  background: #fee2e2;
+
+  color: #b91c1c;
+}
+
+/* =========================================================
+   STATUS BADGES
+   ========================================================= */
+
+.supervisor-status-badge.open {
+  background: #fef2f2;
+
+  color: #b91c1c;
+}
+
+.supervisor-status-badge.in-progress {
+  background: #eff6ff;
+
+  color: #1d4ed8;
+}
+
+.supervisor-status-badge.resolved {
+  background: #ecfdf5;
+
+  color: #15803d;
+}
+
+/* =========================================================
+   ISSUE CONTENT
+   ========================================================= */
+
+.supervisor-issue-description {
+  max-width: 420px;
+
+  margin-top: 5px;
+
+  color: #64748b;
+
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.supervisor-review-info {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.supervisor-review-info strong {
+  color: #334155;
+
+  font-size: 10px;
+}
+
+.supervisor-review-info span {
+  color: #94a3b8;
+
+  font-size: 8px;
+}
+
+.supervisor-review-info p {
+  margin:
+    4px
+    0
+    0;
+
+  color: #64748b;
+
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.supervisor-awaiting-review {
+  color: #b45309;
+
+  font-size: 9px;
+  font-weight: 650;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (
+  max-width: 1100px
+) {
+  .supervisor-photo-grid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+
+  .supervisor-site-summary-grid,
+  .supervisor-issue-summary-grid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+}
+
+@media (
+  max-width: 650px
+) {
+  .supervisor-photo-grid,
+  .supervisor-site-summary-grid,
+  .supervisor-issue-summary-grid {
+    grid-template-columns:
+      1fr;
+  }
+}

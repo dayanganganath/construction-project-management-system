@@ -9,24 +9,30 @@ import {
 
 import api from "../../services/api";
 
+import "../../styles/supervisor-forms-polish.css";
+import "../../styles/supervisor-documents-polish.css";
+
 function SupervisorDocuments() {
   const {
     selectedProjectId,
   } = useOutletContext();
 
   const getToday = () => {
-    const now = new Date();
+    const now =
+      new Date();
 
     const year =
       now.getFullYear();
 
-    const month = String(
-      now.getMonth() + 1
-    ).padStart(2, "0");
+    const month =
+      String(
+        now.getMonth() + 1
+      ).padStart(2, "0");
 
-    const day = String(
-      now.getDate()
-    ).padStart(2, "0");
+    const day =
+      String(
+        now.getDate()
+      ).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
   };
@@ -42,8 +48,10 @@ function SupervisorDocuments() {
   const [form, setForm] =
     useState(initialForm);
 
-  const [documents, setDocuments] =
-    useState([]);
+  const [
+    documents,
+    setDocuments,
+  ] = useState([]);
 
   const [loading, setLoading] =
     useState(false);
@@ -51,8 +59,10 @@ function SupervisorDocuments() {
   const [saving, setSaving] =
     useState(false);
 
-  const [downloadingId, setDownloadingId] =
-    useState(null);
+  const [
+    downloadingId,
+    setDownloadingId,
+  ] = useState(null);
 
   const [error, setError] =
     useState("");
@@ -68,68 +78,72 @@ function SupervisorDocuments() {
     }
   }, [selectedProjectId]);
 
-  const loadDocuments = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const loadDocuments =
+    async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-      const response =
-        await api.get(
-          `/supervisor/projects/${selectedProjectId}/documents`
+        const response =
+          await api.get(
+            `/supervisor/projects/${selectedProjectId}/documents`
+          );
+
+        setDocuments(
+          response.data || []
+        );
+      } catch (error) {
+        console.error(
+          "Error loading project documents:",
+          error
         );
 
-      setDocuments(
-        response.data || []
-      );
-    } catch (error) {
-      console.error(
-        "Error loading project documents:",
-        error
-      );
+        setError(
+          typeof error.response
+            ?.data === "string"
+            ? error.response.data
+            : "Unable to load project documents."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setError(
-        typeof error.response?.data ===
-          "string"
-          ? error.response.data
-          : "Unable to load project documents."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleChange =
+    (event) => {
+      const {
+        name,
+        value,
+      } = event.target;
 
-  const handleChange = (e) => {
-    const {
-      name,
-      value,
-    } = e.target;
+      setForm({
+        ...form,
+        [name]: value,
+      });
 
-    setForm({
-      ...form,
-      [name]: value,
-    });
+      setError("");
+      setSuccess("");
+    };
 
-    setError("");
-    setSuccess("");
-  };
+  const handleFileChange =
+    (event) => {
+      const file =
+        event.target
+          .files?.[0] ||
+        null;
 
-  const handleFileChange = (e) => {
-    const file =
-      e.target.files?.[0] ||
-      null;
+      setForm({
+        ...form,
+        file,
+      });
 
-    setForm({
-      ...form,
-      file,
-    });
-
-    setError("");
-    setSuccess("");
-  };
+      setError("");
+      setSuccess("");
+    };
 
   const handleSubmit =
-    async (e) => {
-      e.preventDefault();
+    async (event) => {
+      event.preventDefault();
 
       if (!selectedProjectId) {
         setError(
@@ -139,7 +153,9 @@ function SupervisorDocuments() {
         return;
       }
 
-      if (!form.title.trim()) {
+      if (
+        !form.title.trim()
+      ) {
         setError(
           "Document title is required."
         );
@@ -226,8 +242,8 @@ function SupervisorDocuments() {
         );
 
         setError(
-          typeof error.response?.data ===
-            "string"
+          typeof error.response
+            ?.data === "string"
             ? error.response.data
             : "Unable to upload document."
         );
@@ -242,6 +258,8 @@ function SupervisorDocuments() {
         setDownloadingId(
           document.id
         );
+
+        setError("");
 
         const response =
           await api.get(
@@ -259,9 +277,7 @@ function SupervisorDocuments() {
 
         const link =
           window.document
-            .createElement(
-              "a"
-            );
+            .createElement("a");
 
         link.href = url;
 
@@ -270,17 +286,13 @@ function SupervisorDocuments() {
           `document-${document.id}`;
 
         window.document.body
-          .appendChild(
-            link
-          );
+          .appendChild(link);
 
         link.click();
 
         link.remove();
 
-        URL.revokeObjectURL(
-          url
-        );
+        URL.revokeObjectURL(url);
       } catch (error) {
         console.error(
           "Error downloading document:",
@@ -306,7 +318,9 @@ function SupervisorDocuments() {
 
     return new Date(
       `${value}T00:00:00`
-    ).toLocaleDateString();
+    ).toLocaleDateString(
+      "en-GB"
+    );
   };
 
   const formatFileSize = (
@@ -340,47 +354,148 @@ function SupervisorDocuments() {
     )} MB`;
   };
 
+  const getTypeClass = (
+    type
+  ) => {
+    return String(
+      type || "OTHER"
+    )
+      .toLowerCase()
+      .replaceAll(
+        "_",
+        "-"
+      );
+  };
+
+  const visibleCount =
+    documents.filter(
+      (document) =>
+        Boolean(
+          document.clientVisible
+        )
+    ).length;
+
+  const drawingCount =
+    documents.filter(
+      (document) =>
+        String(
+          document.documentType
+        ).toUpperCase() ===
+        "DRAWING"
+    ).length;
+
   return (
-    <div>
-      <div className="page-header">
+    <div className="supervisor-page">
+      <div className="supervisor-page-heading">
         <div>
-          <h1>
+          <span className="supervisor-eyebrow">
+            Project Files
+          </span>
+
+          <h2>
             Documents / Drawings
-          </h1>
+          </h2>
 
           <p>
             Upload and manage
-            project drawings,
-            reports, BOQs and site
-            documents.
+            drawings, reports,
+            approvals, BOQs and
+            other project files.
           </p>
+        </div>
+
+        <div className="supervisor-mini-status">
+          <span>
+            Total Documents
+          </span>
+
+          <strong>
+            {documents.length}
+          </strong>
         </div>
       </div>
 
       {error && (
-        <div className="alert alert-error">
+        <div className="supervisor-form-alert supervisor-form-alert-error">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="alert alert-success">
+        <div className="supervisor-form-alert supervisor-form-alert-success">
           {success}
         </div>
       )}
 
-      <div className="form-card">
-        <h2>
-          Upload Document
-        </h2>
+      <div className="supervisor-document-summary-grid">
+        <div className="supervisor-document-summary-card">
+          <span>
+            Total Documents
+          </span>
+
+          <strong>
+            {documents.length}
+          </strong>
+
+          <small>
+            Project files
+          </small>
+        </div>
+
+        <div className="supervisor-document-summary-card">
+          <span>
+            Drawings
+          </span>
+
+          <strong>
+            {drawingCount}
+          </strong>
+
+          <small>
+            Drawing files
+          </small>
+        </div>
+
+        <div className="supervisor-document-summary-card">
+          <span>
+            Client Visible
+          </span>
+
+          <strong>
+            {visibleCount}
+          </strong>
+
+          <small>
+            Shared with client
+          </small>
+        </div>
+      </div>
+
+      <section className="supervisor-form-card">
+        <div className="supervisor-form-card-heading">
+          <div>
+            <h3>
+              Upload Document
+            </h3>
+
+            <p>
+              Add a new project
+              drawing or document.
+            </p>
+          </div>
+
+          <span className="supervisor-form-badge">
+            New File
+          </span>
+        </div>
 
         <form
           onSubmit={
             handleSubmit
           }
         >
-          <div className="progress-form">
-            <div>
+          <div className="supervisor-form-grid supervisor-form-grid-two">
+            <div className="supervisor-field">
               <label>
                 Document Date
               </label>
@@ -397,7 +512,7 @@ function SupervisorDocuments() {
               />
             </div>
 
-            <div>
+            <div className="supervisor-field">
               <label>
                 Document Type
               </label>
@@ -450,13 +565,9 @@ function SupervisorDocuments() {
             </div>
           </div>
 
-          <div
-            style={{
-              marginTop: "15px",
-            }}
-          >
+          <div className="supervisor-field supervisor-field-full">
             <label>
-              Title
+              Document Title *
             </label>
 
             <input
@@ -472,11 +583,7 @@ function SupervisorDocuments() {
             />
           </div>
 
-          <div
-            style={{
-              marginTop: "15px",
-            }}
-          >
+          <div className="supervisor-field supervisor-field-full">
             <label>
               Description
             </label>
@@ -489,17 +596,13 @@ function SupervisorDocuments() {
               onChange={
                 handleChange
               }
-              placeholder="Add document details, revision, instructions, etc..."
+              placeholder="Revision details, instructions or additional information..."
             />
           </div>
 
-          <div
-            style={{
-              marginTop: "15px",
-            }}
-          >
+          <div className="supervisor-field supervisor-field-full">
             <label>
-              File
+              Document File *
             </label>
 
             <input
@@ -511,83 +614,85 @@ function SupervisorDocuments() {
               }
             />
 
-            <p
-              style={{
-                marginTop: "6px",
-                fontSize: "12px",
-                opacity: 0.7,
-              }}
-            >
+            <span className="supervisor-file-hint">
+              PDF, Word, Excel,
+              Images, DWG or DXF.
               Maximum file size:
-              25 MB
+              25 MB.
+            </span>
+          </div>
+
+          <div className="supervisor-form-actions">
+            <button
+              type="submit"
+              className="supervisor-primary-button"
+              disabled={
+                saving ||
+                !selectedProjectId
+              }
+            >
+              {saving
+                ? "Uploading..."
+                : "Upload Document"}
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="supervisor-form-card">
+        <div className="supervisor-form-card-heading">
+          <div>
+            <h3>
+              Document History
+            </h3>
+
+            <p>
+              Review and download
+              previously uploaded
+              project files.
             </p>
           </div>
 
-          <button
-            type="submit"
-            className="primary-button"
-            disabled={
-              saving
-            }
-            style={{
-              marginTop: "18px",
-            }}
-          >
-            {saving
-              ? "Uploading..."
-              : "Upload Document"}
-          </button>
-        </form>
-      </div>
-
-      <div
-        className="form-card"
-        style={{
-          marginTop: "24px",
-        }}
-      >
-        <h2>
-          Document History
-        </h2>
+          {!loading && (
+            <span className="supervisor-count-badge">
+              {documents.length} files
+            </span>
+          )}
+        </div>
 
         {loading ? (
-          <p>
+          <div className="supervisor-table-loading">
             Loading documents...
-          </p>
+          </div>
         ) : documents.length ===
           0 ? (
-          <p>
-            No project documents
-            found.
-          </p>
+          <div className="supervisor-table-empty">
+            <h4>
+              No project documents
+            </h4>
+
+            <p>
+              Uploaded documents
+              and drawings will
+              appear here.
+            </p>
+          </div>
         ) : (
-          <div
-            style={{
-              overflowX:
-                "auto",
-            }}
-          >
-            <table className="data-table">
+          <div className="supervisor-table-scroll">
+            <table className="supervisor-table supervisor-document-table">
               <thead>
                 <tr>
                   <th>Date</th>
-
-                  <th>Title</th>
-
+                  <th>Document</th>
                   <th>Type</th>
-
                   <th>File</th>
-
                   <th>Size</th>
-
                   <th>
                     Uploaded By
                   </th>
-
                   <th>
-                    Client Visible
+                    Visibility
                   </th>
-
                   <th>
                     Action
                   </th>
@@ -609,20 +714,13 @@ function SupervisorDocuments() {
                       </td>
 
                       <td>
-                        <strong>
+                        <strong className="supervisor-table-primary">
                           {document.title ||
                             "-"}
                         </strong>
 
                         {document.description && (
-                          <div
-                            style={{
-                              marginTop:
-                                "5px",
-                              maxWidth:
-                                "320px",
-                            }}
-                          >
+                          <div className="supervisor-document-description">
                             {
                               document.description
                             }
@@ -631,13 +729,27 @@ function SupervisorDocuments() {
                       </td>
 
                       <td>
-                        {document.documentType ||
-                          "OTHER"}
+                        <span
+                          className={`supervisor-document-type ${getTypeClass(
+                            document.documentType
+                          )}`}
+                        >
+                          {document.documentType ||
+                            "OTHER"}
+                        </span>
                       </td>
 
                       <td>
-                        {document.originalFileName ||
-                          "-"}
+                        <div className="supervisor-document-file-name">
+                          <span className="supervisor-document-file-icon">
+                            FL
+                          </span>
+
+                          <span>
+                            {document.originalFileName ||
+                              "-"}
+                          </span>
+                        </div>
                       </td>
 
                       <td>
@@ -652,15 +764,23 @@ function SupervisorDocuments() {
                       </td>
 
                       <td>
-                        {document.clientVisible
-                          ? "Yes"
-                          : "No"}
+                        <span
+                          className={
+                            document.clientVisible
+                              ? "supervisor-document-visibility visible"
+                              : "supervisor-document-visibility internal"
+                          }
+                        >
+                          {document.clientVisible
+                            ? "Client Visible"
+                            : "Internal"}
+                        </span>
                       </td>
 
                       <td>
                         <button
                           type="button"
-                          className="primary-button"
+                          className="supervisor-download-button"
                           disabled={
                             downloadingId ===
                             document.id
@@ -684,7 +804,7 @@ function SupervisorDocuments() {
             </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
