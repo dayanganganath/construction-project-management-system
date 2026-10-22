@@ -1,0 +1,1059 @@
+/* =========================================================
+   CPMS - ADMIN UI POLISH
+   Tables / Forms / Buttons / Badges / Empty States
+   ========================================================= */
+
+/* =========================================================
+   GLOBAL PAGE CONTENT
+   ========================================================= */
+
+.cpms-main-content > div,
+.main-content > div {
+  width: 100%;
+}
+
+.main-content {
+  color: #0f172a;
+}
+
+.main-content h1 {
+  letter-spacing: -0.03em;
+}
+
+.main-content h2,
+.main-content h3 {
+  letter-spacing: -0.02em;
+}
+
+/* =========================================================
+   PAGE HEADERS
+   ========================================================= */
+
+.page-header,
+.dashboard-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1,
+.dashboard-header h1 {
+  color: #0f172a !important;
+
+  font-size: 30px;
+  font-weight: 800;
+
+  letter-spacing: -0.035em;
+}
+
+.page-header p,
+.dashboard-header p {
+  color: #64748b !important;
+
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   CARD SURFACES
+   ========================================================= */
+
+.form-card,
+.table-card,
+.selected-project-info,
+.summary-card,
+.report-card,
+.content-card {
+  border: 1px solid #e2e8f0 !important;
+
+  border-radius: 14px !important;
+
+  background: #ffffff !important;
+
+  box-shadow:
+    0 4px 18px
+    rgba(15, 23, 42, 0.04) !important;
+}
+
+.form-card {
+  padding: 24px !important;
+
+  margin-bottom: 24px !important;
+}
+
+.table-card {
+  margin-bottom: 24px !important;
+
+  overflow: hidden;
+}
+
+/* =========================================================
+   CARD TITLES
+   ========================================================= */
+
+.form-card > h2,
+.form-card > h3,
+.table-card > h2,
+.table-card > h3 {
+  margin-top: 0;
+
+  color: #0f172a !important;
+
+  font-weight: 800;
+}
+
+.form-card > h2,
+.table-card > h2 {
+  font-size: 19px;
+}
+
+.form-card > h3,
+.table-card > h3 {
+  font-size: 16px;
+}
+
+/* =========================================================
+   FORMS
+   ========================================================= */
+
+.client-form,
+.project-form,
+.boq-form,
+.expense-form,
+.payment-form,
+.progress-form,
+.user-form,
+.contractor-form,
+.worker-form,
+.labour-form,
+.material-form,
+.document-form,
+form.form-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(220px, 1fr)
+    );
+
+  gap: 16px;
+
+  align-items: end;
+}
+
+/* Generic form group support */
+
+.form-group,
+.field-group,
+.input-group {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+/* =========================================================
+   LABELS
+   ========================================================= */
+
+.main-content label {
+  color: #334155 !important;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
+
+.main-content input:not(
+  [type="checkbox"]
+):not(
+  [type="radio"]
+),
+.main-content select,
+.main-content textarea {
+  width: 100%;
+
+  min-height: 44px;
+
+  padding:
+    10px
+    13px;
+
+  border: 1px solid #cbd5e1;
+
+  border-radius: 9px;
+
+  background: #ffffff !important;
+
+  color: #0f172a !important;
+
+  font-size: 13px;
+
+  box-shadow:
+    0 1px 2px
+    rgba(15, 23, 42, 0.02);
+
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.main-content textarea {
+  min-height: 105px;
+
+  line-height: 1.55;
+
+  resize: vertical;
+}
+
+.main-content input::placeholder,
+.main-content textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.main-content input:focus,
+.main-content select:focus,
+.main-content textarea:focus {
+  outline: none;
+
+  border-color: #3b82f6;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(59, 130, 246, 0.1);
+}
+
+.main-content input:disabled,
+.main-content select:disabled,
+.main-content textarea:disabled {
+  cursor: not-allowed;
+
+  border-color: #e2e8f0;
+
+  background: #f8fafc !important;
+
+  color: #94a3b8 !important;
+}
+
+/* =========================================================
+   FILE INPUTS
+   ========================================================= */
+
+.main-content input[type="file"] {
+  padding: 7px 9px !important;
+
+  cursor: pointer;
+}
+
+.main-content input[type="file"]::file-selector-button {
+  margin-right: 10px;
+
+  padding:
+    7px
+    12px;
+
+  border: none;
+
+  border-radius: 7px;
+
+  background: #eff6ff;
+
+  color: #1d4ed8;
+
+  cursor: pointer;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   CHECKBOX / RADIO
+   ========================================================= */
+
+.main-content input[type="checkbox"],
+.main-content input[type="radio"] {
+  width: 16px;
+  height: 16px;
+
+  min-height: auto;
+
+  accent-color: #2563eb;
+}
+
+/* =========================================================
+   BUTTON BASE
+   ========================================================= */
+
+.main-content button {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.main-content button:hover:not(
+  :disabled
+) {
+  transform:
+    translateY(-1px);
+}
+
+.main-content button:active:not(
+  :disabled
+) {
+  transform:
+    translateY(0);
+}
+
+/* =========================================================
+   PRIMARY BUTTON
+   ========================================================= */
+
+.primary-button {
+  min-height: 42px;
+
+  padding:
+    9px
+    16px !important;
+
+  border: 1px solid #2563eb !important;
+
+  border-radius: 8px !important;
+
+  background: #2563eb !important;
+
+  color: #ffffff !important;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  box-shadow:
+    0 4px 10px
+    rgba(37, 99, 235, 0.15);
+}
+
+.primary-button:hover:not(
+  :disabled
+) {
+  border-color: #1d4ed8 !important;
+
+  background: #1d4ed8 !important;
+
+  box-shadow:
+    0 7px 15px
+    rgba(37, 99, 235, 0.2);
+}
+
+.primary-button:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.5;
+}
+
+/* =========================================================
+   EDIT BUTTON
+   ========================================================= */
+
+.edit-button {
+  min-height: 34px;
+
+  padding:
+    7px
+    11px !important;
+
+  border: 1px solid #fde68a !important;
+
+  border-radius: 7px !important;
+
+  background: #fffbeb !important;
+
+  color: #b45309 !important;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.edit-button:hover {
+  border-color: #f59e0b !important;
+
+  background: #fef3c7 !important;
+}
+
+/* =========================================================
+   DELETE BUTTON
+   ========================================================= */
+
+.delete-button {
+  min-height: 34px;
+
+  padding:
+    7px
+    11px !important;
+
+  border: 1px solid #fecaca !important;
+
+  border-radius: 7px !important;
+
+  background: #fef2f2 !important;
+
+  color: #b91c1c !important;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.delete-button:hover {
+  border-color: #ef4444 !important;
+
+  background: #fee2e2 !important;
+}
+
+/* =========================================================
+   CANCEL BUTTON
+   ========================================================= */
+
+.cancel-button {
+  min-height: 34px;
+
+  padding:
+    7px
+    11px !important;
+
+  border: 1px solid #cbd5e1 !important;
+
+  border-radius: 7px !important;
+
+  background: #ffffff !important;
+
+  color: #475569 !important;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cancel-button:hover {
+  background: #f8fafc !important;
+}
+
+/* =========================================================
+   GENERIC ACTION BUTTONS
+   ========================================================= */
+
+.action-button,
+.view-button,
+.download-button,
+.secondary-button {
+  min-height: 34px;
+
+  padding:
+    7px
+    11px;
+
+  border: 1px solid #bfdbfe;
+
+  border-radius: 7px;
+
+  background: #eff6ff;
+
+  color: #1d4ed8;
+
+  cursor: pointer;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.action-button:hover,
+.view-button:hover,
+.download-button:hover,
+.secondary-button:hover {
+  border-color: #60a5fa;
+
+  background: #dbeafe;
+}
+
+/* =========================================================
+   TABLE WRAPPER
+   ========================================================= */
+
+.table-card {
+  overflow-x: auto;
+}
+
+.table-card::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-card::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.table-card::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+
+  background: #cbd5e1;
+}
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.data-table {
+  width: 100%;
+
+  min-width: 760px;
+
+  border-collapse: separate;
+  border-spacing: 0;
+
+  background: #ffffff;
+}
+
+.data-table thead {
+  background: #f8fafc;
+}
+
+.data-table th {
+  position: relative;
+
+  padding:
+    13px
+    15px !important;
+
+  border-bottom:
+    1px solid #e2e8f0 !important;
+
+  background: #f8fafc !important;
+
+  color: #475569 !important;
+
+  font-size: 10px !important;
+  font-weight: 800 !important;
+
+  letter-spacing: 0.05em;
+
+  text-align: left;
+
+  text-transform: uppercase;
+
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding:
+    14px
+    15px !important;
+
+  border-bottom:
+    1px solid #edf2f7 !important;
+
+  background: #ffffff !important;
+
+  color: #334155 !important;
+
+  font-size: 12px !important;
+
+  line-height: 1.45;
+
+  vertical-align: middle;
+}
+
+.data-table tbody tr {
+  transition:
+    background 0.15s ease;
+}
+
+.data-table tbody tr:hover td {
+  background: #f8fafc !important;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+/* =========================================================
+   TABLE ID / SMALL DATA
+   ========================================================= */
+
+.data-table td:first-child {
+  color: #64748b !important;
+}
+
+/* =========================================================
+   TABLE ACTION COLUMN
+   ========================================================= */
+
+.data-table td:last-child {
+  white-space: nowrap;
+}
+
+/* =========================================================
+   COMMON STATUS BADGES
+   ========================================================= */
+
+.status-badge,
+.badge,
+.status-pill,
+.project-status,
+.payment-status,
+.request-status {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-height: 25px;
+
+  padding:
+    4px
+    9px;
+
+  border-radius: 999px;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 0.03em;
+
+  text-transform: uppercase;
+}
+
+/* success */
+
+.status-approved,
+.status-paid,
+.status-completed,
+.status-active,
+.badge-success {
+  background: #ecfdf5 !important;
+
+  color: #15803d !important;
+}
+
+/* pending */
+
+.status-pending,
+.status-partially-paid,
+.status-ongoing,
+.badge-warning {
+  background: #fffbeb !important;
+
+  color: #b45309 !important;
+}
+
+/* rejected / unpaid */
+
+.status-rejected,
+.status-unpaid,
+.status-inactive,
+.status-cancelled,
+.badge-danger {
+  background: #fef2f2 !important;
+
+  color: #b91c1c !important;
+}
+
+/* info */
+
+.badge-info,
+.status-open,
+.status-new {
+  background: #eff6ff !important;
+
+  color: #1d4ed8 !important;
+}
+
+/* neutral */
+
+.badge-neutral,
+.status-closed {
+  background: #f1f5f9 !important;
+
+  color: #475569 !important;
+}
+
+/* =========================================================
+   MESSAGES
+   ========================================================= */
+
+.success-message,
+.error-message,
+.warning-message,
+.info-message {
+  margin-bottom: 18px;
+
+  padding:
+    12px
+    14px;
+
+  border-radius: 9px;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.success-message {
+  border:
+    1px solid #bbf7d0;
+
+  background: #f0fdf4;
+
+  color: #15803d !important;
+}
+
+.error-message {
+  border:
+    1px solid #fecaca;
+
+  background: #fef2f2;
+
+  color: #b91c1c !important;
+}
+
+.warning-message {
+  border:
+    1px solid #fde68a;
+
+  background: #fffbeb;
+
+  color: #b45309 !important;
+}
+
+.info-message {
+  border:
+    1px solid #bfdbfe;
+
+  background: #eff6ff;
+
+  color: #1d4ed8 !important;
+}
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.empty-state,
+.no-data,
+.no-records {
+  padding:
+    42px
+    20px;
+
+  color: #94a3b8 !important;
+
+  text-align: center;
+
+  font-size: 12px;
+}
+
+.empty-state h3,
+.no-data h3,
+.no-records h3 {
+  margin:
+    0
+    0
+    6px;
+
+  color: #475569 !important;
+
+  font-size: 15px;
+}
+
+.empty-state p,
+.no-data p,
+.no-records p {
+  margin: 0;
+
+  color: #94a3b8 !important;
+}
+
+/* =========================================================
+   LOADING STATE
+   ========================================================= */
+
+.loading,
+.page-loading,
+.table-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 160px;
+
+  color: #64748b !important;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* =========================================================
+   SUMMARY / STATS
+   ========================================================= */
+
+.summary-grid,
+.stats-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(190px, 1fr)
+    );
+
+  gap: 14px;
+
+  margin-bottom: 22px;
+}
+
+.summary-card,
+.stat-card {
+  padding: 18px;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 3px 14px
+    rgba(15, 23, 42, 0.035);
+}
+
+.summary-card span,
+.stat-card span {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #64748b !important;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.04em;
+}
+
+.summary-card strong,
+.stat-card strong {
+  color: #0f172a !important;
+
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* =========================================================
+   FILTER BARS
+   ========================================================= */
+
+.filter-bar,
+.toolbar,
+.table-toolbar {
+  display: flex;
+  align-items: center;
+
+  flex-wrap: wrap;
+
+  gap: 12px;
+
+  margin-bottom: 18px;
+
+  padding: 14px;
+
+  border: 1px solid #e2e8f0;
+
+  border-radius: 11px;
+
+  background: #ffffff;
+}
+
+.filter-bar input,
+.filter-bar select,
+.toolbar input,
+.toolbar select,
+.table-toolbar input,
+.table-toolbar select {
+  max-width: 280px;
+}
+
+/* =========================================================
+   PROJECT FILTER
+   ========================================================= */
+
+.project-filter {
+  min-height: 44px !important;
+
+  border-color: #cbd5e1 !important;
+
+  border-radius: 9px !important;
+
+  background: #ffffff !important;
+
+  color: #0f172a !important;
+
+  font-size: 12px !important;
+}
+
+/* =========================================================
+   PROJECT INFO BLOCK
+   ========================================================= */
+
+.selected-project-info {
+  padding: 22px !important;
+}
+
+.selected-project-info h2 {
+  color: #0f172a !important;
+
+  font-weight: 800;
+}
+
+.selected-project-info p {
+  color: #64748b !important;
+}
+
+/* =========================================================
+   LINKS
+   ========================================================= */
+
+.main-content a:not(
+  .cpms-nav-item
+) {
+  color: #2563eb;
+
+  text-decoration: none;
+}
+
+.main-content a:not(
+  .cpms-nav-item
+):hover {
+  color: #1d4ed8;
+}
+
+/* =========================================================
+   MODAL SUPPORT
+   ========================================================= */
+
+.modal-overlay {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background:
+    rgba(
+      15,
+      23,
+      42,
+      0.55
+    );
+
+  backdrop-filter:
+    blur(3px);
+}
+
+.modal-content,
+.modal-card {
+  width: 100%;
+  max-width: 650px;
+
+  max-height: 90vh;
+
+  overflow-y: auto;
+
+  padding: 24px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 25px 60px
+    rgba(15, 23, 42, 0.22);
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (
+  max-width: 900px
+) {
+  .form-card {
+    padding: 18px !important;
+  }
+
+  .client-form,
+  .project-form,
+  .boq-form,
+  .expense-form,
+  .payment-form,
+  .progress-form,
+  .user-form,
+  .contractor-form,
+  .worker-form,
+  .labour-form,
+  .material-form,
+  .document-form {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+}
+
+@media (
+  max-width: 620px
+) {
+  .client-form,
+  .project-form,
+  .boq-form,
+  .expense-form,
+  .payment-form,
+  .progress-form,
+  .user-form,
+  .contractor-form,
+  .worker-form,
+  .labour-form,
+  .material-form,
+  .document-form {
+    grid-template-columns:
+      1fr;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-bar,
+  .toolbar,
+  .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-bar input,
+  .filter-bar select,
+  .toolbar input,
+  .toolbar select,
+  .table-toolbar input,
+  .table-toolbar select {
+    max-width: none;
+  }
+}

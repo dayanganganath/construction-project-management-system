@@ -57,6 +57,7 @@ import SupervisorDocuments from "./pages/supervisor/SupervisorDocuments";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import "./App.css";
+import "./styles/sidebar-polish.css";
 
 function logoutAndGoToLogin(
   navigate
@@ -82,6 +83,56 @@ function logoutAndGoToLogin(
     {
       replace: true,
     }
+  );
+}
+
+function NavigationItem({
+  to,
+  label,
+  code,
+  end = false,
+  badge = null,
+}) {
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      className="cpms-nav-item"
+    >
+      <span className="cpms-nav-icon">
+        {code}
+      </span>
+
+      <span className="cpms-nav-label">
+        {label}
+      </span>
+
+      {badge !== null &&
+        Number(badge) > 0 && (
+          <span className="cpms-nav-badge">
+            {Number(badge) > 99
+              ? "99+"
+              : badge}
+          </span>
+        )}
+    </NavLink>
+  );
+}
+
+function NavigationSection({
+  title,
+  children,
+}) {
+  return (
+    <div className="cpms-nav-section">
+      <div className="cpms-nav-section-title">
+        {title}
+      </div>
+
+      <div className="cpms-nav-section-links">
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -172,208 +223,247 @@ function AdminLayout() {
 
   return (
     <div className="app-layout">
-      <aside className="sidebar">
-        <div className="brand">
-          <h2>
-            CPMS
-          </h2>
+      <aside className="sidebar cpms-sidebar">
+        <div className="cpms-sidebar-header">
+          <div className="cpms-brand-mark">
+            C
+          </div>
 
-          <p>
-            Construction
-            Management
-          </p>
+          <div className="cpms-brand-copy">
+            <h2>
+              CPMS
+            </h2>
+
+            <p>
+              Construction Management
+            </p>
+          </div>
         </div>
 
-        <nav className="nav-menu">
-          <NavLink
-            to="/"
-            end
+        <div className="cpms-sidebar-divider" />
+
+        <nav className="nav-menu cpms-nav-scroll">
+          <NavigationSection
+            title="Overview"
           >
-            Dashboard
-          </NavLink>
+            <NavigationItem
+              to="/"
+              label="Dashboard"
+              code="DB"
+              end
+            />
 
-          <NavLink
-            to="/notifications"
+            <NavigationItem
+              to="/notifications"
+              label="Notifications"
+              code="NT"
+              badge={
+                unreadNotificationCount
+              }
+            />
+
+            <NavigationItem
+              to="/audit-logs"
+              label="Audit Logs"
+              code="AL"
+            />
+          </NavigationSection>
+
+          <NavigationSection
+            title="Project Management"
           >
-            <div className="notification-nav-content">
-              <span className="notification-nav-text">
-                Notifications
-              </span>
+            <NavigationItem
+              to="/clients"
+              label="Clients"
+              code="CL"
+            />
 
-              {unreadNotificationCount >
-                0 && (
-                <span className="notification-badge">
-                  {unreadNotificationCount >
-                  99
-                    ? "99+"
-                    : unreadNotificationCount}
-                </span>
-              )}
-            </div>
-          </NavLink>
+            <NavigationItem
+              to="/projects"
+              label="Projects"
+              code="PR"
+            />
 
-          <NavLink
-            to="/audit-logs"
+            <NavigationItem
+              to="/boq"
+              label="BOQ"
+              code="BQ"
+            />
+
+            <NavigationItem
+              to="/progress"
+              label="Daily Progress"
+              code="DP"
+            />
+
+            <NavigationItem
+              to="/site-report"
+              label="Site Report"
+              code="SR"
+            />
+          </NavigationSection>
+
+          <NavigationSection
+            title="Finance"
           >
-            Audit Logs
-          </NavLink>
+            <NavigationItem
+              to="/expenses"
+              label="Expenses"
+              code="EX"
+            />
 
-          <NavLink
-            to="/clients"
+            <NavigationItem
+              to="/payments"
+              label="Client Payments"
+              code="CP"
+            />
+
+            <NavigationItem
+              to="/accounts"
+              label="Payment Register"
+              code="AC"
+            />
+
+            <NavigationItem
+              to="/site-cost-summary"
+              label="Site Cost Summary"
+              code="CS"
+            />
+          </NavigationSection>
+
+          <NavigationSection
+            title="Contractors"
           >
-            Clients
-          </NavLink>
+            <NavigationItem
+              to="/contractors"
+              label="Contractors"
+              code="CT"
+            />
 
-          <NavLink
-            to="/projects"
+            <NavigationItem
+              to="/contractor-bills"
+              label="Contractor Bills"
+              code="CB"
+            />
+
+            <NavigationItem
+              to="/contractor-ledger"
+              label="Contractor Ledger"
+              code="LG"
+            />
+
+            <NavigationItem
+              to="/subcontractor-payments"
+              label="Contractor Payments"
+              code="SP"
+            />
+          </NavigationSection>
+
+          <NavigationSection
+            title="Workforce"
           >
-            Projects
-          </NavLink>
+            <NavigationItem
+              to="/workers"
+              label="Workers"
+              code="WK"
+            />
 
-          <NavLink
-            to="/boq"
+            <NavigationItem
+              to="/labour-attendance"
+              label="Labour Attendance"
+              code="AT"
+            />
+
+            <NavigationItem
+              to="/labour-payments"
+              label="Labour Payments"
+              code="LP"
+            />
+          </NavigationSection>
+
+          <NavigationSection
+            title="Site Operations"
           >
-            BOQ
-          </NavLink>
+            <NavigationItem
+              to="/material-requests"
+              label="Material Requests"
+              code="MR"
+            />
 
-          <NavLink
-            to="/expenses"
-          >
-            Expenses
-          </NavLink>
+            <NavigationItem
+              to="/site-photos"
+              label="Site Photos"
+              code="PH"
+            />
 
-          <NavLink
-            to="/payments"
-          >
-            Client Payments
-          </NavLink>
+            <NavigationItem
+              to="/site-issues"
+              label="Site Issues"
+              code="IS"
+            />
 
-          <NavLink
-            to="/contractors"
-          >
-            Contractors
-          </NavLink>
+            <NavigationItem
+              to="/documents"
+              label="Documents"
+              code="DC"
+            />
+          </NavigationSection>
 
-          <NavLink
-            to="/contractor-bills"
-          >
-            Contractor Bills
-          </NavLink>
-
-          <NavLink
-            to="/contractor-ledger"
-          >
-            Contractor Ledger
-          </NavLink>
-
-          <NavLink
-            to="/subcontractor-payments"
-          >
-            Subcontractor Payments
-          </NavLink>
-
-          <NavLink
-            to="/workers"
-          >
-            Workers
-          </NavLink>
-
-          <NavLink
-            to="/labour-attendance"
-          >
-            Labour Attendance
-          </NavLink>
-
-          <NavLink
-            to="/labour-payments"
-          >
-            Labour Payments
-          </NavLink>
-
-          <NavLink
-            to="/material-requests"
-          >
-            Material Requests
-          </NavLink>
-
-          <NavLink
-            to="/site-photos"
-          >
-            Site Photos
-          </NavLink>
-
-          <NavLink
-            to="/site-issues"
-          >
-            Site Issues
-          </NavLink>
-
-          <NavLink
-            to="/documents"
-          >
-            Documents
-          </NavLink>
-
-          <NavLink
-            to="/accounts"
-          >
-            Accounts / Payment Register
-          </NavLink>
-
-          <NavLink
-            to="/site-cost-summary"
-          >
-            Site Cost Summary
-          </NavLink>
-
-          <NavLink
-            to="/site-report"
-          >
-            Site Report
-          </NavLink>
-
-          <NavLink
-            to="/progress"
-          >
-            Daily Progress
-          </NavLink>
-
-          {role ===
-            "ADMIN" && (
-            <NavLink
-              to="/users"
+          {role === "ADMIN" && (
+            <NavigationSection
+              title="System"
             >
-              Users
-            </NavLink>
+              <NavigationItem
+                to="/users"
+                label="User Management"
+                code="US"
+              />
+            </NavigationSection>
           )}
         </nav>
 
-        <div className="sidebar-footer">
-          {username && (
-            <div className="logged-user">
-              <p>
-                {username}
-              </p>
+        <div className="cpms-sidebar-footer">
+          <div className="cpms-user-card">
+            <div className="cpms-user-avatar">
+              {username
+                ? username
+                    .charAt(0)
+                    .toUpperCase()
+                : "U"}
+            </div>
+
+            <div className="cpms-user-info">
+              <strong>
+                {username ||
+                  "User"}
+              </strong>
 
               <span>
-                {role}
+                {role ||
+                  "USER"}
               </span>
             </div>
-          )}
+          </div>
 
           <button
             type="button"
-            className="logout-button"
+            className="cpms-logout-button"
             onClick={
               handleLogout
             }
           >
-            Logout
+            <span>
+              Sign Out
+            </span>
+
+            <span>
+              →
+            </span>
           </button>
         </div>
       </aside>
 
-      <main className="main-content">
+      <main className="main-content cpms-main-content">
         <Routes>
           <Route
             path="/"
@@ -572,11 +662,6 @@ function RoleBasedProtectedArea() {
       "role"
     );
 
-  /*
-   * =========================
-   * CLIENT
-   * =========================
-   */
   if (
     role === "CLIENT"
   ) {
@@ -602,11 +687,6 @@ function RoleBasedProtectedArea() {
     );
   }
 
-  /*
-   * =========================
-   * SUPERVISOR
-   * =========================
-   */
   if (
     role ===
     "SUPERVISOR"
@@ -675,11 +755,6 @@ function RoleBasedProtectedArea() {
     );
   }
 
-  /*
-   * =========================
-   * CONTRACTOR
-   * =========================
-   */
   if (
     role ===
     "CONTRACTOR"
@@ -706,11 +781,6 @@ function RoleBasedProtectedArea() {
     );
   }
 
-  /*
-   * =========================
-   * ADMIN / MANAGER
-   * =========================
-   */
   if (
     role === "ADMIN" ||
     role === "MANAGER"
@@ -720,9 +790,6 @@ function RoleBasedProtectedArea() {
     );
   }
 
-  /*
-   * Unknown role
-   */
   return (
     <Navigate
       to="/login"
