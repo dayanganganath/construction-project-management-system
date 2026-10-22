@@ -14,7 +14,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(
+            nullable = false,
+            unique = true
+    )
     private String username;
 
     @Column(nullable = false)
@@ -25,4 +28,25 @@ public class User {
 
     @Column(nullable = false)
     private Boolean active = true;
+
+    /*
+     * =========================================================
+     * PROFILE
+     * =========================================================
+     */
+
+    @Column(length = 150)
+    private String fullName;
+
+    @Column(length = 190)
+    private String email;
+
+    @Column(length = 50)
+    private String phone;
+
+    @Column(length = 500)
+    private String profilePhotoPath;
+
+    @Column(length = 100)
+    private String profilePhotoContentType;
 }

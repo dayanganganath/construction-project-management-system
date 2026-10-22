@@ -11,6 +11,10 @@ import {
 
 import api from "../../services/api";
 
+import ClientProfile from "../../pages/client/ClientProfile";
+
+import "../../styles/client-profile-layout.css";
+
 function ClientLayout() {
   const navigate =
     useNavigate();
@@ -49,22 +53,63 @@ function ClientLayout() {
   const [error, setError] =
     useState("");
 
+  const [
+    showProfile,
+    setShowProfile,
+  ] = useState(false);
+
+  const [profile, setProfile] =
+    useState(null);
+
+  const [
+    profilePhotoUrl,
+    setProfilePhotoUrl,
+  ] = useState("");
+
   useEffect(() => {
     loadProjects();
 
-    const timer = setInterval(
+    loadProfile();
+
+    const timer =
+      setInterval(
+        () => {
+          setCurrentTime(
+            new Date()
+          );
+        },
+        60000
+      );
+
+    const handleProfileUpdate =
       () => {
-        setCurrentTime(
-          new Date()
-        );
-      },
-      60000
+        loadProfile();
+      };
+
+    window.addEventListener(
+      "client-profile-updated",
+      handleProfileUpdate
     );
 
     return () => {
       clearInterval(timer);
+
+      window.removeEventListener(
+        "client-profile-updated",
+        handleProfileUpdate
+      );
     };
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (profilePhotoUrl) {
+        URL.revokeObjectURL(
+          profilePhotoUrl
+        );
+      }
+    };
+  }, [profilePhotoUrl]);
 
   const getGreeting = () => {
     const hour =
@@ -98,6 +143,87 @@ function ClientLayout() {
     );
   };
 
+  const loadProfile =
+    async () => {
+      try {
+        const response =
+          await api.get(
+            "/client/profile"
+          );
+
+        const data =
+          response.data;
+
+        setProfile(data);
+
+        if (
+          data?.photoAvailable
+        ) {
+          await loadProfilePhoto();
+        } else {
+          clearProfilePhoto();
+        }
+      } catch (error) {
+        console.error(
+          "Unable to load client profile:",
+          error
+        );
+      }
+    };
+
+  const clearProfilePhoto =
+    () => {
+      setProfilePhotoUrl(
+        (currentUrl) => {
+          if (currentUrl) {
+            URL.revokeObjectURL(
+              currentUrl
+            );
+          }
+
+          return "";
+        }
+      );
+    };
+
+  const loadProfilePhoto =
+    async () => {
+      try {
+        const response =
+          await api.get(
+            "/client/profile/photo",
+            {
+              responseType:
+                "blob",
+            }
+          );
+
+        const objectUrl =
+          URL.createObjectURL(
+            response.data
+          );
+
+        setProfilePhotoUrl(
+          (currentUrl) => {
+            if (currentUrl) {
+              URL.revokeObjectURL(
+                currentUrl
+              );
+            }
+
+            return objectUrl;
+          }
+        );
+      } catch (error) {
+        console.error(
+          "Unable to load client profile photo:",
+          error
+        );
+
+        clearProfilePhoto();
+      }
+    };
+
   const loadProjects =
     async () => {
       try {
@@ -119,9 +245,10 @@ function ClientLayout() {
             data[0].projectId ??
             data[0].id;
 
-          const id = String(
-            firstProjectId
-          );
+          const id =
+            String(
+              firstProjectId
+            );
 
           setSelectedProjectId(
             id
@@ -184,7 +311,9 @@ function ClientLayout() {
           )
         );
       } finally {
-        setLoadingProject(false);
+        setLoadingProject(
+          false
+        );
       }
     };
 
@@ -196,6 +325,17 @@ function ClientLayout() {
       setSelectedProjectId(id);
 
       await loadDashboard(id);
+    };
+
+  const handlePortalNavigation =
+    () => {
+      setShowProfile(false);
+    };
+
+  const handleProfileOpen =
+    () => {
+      setShowProfile(true);
+      setError("");
     };
 
   const handleLogout = () => {
@@ -252,6 +392,21 @@ function ClientLayout() {
     );
   };
 
+  const getDisplayName =
+    () => {
+      return (
+        profile?.fullName ||
+        username
+      );
+    };
+
+  const getProfileInitial =
+    () => {
+      return getDisplayName()
+        .charAt(0)
+        .toUpperCase();
+    };
+
   if (loading) {
     return (
       <div className="client-full-loading">
@@ -271,6 +426,7 @@ function ClientLayout() {
 
           <div>
             <h2>CPMS</h2>
+
             <p>
               Client Portal
             </p>
@@ -285,68 +441,119 @@ function ClientLayout() {
           <NavLink
             to="/client"
             end
+            onClick={
+              handlePortalNavigation
+            }
           >
             <span className="client-nav-icon">
               OV
             </span>
+
             Overview
           </NavLink>
 
           <NavLink
             to="/client/project"
+            onClick={
+              handlePortalNavigation
+            }
           >
             <span className="client-nav-icon">
               PR
             </span>
+
             Project Details
           </NavLink>
 
           <NavLink
             to="/client/payments"
+            onClick={
+              handlePortalNavigation
+            }
           >
             <span className="client-nav-icon">
               PY
             </span>
+
             Payments
           </NavLink>
 
           <NavLink
             to="/client/photos"
+            onClick={
+              handlePortalNavigation
+            }
           >
             <span className="client-nav-icon">
               PH
             </span>
+
             Site Photos
           </NavLink>
 
           <NavLink
             to="/client/documents"
+            onClick={
+              handlePortalNavigation
+            }
           >
             <span className="client-nav-icon">
               DC
             </span>
+
             Documents
           </NavLink>
+
+          <button
+            type="button"
+            className={
+              showProfile
+                ? "client-profile-nav-button active"
+                : "client-profile-nav-button"
+            }
+            onClick={
+              handleProfileOpen
+            }
+          >
+            <span className="client-nav-icon">
+              PF
+            </span>
+
+            My Profile
+          </button>
         </nav>
 
         <div className="client-sidebar-footer">
-          <div className="client-user-card">
-            <div className="client-user-avatar">
-              {username
-                .charAt(0)
-                .toUpperCase()}
+          <button
+            type="button"
+            className="client-user-card client-user-card-button"
+            onClick={
+              handleProfileOpen
+            }
+          >
+            <div className="client-user-avatar client-user-avatar-photo">
+              {profilePhotoUrl ? (
+                <img
+                  src={
+                    profilePhotoUrl
+                  }
+                  alt="Profile"
+                />
+              ) : (
+                getProfileInitial()
+              )}
             </div>
 
             <div>
               <strong>
-                {username}
+                {getDisplayName()}
               </strong>
 
               <span>
                 CLIENT
               </span>
             </div>
-          </div>
+          </button>
 
           <button
             type="button"
@@ -365,85 +572,104 @@ function ClientLayout() {
       </aside>
 
       <main className="client-main">
-        <header className="client-topbar">
-          <div>
-            <p className="client-greeting">
-              {getGreeting()},
-            </p>
+        {!showProfile && (
+          <header className="client-topbar">
+            <div>
+              <p className="client-greeting">
+                {getGreeting()},
+              </p>
 
-            <h1>
-              {username}
-            </h1>
-          </div>
-
-          {projects.length >
-            0 && (
-            <div className="client-project-selector">
-              <label>
-                Current Project
-              </label>
-
-              <select
-                value={
-                  selectedProjectId
-                }
-                onChange={
-                  handleProjectChange
-                }
-              >
-                {projects.map(
-                  (project) => {
-                    const id =
-                      project.projectId ??
-                      project.id;
-
-                    return (
-                      <option
-                        key={id}
-                        value={id}
-                      >
-                        {
-                          project.projectName
-                        }
-                      </option>
-                    );
-                  }
-                )}
-              </select>
+              <h1>
+                {getDisplayName()}
+              </h1>
             </div>
-          )}
-        </header>
 
-        {error && (
-          <div className="client-alert-error">
-            {error}
-          </div>
+            {projects.length >
+              0 && (
+              <div className="client-project-selector">
+                <label>
+                  Current Project
+                </label>
+
+                <select
+                  value={
+                    selectedProjectId
+                  }
+                  onChange={
+                    handleProjectChange
+                  }
+                >
+                  {projects.map(
+                    (project) => {
+                      const id =
+                        project.projectId ??
+                        project.id;
+
+                      return (
+                        <option
+                          key={id}
+                          value={id}
+                        >
+                          {
+                            project.projectName
+                          }
+                        </option>
+                      );
+                    }
+                  )}
+                </select>
+              </div>
+            )}
+          </header>
         )}
 
-        {projects.length ===
-        0 ? (
-          <div className="client-empty-card">
-            <h2>
-              No projects assigned
-            </h2>
-
-            <p>
-              There are currently
-              no projects assigned
-              to your client
-              account.
-            </p>
-          </div>
-        ) : (
-          <Outlet
-            context={{
-              selectedProjectId,
-              dashboard,
-              loadingProject,
-              formatCurrency,
-              formatDate,
-            }}
+        {showProfile ? (
+          <ClientProfile
+            onBack={() =>
+              setShowProfile(
+                false
+              )
+            }
+            onProfileUpdated={
+              loadProfile
+            }
           />
+        ) : (
+          <>
+            {error && (
+              <div className="client-alert-error">
+                {error}
+              </div>
+            )}
+
+            {projects.length ===
+            0 ? (
+              <div className="client-empty-card">
+                <h2>
+                  No projects
+                  assigned
+                </h2>
+
+                <p>
+                  There are
+                  currently no
+                  projects assigned
+                  to your client
+                  account.
+                </p>
+              </div>
+            ) : (
+              <Outlet
+                context={{
+                  selectedProjectId,
+                  dashboard,
+                  loadingProject,
+                  formatCurrency,
+                  formatDate,
+                }}
+              />
+            )}
+          </>
         )}
       </main>
     </div>

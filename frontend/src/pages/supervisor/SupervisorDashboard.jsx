@@ -1,8 +1,11 @@
-import { useOutletContext } from "react-router-dom";
+import {
+  useOutletContext,
+} from "react-router-dom";
 
 function SupervisorDashboard() {
   const {
     selectedProject,
+    loadingProject,
   } = useOutletContext();
 
   const formatDate = (
@@ -14,155 +17,291 @@ function SupervisorDashboard() {
 
     return new Date(
       `${value}T00:00:00`
-    ).toLocaleDateString();
+    ).toLocaleDateString(
+      "en-GB"
+    );
   };
 
-  if (!selectedProject) {
-    return null;
+  if (loadingProject) {
+    return (
+      <div className="supervisor-page-loading">
+        Loading project
+        dashboard...
+      </div>
+    );
   }
 
-  return (
-    <div>
-      <div className="page-header">
-        <div>
-          <h1>
-            Site Dashboard
-          </h1>
-
-          <p>
-            Current site overview and
-            latest progress information.
-          </p>
-        </div>
-      </div>
-
-      <div className="selected-project-info">
-        <h2>
-          {
-            selectedProject.projectName
-          }
-        </h2>
+  if (!selectedProject) {
+    return (
+      <div className="supervisor-empty-card">
+        <h3>
+          No project selected
+        </h3>
 
         <p>
-          {selectedProject.description ||
-            "No project description available."}
+          Select an assigned
+          project to view the site
+          dashboard.
         </p>
+      </div>
+    );
+  }
 
-        <div className="project-info-details">
-          <p>
-            <strong>
-              Location:
-            </strong>{" "}
-            {selectedProject.location ||
-              "-"}
-          </p>
+  const progress =
+    Math.min(
+      100,
+      Math.max(
+        0,
+        Number(
+          selectedProject
+            .latestProgressPercentage ??
+            0
+        )
+      )
+    );
+
+  return (
+    <div className="supervisor-page">
+      <div className="supervisor-page-heading">
+        <div>
+          <span className="supervisor-eyebrow">
+            Site Overview
+          </span>
+
+          <h2>
+            Site Dashboard
+          </h2>
 
           <p>
-            <strong>
-              Status:
-            </strong>{" "}
-            {selectedProject.status ||
-              "-"}
-          </p>
-
-          <p>
-            <strong>
-              Start Date:
-            </strong>{" "}
-            {formatDate(
-              selectedProject.startDate
-            )}
-          </p>
-
-          <p>
-            <strong>
-              End Date:
-            </strong>{" "}
-            {formatDate(
-              selectedProject.endDate
-            )}
+            Current project status,
+            workforce and latest
+            construction progress.
           </p>
         </div>
+
+        <span className="supervisor-status-pill">
+          {selectedProject.status ||
+            "ONGOING"}
+        </span>
       </div>
 
-      <div className="dashboard-grid">
-        <div className="dashboard-card blue">
-          <p>
-            Latest Progress
-          </p>
+      <section className="supervisor-project-hero">
+        <div>
+          <span className="supervisor-project-label">
+            Current Project
+          </span>
 
-          <h2>
-            {selectedProject
-              .latestProgressPercentage ??
-              0}
-            %
-          </h2>
+          <h3>
+            {
+              selectedProject.projectName
+            }
+          </h3>
+
+          <p>
+            {selectedProject.description ||
+              "No project description available."}
+          </p>
         </div>
 
-        <div className="dashboard-card green">
-          <p>
-            Workers on Site
-          </p>
+        <div className="supervisor-project-details">
+          <div>
+            <span>
+              Location
+            </span>
 
-          <h2>
+            <strong>
+              {selectedProject.location ||
+                "-"}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              Start Date
+            </span>
+
+            <strong>
+              {formatDate(
+                selectedProject.startDate
+              )}
+            </strong>
+          </div>
+
+          <div>
+            <span>
+              End Date
+            </span>
+
+            <strong>
+              {formatDate(
+                selectedProject.endDate
+              )}
+            </strong>
+          </div>
+        </div>
+      </section>
+
+      <div className="supervisor-kpi-grid">
+        <div className="supervisor-kpi-card">
+          <span>
+            Latest Progress
+          </span>
+
+          <strong>
+            {progress}%
+          </strong>
+
+          <small>
+            Physical completion
+          </small>
+        </div>
+
+        <div className="supervisor-kpi-card">
+          <span>
+            Workers on Site
+          </span>
+
+          <strong>
             {selectedProject
               .latestWorkersCount ??
               0}
-          </h2>
+          </strong>
+
+          <small>
+            Latest workforce count
+          </small>
         </div>
 
-        <div className="dashboard-card orange">
-          <p>
+        <div className="supervisor-kpi-card">
+          <span>
             Last Update
-          </p>
+          </span>
 
-          <h2 className="date-value">
+          <strong className="supervisor-kpi-date">
             {formatDate(
               selectedProject
                 .latestProgressDate
             )}
-          </h2>
+          </strong>
+
+          <small>
+            Latest daily report
+          </small>
         </div>
 
-        <div className="dashboard-card purple">
-          <p>
+        <div className="supervisor-kpi-card">
+          <span>
             Site Status
-          </p>
+          </span>
 
-          <h2>
+          <strong className="supervisor-kpi-status">
             {selectedProject.status ||
               "-"}
-          </h2>
+          </strong>
+
+          <small>
+            Project status
+          </small>
         </div>
       </div>
 
-      <div
-        className="form-card"
-        style={{
-          marginTop: "24px",
-        }}
-      >
-        <h2>
-          Latest Work
-        </h2>
+      <section className="supervisor-card supervisor-progress-card">
+        <div className="supervisor-card-heading">
+          <div>
+            <h3>
+              Construction Progress
+            </h3>
 
-        <p>
-          {selectedProject
-            .latestWorkDescription ||
-            "No daily progress record available."}
-        </p>
-      </div>
+            <p>
+              Latest recorded
+              physical progress
+            </p>
+          </div>
 
-      <div className="form-card">
-        <h2>
-          Latest Remarks
-        </h2>
+          <strong>
+            {progress}%
+          </strong>
+        </div>
 
-        <p>
-          {selectedProject
-            .latestRemarks ||
-            "No remarks available."}
-        </p>
+        <div className="supervisor-progress-track">
+          <div
+            className="supervisor-progress-value"
+            style={{
+              width: `${progress}%`,
+            }}
+          />
+        </div>
+
+        <div className="supervisor-progress-meta">
+          <span>
+            0%
+          </span>
+
+          <span>
+            100%
+          </span>
+        </div>
+      </section>
+
+      <div className="supervisor-dashboard-grid">
+        <section className="supervisor-card">
+          <div className="supervisor-card-heading">
+            <div>
+              <h3>
+                Latest Work
+              </h3>
+
+              <p>
+                Most recent site
+                activity
+              </p>
+            </div>
+          </div>
+
+          <div className="supervisor-latest-content">
+            <div className="supervisor-latest-icon">
+              WK
+            </div>
+
+            <div>
+              <h4>
+                {selectedProject
+                  .latestWorkDescription ||
+                  "No daily progress record available."}
+              </h4>
+
+              <p>
+                Last updated{" "}
+                {formatDate(
+                  selectedProject
+                    .latestProgressDate
+                )}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="supervisor-card">
+          <div className="supervisor-card-heading">
+            <div>
+              <h3>
+                Latest Remarks
+              </h3>
+
+              <p>
+                Notes from the
+                latest progress
+                update
+              </p>
+            </div>
+          </div>
+
+          <div className="supervisor-remarks">
+            {selectedProject
+              .latestRemarks ||
+              "No remarks available."}
+          </div>
+        </section>
       </div>
     </div>
   );

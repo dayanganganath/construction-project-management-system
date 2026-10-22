@@ -11,8 +11,23 @@ import {
 
 import api from "../../services/api";
 
+import "../../styles/supervisor-portal-polish.css";
+
 function SupervisorLayout() {
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
+
+  const username =
+    localStorage.getItem(
+      "username"
+    ) || "Supervisor";
+
+  const [
+    currentTime,
+    setCurrentTime,
+  ] = useState(
+    new Date()
+  );
 
   const [projects, setProjects] =
     useState([]);
@@ -38,14 +53,38 @@ function SupervisorLayout() {
   const [error, setError] =
     useState("");
 
-  const username =
-    localStorage.getItem(
-      "username"
-    );
-
   useEffect(() => {
     loadProjects();
+
+    const timer =
+      setInterval(
+        () => {
+          setCurrentTime(
+            new Date()
+          );
+        },
+        60000
+      );
+
+    return () => {
+      clearInterval(timer);
+    };
   }, []);
+
+  const getGreeting = () => {
+    const hour =
+      currentTime.getHours();
+
+    if (hour < 12) {
+      return "Good morning";
+    }
+
+    if (hour < 17) {
+      return "Good afternoon";
+    }
+
+    return "Good evening";
+  };
 
   const getProjectId = (
     project
@@ -54,6 +93,23 @@ function SupervisorLayout() {
       project?.projectId ??
       project?.id ??
       ""
+    );
+  };
+
+  const getErrorMessage = (
+    error,
+    fallback
+  ) => {
+    if (
+      typeof error.response?.data ===
+      "string"
+    ) {
+      return error.response.data;
+    }
+
+    return (
+      error.response?.data
+        ?.message || fallback
     );
   };
 
@@ -126,10 +182,10 @@ function SupervisorLayout() {
         );
 
         setError(
-          typeof error.response
-            ?.data === "string"
-            ? error.response.data
-            : "Unable to load assigned projects."
+          getErrorMessage(
+            error,
+            "Unable to load assigned projects."
+          )
         );
       } finally {
         setLoading(false);
@@ -142,14 +198,12 @@ function SupervisorLayout() {
         setSelectedProject(
           null
         );
+
         return;
       }
 
       try {
-        setLoadingProject(
-          true
-        );
-
+        setLoadingProject(true);
         setError("");
 
         const response =
@@ -171,10 +225,10 @@ function SupervisorLayout() {
         );
 
         setError(
-          typeof error.response
-            ?.data === "string"
-            ? error.response.data
-            : "Unable to load project details."
+          getErrorMessage(
+            error,
+            "Unable to load project details."
+          )
         );
       } finally {
         setLoadingProject(
@@ -184,9 +238,9 @@ function SupervisorLayout() {
     };
 
   const handleProjectChange =
-    async (e) => {
+    async (event) => {
       const value =
-        e.target.value;
+        event.target.value;
 
       setSelectedProjectId(
         value
@@ -240,93 +294,147 @@ function SupervisorLayout() {
   };
 
   return (
-    <div className="app-layout">
-      <aside className="sidebar">
-        <div className="brand">
-          <h2>CPMS</h2>
+    <div className="supervisor-shell">
+      <aside className="supervisor-sidebar">
+        <div className="supervisor-brand">
+          <div className="supervisor-brand-mark">
+            C
+          </div>
 
-          <p>
-            Construction Management
-          </p>
+          <div>
+            <h2>CPMS</h2>
+
+            <p>
+              Supervisor Portal
+            </p>
+          </div>
         </div>
 
-        <nav className="nav-menu">
+        <div className="supervisor-nav-label">
+          Site Management
+        </div>
+
+        <nav className="supervisor-nav">
           <NavLink
             to="/supervisor"
             end
           >
+            <span className="supervisor-nav-icon">
+              DB
+            </span>
+
             Dashboard
           </NavLink>
 
           <NavLink
             to="/supervisor/progress"
           >
+            <span className="supervisor-nav-icon">
+              DP
+            </span>
+
             Daily Progress
           </NavLink>
 
           <NavLink
             to="/supervisor/material-requests"
           >
+            <span className="supervisor-nav-icon">
+              MR
+            </span>
+
             Material Requests
           </NavLink>
 
           <NavLink
             to="/supervisor/site-photos"
           >
+            <span className="supervisor-nav-icon">
+              PH
+            </span>
+
             Site Photos
           </NavLink>
 
           <NavLink
-  to="/supervisor/site-issues"
->
-  Site Issues
-</NavLink>
-<NavLink
-  to="/supervisor/documents"
->
-  Documents
-</NavLink>
+            to="/supervisor/site-issues"
+          >
+            <span className="supervisor-nav-icon">
+              IS
+            </span>
+
+            Site Issues
+          </NavLink>
+
+          <NavLink
+            to="/supervisor/documents"
+          >
+            <span className="supervisor-nav-icon">
+              DC
+            </span>
+
+            Documents
+          </NavLink>
         </nav>
 
-        <div className="sidebar-footer">
-          {username && (
-            <div className="logged-user">
-              <p>
+        <div className="supervisor-sidebar-footer">
+          <div className="supervisor-user-card">
+            <div className="supervisor-user-avatar">
+              {username
+                .charAt(0)
+                .toUpperCase()}
+            </div>
+
+            <div>
+              <strong>
                 {username}
-              </p>
+              </strong>
 
               <span>
                 SUPERVISOR
               </span>
             </div>
-          )}
+          </div>
 
           <button
             type="button"
-            className="logout-button"
+            className="supervisor-signout"
             onClick={
               handleLogout
             }
           >
-            Logout
+            <span>
+              Sign Out
+            </span>
+
+            <span>→</span>
           </button>
         </div>
       </aside>
 
-      <main className="main-content">
-        <div className="dashboard-header">
+      <main className="supervisor-main">
+        <header className="supervisor-topbar">
           <div>
+            <p className="supervisor-greeting">
+              {getGreeting()},
+            </p>
+
             <h1>
-              Supervisor Portal
+              {username}
             </h1>
 
-            <p>
+            <p className="supervisor-topbar-subtitle">
               Manage your assigned
-              construction sites.
+              construction site
+              activities.
             </p>
           </div>
 
-          <div>
+          <div className="supervisor-project-selector">
+            <label>
+              Current Project
+            </label>
+
             <select
               value={
                 selectedProjectId
@@ -343,7 +451,8 @@ function SupervisorLayout() {
               {projects.length ===
               0 ? (
                 <option value="">
-                  No assigned projects
+                  No assigned
+                  projects
                 </option>
               ) : (
                 projects.map(
@@ -365,10 +474,6 @@ function SupervisorLayout() {
                         {project.projectName ||
                           project.name ||
                           `Project ${projectId}`}
-
-                        {project.location
-                          ? ` - ${project.location}`
-                          : ""}
                       </option>
                     );
                   }
@@ -376,20 +481,18 @@ function SupervisorLayout() {
               )}
             </select>
           </div>
-        </div>
+        </header>
 
         {error && (
-          <div className="alert alert-error">
+          <div className="supervisor-alert-error">
             {error}
           </div>
         )}
 
         {loading ? (
-          <div className="form-card">
-            <p>
-              Loading assigned
-              projects...
-            </p>
+          <div className="supervisor-page-loading">
+            Loading assigned
+            projects...
           </div>
         ) : (
           <Outlet

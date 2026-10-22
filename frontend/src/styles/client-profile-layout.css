@@ -1,0 +1,461 @@
+/* =========================================================
+   CLIENT PROFILE NAVIGATION
+   ========================================================= */
+
+.client-profile-nav-button {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  min-height: 42px;
+
+  padding:
+    6px
+    10px;
+
+  border: 0;
+
+  border-radius: 9px;
+
+  background: transparent;
+
+  color: #cbd5e1;
+
+  cursor: pointer;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 650;
+
+  text-align: left;
+
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.client-profile-nav-button:hover {
+  transform:
+    translateX(2px);
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.055
+    );
+
+  color: #ffffff;
+}
+
+.client-profile-nav-button.active {
+  background: #2563eb;
+
+  color: #ffffff;
+
+  box-shadow:
+    0 6px 16px
+    rgba(
+      37,
+      99,
+      235,
+      0.22
+    );
+}
+
+.client-profile-nav-button
+.client-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 28px;
+  height: 28px;
+
+  flex: 0 0 28px;
+
+  border-radius: 7px;
+
+  background:
+    rgba(
+      148,
+      163,
+      184,
+      0.1
+    );
+
+  color: #94a3b8;
+
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.client-profile-nav-button:hover
+.client-nav-icon {
+  color: #ffffff;
+}
+
+.client-profile-nav-button.active
+.client-nav-icon {
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.15
+    );
+
+  color: #ffffff;
+}
+
+/* =========================================================
+   CLIENT SIDEBAR NAV SPACING
+   ========================================================= */
+
+.client-nav {
+  gap: 4px !important;
+
+  padding-bottom: 12px !important;
+}
+
+.client-nav a {
+  min-height: 42px !important;
+}
+
+.client-nav-label {
+  padding-top: 16px !important;
+
+  padding-bottom: 7px !important;
+}
+
+/* =========================================================
+   SIDEBAR FOOTER
+   ========================================================= */
+
+.client-sidebar {
+  overflow: hidden !important;
+}
+
+.client-sidebar-footer {
+  margin-top: auto;
+
+  padding:
+    12px
+    12px
+    14px !important;
+
+  border-top:
+    1px solid
+    rgba(
+      148,
+      163,
+      184,
+      0.1
+    );
+
+  background: #0f172a;
+}
+
+/* =========================================================
+   PROFILE USER CARD
+   ========================================================= */
+
+.client-user-card-button {
+  width: 100%;
+
+  min-height: 54px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  padding:
+    7px
+    8px !important;
+
+  margin: 0 !important;
+
+  border: 1px solid
+    rgba(
+      148,
+      163,
+      184,
+      0.14
+    );
+
+  border-radius: 9px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.035
+    );
+
+  color: #ffffff;
+
+  cursor: pointer;
+
+  text-align: left;
+
+  font-family: inherit;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.client-user-card-button:hover {
+  border-color:
+    rgba(
+      59,
+      130,
+      246,
+      0.45
+    );
+
+  background:
+    rgba(
+      37,
+      99,
+      235,
+      0.09
+    );
+}
+
+.client-user-card-button strong {
+  display: block;
+
+  max-width: 125px;
+
+  overflow: hidden;
+
+  color: #f8fafc;
+
+  font-size: 10px;
+  font-weight: 750;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.client-user-card-button span {
+  display: block;
+
+  margin-top: 2px;
+
+  color: #64748b;
+
+  font-size: 7px;
+  font-weight: 850;
+
+  letter-spacing: 0.08em;
+}
+
+/* =========================================================
+   PROFILE PHOTO
+   ========================================================= */
+
+.client-user-avatar-photo {
+  width: 34px !important;
+  height: 34px !important;
+
+  flex: 0 0 34px;
+
+  overflow: hidden;
+
+  border-radius: 9px !important;
+
+  background: #2563eb;
+}
+
+.client-user-avatar-photo img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+.client-signout {
+  width: 100%;
+
+  min-height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding:
+    0
+    12px;
+
+  margin:
+    8px
+    0
+    0 !important;
+
+  border: 1px solid
+    rgba(
+      148,
+      163,
+      184,
+      0.16
+    );
+
+  border-radius: 8px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.035
+    );
+
+  color: #94a3b8;
+
+  cursor: pointer;
+
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.client-signout:hover {
+  transform:
+    translateY(-1px);
+
+  border-color:
+    rgba(
+      239,
+      68,
+      68,
+      0.45
+    );
+
+  background:
+    rgba(
+      239,
+      68,
+      68,
+      0.12
+    );
+
+  color: #fecaca;
+}
+
+.client-signout span:last-child {
+  color: #64748b;
+
+  font-size: 13px;
+}
+
+.client-signout:hover
+span:last-child {
+  color: #fecaca;
+}
+
+/* =========================================================
+   SHORT SCREEN HEIGHT FIX
+   ========================================================= */
+
+@media (
+  max-height: 720px
+) {
+  .client-brand {
+    padding-top: 15px !important;
+    padding-bottom: 15px !important;
+  }
+
+  .client-nav-label {
+    padding-top: 10px !important;
+  }
+
+  .client-nav {
+    gap: 2px !important;
+  }
+
+  .client-nav a,
+  .client-profile-nav-button {
+    min-height: 38px !important;
+  }
+
+  .client-sidebar-footer {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .client-user-card-button {
+    min-height: 48px;
+  }
+
+  .client-signout {
+    min-height: 34px;
+  }
+}
+
+/* =========================================================
+   MOBILE / COLLAPSED SIDEBAR
+   ========================================================= */
+
+@media (
+  max-width: 850px
+) {
+  .client-profile-nav-button {
+    justify-content: center;
+
+    padding:
+      6px
+      5px;
+
+    font-size: 0;
+  }
+
+  .client-profile-nav-button
+  .client-nav-icon {
+    font-size: 8px;
+  }
+
+  .client-user-card-button {
+    justify-content: center;
+  }
+
+  .client-user-card-button
+  > div:last-child {
+    display: none;
+  }
+
+  .client-signout {
+    justify-content: center;
+  }
+
+  .client-signout
+  span:first-child {
+    display: none;
+  }
+
+  .client-signout
+  span:last-child {
+    font-size: 15px;
+  }
+}
