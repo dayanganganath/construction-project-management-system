@@ -43,8 +43,14 @@ import ProjectDocuments from "./pages/ProjectDocuments";
 import Notifications from "./pages/Notifications";
 import AuditLogs from "./pages/AuditLogs";
 
-import ClientPortal from "./pages/ClientPortal";
 import ContractorPortal from "./pages/ContractorPortal";
+
+import ClientLayout from "./components/client/ClientLayout";
+import ClientOverview from "./pages/client/ClientOverview";
+import ClientProjectDetails from "./pages/client/ClientProjectDetails";
+import ClientPayments from "./pages/client/ClientPayments";
+import ClientPhotos from "./pages/client/ClientPhotos";
+import ClientDocuments from "./pages/client/ClientDocuments";
 
 import SupervisorLayout from "./components/supervisor/SupervisorLayout";
 import SupervisorDashboard from "./pages/supervisor/SupervisorDashboard";
@@ -230,9 +236,7 @@ function AdminLayout() {
           </div>
 
           <div className="cpms-brand-copy">
-            <h2>
-              CPMS
-            </h2>
+            <h2>CPMS</h2>
 
             <p>
               Construction Management
@@ -434,13 +438,11 @@ function AdminLayout() {
 
             <div className="cpms-user-info">
               <strong>
-                {username ||
-                  "User"}
+                {username || "User"}
               </strong>
 
               <span>
-                {role ||
-                  "USER"}
+                {role || "USER"}
               </span>
             </div>
           </div>
@@ -452,13 +454,8 @@ function AdminLayout() {
               handleLogout
             }
           >
-            <span>
-              Sign Out
-            </span>
-
-            <span>
-              →
-            </span>
+            <span>Sign Out</span>
+            <span>→</span>
           </button>
         </div>
       </aside>
@@ -467,65 +464,47 @@ function AdminLayout() {
         <Routes>
           <Route
             path="/"
-            element={
-              <Dashboard />
-            }
+            element={<Dashboard />}
           />
 
           <Route
             path="/notifications"
-            element={
-              <Notifications />
-            }
+            element={<Notifications />}
           />
 
           <Route
             path="/audit-logs"
-            element={
-              <AuditLogs />
-            }
+            element={<AuditLogs />}
           />
 
           <Route
             path="/clients"
-            element={
-              <Clients />
-            }
+            element={<Clients />}
           />
 
           <Route
             path="/projects"
-            element={
-              <Projects />
-            }
+            element={<Projects />}
           />
 
           <Route
             path="/boq"
-            element={
-              <Boq />
-            }
+            element={<Boq />}
           />
 
           <Route
             path="/expenses"
-            element={
-              <Expenses />
-            }
+            element={<Expenses />}
           />
 
           <Route
             path="/payments"
-            element={
-              <Payments />
-            }
+            element={<Payments />}
           />
 
           <Route
             path="/contractors"
-            element={
-              <Contractors />
-            }
+            element={<Contractors />}
           />
 
           <Route
@@ -551,9 +530,7 @@ function AdminLayout() {
 
           <Route
             path="/workers"
-            element={
-              <Workers />
-            }
+            element={<Workers />}
           />
 
           <Route
@@ -579,16 +556,12 @@ function AdminLayout() {
 
           <Route
             path="/site-photos"
-            element={
-              <SitePhotos />
-            }
+            element={<SitePhotos />}
           />
 
           <Route
             path="/site-issues"
-            element={
-              <SiteIssues />
-            }
+            element={<SiteIssues />}
           />
 
           <Route
@@ -600,9 +573,7 @@ function AdminLayout() {
 
           <Route
             path="/accounts"
-            element={
-              <Accounts />
-            }
+            element={<Accounts />}
           />
 
           <Route
@@ -614,9 +585,7 @@ function AdminLayout() {
 
           <Route
             path="/site-report"
-            element={
-              <SiteReport />
-            }
+            element={<SiteReport />}
           />
 
           <Route
@@ -629,8 +598,7 @@ function AdminLayout() {
           <Route
             path="/users"
             element={
-              role ===
-              "ADMIN" ? (
+              role === "ADMIN" ? (
                 <Users />
               ) : (
                 <Navigate
@@ -662,17 +630,48 @@ function RoleBasedProtectedArea() {
       "role"
     );
 
-  if (
-    role === "CLIENT"
-  ) {
+  if (role === "CLIENT") {
     return (
       <Routes>
         <Route
           path="/client"
-          element={
-            <ClientPortal />
-          }
-        />
+          element={<ClientLayout />}
+        >
+          <Route
+            index
+            element={
+              <ClientOverview />
+            }
+          />
+
+          <Route
+            path="project"
+            element={
+              <ClientProjectDetails />
+            }
+          />
+
+          <Route
+            path="payments"
+            element={
+              <ClientPayments />
+            }
+          />
+
+          <Route
+            path="photos"
+            element={
+              <ClientPhotos />
+            }
+          />
+
+          <Route
+            path="documents"
+            element={
+              <ClientDocuments />
+            }
+          />
+        </Route>
 
         <Route
           path="*"
@@ -688,8 +687,7 @@ function RoleBasedProtectedArea() {
   }
 
   if (
-    role ===
-    "SUPERVISOR"
+    role === "SUPERVISOR"
   ) {
     return (
       <Routes>
@@ -756,8 +754,7 @@ function RoleBasedProtectedArea() {
   }
 
   if (
-    role ===
-    "CONTRACTOR"
+    role === "CONTRACTOR"
   ) {
     return (
       <Routes>
@@ -785,9 +782,7 @@ function RoleBasedProtectedArea() {
     role === "ADMIN" ||
     role === "MANAGER"
   ) {
-    return (
-      <AdminLayout />
-    );
+    return <AdminLayout />;
   }
 
   return (
@@ -804,9 +799,7 @@ function App() {
       <Routes>
         <Route
           path="/login"
-          element={
-            <Login />
-          }
+          element={<Login />}
         />
 
         <Route
