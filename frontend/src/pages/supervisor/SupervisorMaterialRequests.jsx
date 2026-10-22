@@ -9,6 +9,8 @@ import {
 
 import api from "../../services/api";
 
+import "../../styles/supervisor-forms-polish.css";
+
 function SupervisorMaterialRequests() {
   const {
     selectedProjectId,
@@ -64,6 +66,8 @@ function SupervisorMaterialRequests() {
   useEffect(() => {
     if (selectedProjectId) {
       loadRequests();
+    } else {
+      setRequests([]);
     }
   }, [selectedProjectId]);
 
@@ -71,6 +75,7 @@ function SupervisorMaterialRequests() {
     async () => {
       try {
         setLoading(true);
+        setError("");
 
         const response =
           await api.get(
@@ -110,18 +115,23 @@ function SupervisorMaterialRequests() {
         );
 
         setError(
-          "Unable to load material requests."
+          typeof error.response
+            ?.data === "string"
+            ? error.response.data
+            : "Unable to load material requests."
         );
       } finally {
         setLoading(false);
       }
     };
 
-  const handleChange = (e) => {
+  const handleChange = (
+    event
+  ) => {
     setForm({
       ...form,
-      [e.target.name]:
-        e.target.value,
+      [event.target.name]:
+        event.target.value,
     });
 
     setError("");
@@ -129,8 +139,8 @@ function SupervisorMaterialRequests() {
   };
 
   const handleSubmit =
-    async (e) => {
-      e.preventDefault();
+    async (event) => {
+      event.preventDefault();
 
       if (
         !form.materialName
@@ -139,6 +149,7 @@ function SupervisorMaterialRequests() {
         setError(
           "Material name is required."
         );
+
         return;
       }
 
@@ -151,6 +162,7 @@ function SupervisorMaterialRequests() {
         setError(
           "Quantity must be greater than zero."
         );
+
         return;
       }
 
@@ -160,11 +172,14 @@ function SupervisorMaterialRequests() {
         setError(
           "Unit is required."
         );
+
         return;
       }
 
       try {
         setSaving(true);
+        setError("");
+        setSuccess("");
 
         await api.post(
           `/supervisor/projects/${selectedProjectId}/material-requests`,
@@ -214,8 +229,8 @@ function SupervisorMaterialRequests() {
         );
 
         setError(
-          typeof error.response?.data ===
-            "string"
+          typeof error.response
+            ?.data === "string"
             ? error.response.data
             : "Unable to submit material request."
         );
@@ -233,208 +248,322 @@ function SupervisorMaterialRequests() {
 
     return new Date(
       `${value}T00:00:00`
-    ).toLocaleDateString();
+    ).toLocaleDateString(
+      "en-GB"
+    );
   };
 
+  const getStatusClass = (
+    status
+  ) => {
+    const value =
+      String(
+        status || "PENDING"
+      ).toUpperCase();
+
+    if (
+      value === "APPROVED"
+    ) {
+      return "approved";
+    }
+
+    if (
+      value === "REJECTED"
+    ) {
+      return "rejected";
+    }
+
+    return "pending";
+  };
+
+  const pendingCount =
+    requests.filter(
+      (request) =>
+        String(
+          request.status ||
+            "PENDING"
+        ).toUpperCase() ===
+        "PENDING"
+    ).length;
+
   return (
-    <div>
-      <div className="page-header">
+    <div className="supervisor-page">
+      <div className="supervisor-page-heading">
         <div>
-          <h1>
+          <span className="supervisor-eyebrow">
+            Site Procurement
+          </span>
+
+          <h2>
             Material Requests
-          </h1>
+          </h2>
 
           <p>
-            Submit and track site
-            material requirements.
+            Submit site material
+            requirements and track
+            their approval status.
           </p>
+        </div>
+
+        <div className="supervisor-mini-status">
+          <span>
+            Pending
+          </span>
+
+          <strong>
+            {pendingCount}
+          </strong>
         </div>
       </div>
 
       {error && (
-        <div className="alert alert-error">
+        <div className="supervisor-form-alert supervisor-form-alert-error">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="alert alert-success">
+        <div className="supervisor-form-alert supervisor-form-alert-success">
           {success}
         </div>
       )}
 
-      <div className="form-card">
-        <h2>
-          New Material Request
-        </h2>
+      <section className="supervisor-form-card">
+        <div className="supervisor-form-card-heading">
+          <div>
+            <h3>
+              New Material Request
+            </h3>
+
+            <p>
+              Request materials
+              required for current
+              site activities.
+            </p>
+          </div>
+
+          <span className="supervisor-form-badge">
+            New Request
+          </span>
+        </div>
 
         <form
           onSubmit={
             handleSubmit
           }
         >
-          <div className="progress-form">
-            <input
-              type="date"
-              name="requestDate"
-              value={
-                form.requestDate
-              }
-              onChange={
-                handleChange
-              }
-            />
+          <div className="supervisor-form-grid supervisor-form-grid-four">
+            <div className="supervisor-field">
+              <label>
+                Request Date
+              </label>
 
-            <input
-              type="text"
-              name="materialName"
-              placeholder="Material Name *"
-              value={
-                form.materialName
-              }
-              onChange={
-                handleChange
-              }
-            />
+              <input
+                type="date"
+                name="requestDate"
+                value={
+                  form.requestDate
+                }
+                onChange={
+                  handleChange
+                }
+              />
+            </div>
 
-            <input
-              type="number"
-              name="quantity"
-              min="0.01"
-              step="0.01"
-              placeholder="Quantity *"
-              value={
-                form.quantity
-              }
-              onChange={
-                handleChange
-              }
-            />
+            <div className="supervisor-field">
+              <label>
+                Material Name *
+              </label>
 
-            <select
-              name="unit"
-              value={
-                form.unit
-              }
-              onChange={
-                handleChange
+              <input
+                type="text"
+                name="materialName"
+                placeholder="Example: Cement"
+                value={
+                  form.materialName
+                }
+                onChange={
+                  handleChange
+                }
+              />
+            </div>
+
+            <div className="supervisor-field">
+              <label>
+                Quantity *
+              </label>
+
+              <input
+                type="number"
+                name="quantity"
+                min="0.01"
+                step="0.01"
+                placeholder="Enter quantity"
+                value={
+                  form.quantity
+                }
+                onChange={
+                  handleChange
+                }
+              />
+            </div>
+
+            <div className="supervisor-field">
+              <label>
+                Unit *
+              </label>
+
+              <select
+                name="unit"
+                value={
+                  form.unit
+                }
+                onChange={
+                  handleChange
+                }
+              >
+                <option value="">
+                  Select unit
+                </option>
+
+                <option value="BAG">
+                  Bag
+                </option>
+
+                <option value="KG">
+                  Kg
+                </option>
+
+                <option value="TON">
+                  Ton
+                </option>
+
+                <option value="M3">
+                  m³
+                </option>
+
+                <option value="SQFT">
+                  Sq.ft
+                </option>
+
+                <option value="LFT">
+                  L.ft
+                </option>
+
+                <option value="NOS">
+                  Nos
+                </option>
+
+                <option value="PCS">
+                  Pieces
+                </option>
+
+                <option value="LITER">
+                  Liter
+                </option>
+
+                <option value="OTHER">
+                  Other
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div className="supervisor-form-grid supervisor-form-grid-two">
+            <div className="supervisor-field">
+              <label>
+                Purpose
+              </label>
+
+              <textarea
+                name="purpose"
+                value={
+                  form.purpose
+                }
+                onChange={
+                  handleChange
+                }
+                placeholder="Example: Ground floor plastering"
+              />
+            </div>
+
+            <div className="supervisor-field">
+              <label>
+                Notes
+              </label>
+
+              <textarea
+                name="notes"
+                value={
+                  form.notes
+                }
+                onChange={
+                  handleChange
+                }
+                placeholder="Urgency, specification or delivery notes..."
+              />
+            </div>
+          </div>
+
+          <div className="supervisor-form-actions">
+            <button
+              type="submit"
+              className="supervisor-primary-button"
+              disabled={
+                saving ||
+                !selectedProjectId
               }
             >
-              <option value="">
-                Select Unit *
-              </option>
-
-              <option value="BAG">
-                Bag
-              </option>
-
-              <option value="KG">
-                Kg
-              </option>
-
-              <option value="TON">
-                Ton
-              </option>
-
-              <option value="M3">
-                m³
-              </option>
-
-              <option value="SQFT">
-                Sq.ft
-              </option>
-
-              <option value="LFT">
-                L.ft
-              </option>
-
-              <option value="NOS">
-                Nos
-              </option>
-
-              <option value="PCS">
-                Pieces
-              </option>
-
-              <option value="LITER">
-                Liter
-              </option>
-
-              <option value="OTHER">
-                Other
-              </option>
-            </select>
+              {saving
+                ? "Submitting..."
+                : "Submit Material Request"}
+            </button>
           </div>
-
-          <div style={{
-            marginTop: "15px",
-          }}>
-            <label>
-              Purpose
-            </label>
-
-            <textarea
-              name="purpose"
-              value={
-                form.purpose
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="Example: Ground floor plastering"
-            />
-          </div>
-
-          <div style={{
-            marginTop: "15px",
-          }}>
-            <label>
-              Notes
-            </label>
-
-            <textarea
-              name="notes"
-              value={
-                form.notes
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="Urgency, specification or delivery notes..."
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="primary-button"
-            disabled={saving}
-            style={{
-              marginTop: "18px",
-            }}
-          >
-            {saving
-              ? "Submitting..."
-              : "Submit Request"}
-          </button>
         </form>
-      </div>
+      </section>
 
-      <div className="form-card">
-        <h2>
-          Request History
-        </h2>
+      <section className="supervisor-form-card">
+        <div className="supervisor-form-card-heading">
+          <div>
+            <h3>
+              Request History
+            </h3>
+
+            <p>
+              Track previously
+              submitted material
+              requests and approvals.
+            </p>
+          </div>
+
+          {!loading && (
+            <span className="supervisor-count-badge">
+              {requests.length} requests
+            </span>
+          )}
+        </div>
 
         {loading ? (
-          <p>Loading...</p>
+          <div className="supervisor-table-loading">
+            Loading material
+            requests...
+          </div>
         ) : requests.length ===
           0 ? (
-          <p>
-            No material requests
-            found.
-          </p>
+          <div className="supervisor-table-empty">
+            <h4>
+              No material requests
+            </h4>
+
+            <p>
+              Submitted material
+              requests will appear
+              here.
+            </p>
+          </div>
         ) : (
-          <div className="table-card">
-            <table className="data-table">
+          <div className="supervisor-table-scroll">
+            <table className="supervisor-table">
               <thead>
                 <tr>
                   <th>Date</th>
@@ -472,8 +601,10 @@ function SupervisorMaterialRequests() {
                       </td>
 
                       <td>
-                        <strong>
-                          {request.materialName}
+                        <strong className="supervisor-table-primary">
+                          {
+                            request.materialName
+                          }
                         </strong>
                       </td>
 
@@ -488,8 +619,14 @@ function SupervisorMaterialRequests() {
                       </td>
 
                       <td>
-                        {request.status ||
-                          "PENDING"}
+                        <span
+                          className={`supervisor-request-status ${getStatusClass(
+                            request.status
+                          )}`}
+                        >
+                          {request.status ||
+                            "PENDING"}
+                        </span>
                       </td>
 
                       <td>
@@ -508,7 +645,7 @@ function SupervisorMaterialRequests() {
             </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

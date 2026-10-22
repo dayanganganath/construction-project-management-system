@@ -9,24 +9,29 @@ import {
 
 import api from "../../services/api";
 
+import "../../styles/supervisor-site-polish.css";
+
 function SupervisorSitePhotos() {
   const {
     selectedProjectId,
   } = useOutletContext();
 
   const getToday = () => {
-    const now = new Date();
+    const now =
+      new Date();
 
     const year =
       now.getFullYear();
 
-    const month = String(
-      now.getMonth() + 1
-    ).padStart(2, "0");
+    const month =
+      String(
+        now.getMonth() + 1
+      ).padStart(2, "0");
 
-    const day = String(
-      now.getDate()
-    ).padStart(2, "0");
+    const day =
+      String(
+        now.getDate()
+      ).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
   };
@@ -59,76 +64,83 @@ function SupervisorSitePhotos() {
   useEffect(() => {
     if (selectedProjectId) {
       loadPhotos();
+    } else {
+      setPhotos([]);
     }
   }, [selectedProjectId]);
 
-  const loadPhotos = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  const loadPhotos =
+    async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-      const response =
-        await api.get(
-          `/supervisor/projects/${selectedProjectId}/site-photos`
+        const response =
+          await api.get(
+            `/supervisor/projects/${selectedProjectId}/site-photos`
+          );
+
+        setPhotos(
+          response.data || []
+        );
+      } catch (error) {
+        console.error(
+          "Error loading site photos:",
+          error
         );
 
-      setPhotos(
-        response.data || []
-      );
-    } catch (error) {
-      console.error(
-        "Error loading site photos:",
-        error
-      );
+        setError(
+          typeof error.response
+            ?.data === "string"
+            ? error.response.data
+            : "Unable to load site photos."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setError(
-        typeof error.response?.data ===
-          "string"
-          ? error.response.data
-          : "Unable to load site photos."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleChange =
+    (event) => {
+      const {
+        name,
+        value,
+      } = event.target;
 
-  const handleChange = (e) => {
-    const {
-      name,
-      value,
-    } = e.target;
+      setForm({
+        ...form,
+        [name]: value,
+      });
 
-    setForm({
-      ...form,
-      [name]: value,
-    });
+      setError("");
+      setSuccess("");
+    };
 
-    setError("");
-    setSuccess("");
-  };
+  const handleFileChange =
+    (event) => {
+      const file =
+        event.target
+          .files?.[0] ||
+        null;
 
-  const handleFileChange = (e) => {
-    const file =
-      e.target.files?.[0] ||
-      null;
+      setForm({
+        ...form,
+        file,
+      });
 
-    setForm({
-      ...form,
-      file,
-    });
-
-    setError("");
-    setSuccess("");
-  };
+      setError("");
+      setSuccess("");
+    };
 
   const handleSubmit =
-    async (e) => {
-      e.preventDefault();
+    async (event) => {
+      event.preventDefault();
 
       if (!selectedProjectId) {
         setError(
           "Please select a project."
         );
+
         return;
       }
 
@@ -136,6 +148,7 @@ function SupervisorSitePhotos() {
         setError(
           "Photo date is required."
         );
+
         return;
       }
 
@@ -143,6 +156,7 @@ function SupervisorSitePhotos() {
         setError(
           "Photo category is required."
         );
+
         return;
       }
 
@@ -150,6 +164,7 @@ function SupervisorSitePhotos() {
         setError(
           "Please select a photo."
         );
+
         return;
       }
 
@@ -202,13 +217,13 @@ function SupervisorSitePhotos() {
             getToday(),
         });
 
-        const fileInput =
+        const input =
           document.getElementById(
             "site-photo-file"
           );
 
-        if (fileInput) {
-          fileInput.value = "";
+        if (input) {
+          input.value = "";
         }
 
         await loadPhotos();
@@ -219,8 +234,8 @@ function SupervisorSitePhotos() {
         );
 
         setError(
-          typeof error.response?.data ===
-            "string"
+          typeof error.response
+            ?.data === "string"
             ? error.response.data
             : "Unable to upload site photo."
         );
@@ -238,7 +253,9 @@ function SupervisorSitePhotos() {
 
     return new Date(
       `${value}T00:00:00`
-    ).toLocaleDateString();
+    ).toLocaleDateString(
+      "en-GB"
+    );
   };
 
   const getPhotoUrl = (
@@ -247,128 +264,224 @@ function SupervisorSitePhotos() {
     return `http://localhost:9090/api/site-photos/${photoId}/file`;
   };
 
+  const visibleCount =
+    photos.filter(
+      (photo) =>
+        Boolean(
+          photo.clientVisible
+        )
+    ).length;
+
   return (
-    <div>
-      <div className="page-header">
+    <div className="supervisor-page">
+      <div className="supervisor-page-heading">
         <div>
-          <h1>
+          <span className="supervisor-eyebrow">
+            Site Documentation
+          </span>
+
+          <h2>
             Site Photos
-          </h1>
+          </h2>
 
           <p>
-            Upload and review
-            project progress photos.
+            Upload project progress
+            photos and review the
+            site photo history.
           </p>
+        </div>
+
+        <div className="supervisor-mini-status">
+          <span>
+            Total Photos
+          </span>
+
+          <strong>
+            {photos.length}
+          </strong>
         </div>
       </div>
 
       {error && (
-        <div className="alert alert-error">
+        <div className="supervisor-form-alert supervisor-form-alert-error">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="alert alert-success">
+        <div className="supervisor-form-alert supervisor-form-alert-success">
           {success}
         </div>
       )}
 
-      <div className="form-card">
-        <h2>
-          Upload Site Photo
-        </h2>
+      <div className="supervisor-site-summary-grid">
+        <div className="supervisor-site-summary-card">
+          <span>
+            Uploaded Photos
+          </span>
+
+          <strong>
+            {photos.length}
+          </strong>
+
+          <small>
+            Total site records
+          </small>
+        </div>
+
+        <div className="supervisor-site-summary-card">
+          <span>
+            Client Visible
+          </span>
+
+          <strong>
+            {visibleCount}
+          </strong>
+
+          <small>
+            Shared with client
+          </small>
+        </div>
+
+        <div className="supervisor-site-summary-card">
+          <span>
+            Internal Photos
+          </span>
+
+          <strong>
+            {photos.length -
+              visibleCount}
+          </strong>
+
+          <small>
+            Management only
+          </small>
+        </div>
+      </div>
+
+      <section className="supervisor-form-card">
+        <div className="supervisor-form-card-heading">
+          <div>
+            <h3>
+              Upload Site Photo
+            </h3>
+
+            <p>
+              Add a dated photo
+              record for the
+              selected project.
+            </p>
+          </div>
+
+          <span className="supervisor-form-badge">
+            Photo Upload
+          </span>
+        </div>
 
         <form
           onSubmit={
             handleSubmit
           }
         >
-          <div className="progress-form">
-            <input
-              type="date"
-              name="photoDate"
-              value={
-                form.photoDate
-              }
-              onChange={
-                handleChange
-              }
-            />
+          <div className="supervisor-form-grid supervisor-form-grid-three">
+            <div className="supervisor-field">
+              <label>
+                Photo Date
+              </label>
 
-            <select
-              name="category"
-              value={
-                form.category
-              }
-              onChange={
-                handleChange
-              }
-            >
-              <option value="">
-                Select Category *
-              </option>
+              <input
+                type="date"
+                name="photoDate"
+                value={
+                  form.photoDate
+                }
+                onChange={
+                  handleChange
+                }
+              />
+            </div>
 
-              <option value="PROGRESS">
-                Progress
-              </option>
+            <div className="supervisor-field">
+              <label>
+                Category *
+              </label>
 
-              <option value="STRUCTURAL">
-                Structural
-              </option>
+              <select
+                name="category"
+                value={
+                  form.category
+                }
+                onChange={
+                  handleChange
+                }
+              >
+                <option value="">
+                  Select category
+                </option>
 
-              <option value="MASONRY">
-                Masonry
-              </option>
+                <option value="PROGRESS">
+                  Progress
+                </option>
 
-              <option value="PLUMBING">
-                Plumbing
-              </option>
+                <option value="STRUCTURAL">
+                  Structural
+                </option>
 
-              <option value="ELECTRICAL">
-                Electrical
-              </option>
+                <option value="MASONRY">
+                  Masonry
+                </option>
 
-              <option value="WATERPROOFING">
-                Waterproofing
-              </option>
+                <option value="PLUMBING">
+                  Plumbing
+                </option>
 
-              <option value="PAINTING">
-                Painting
-              </option>
+                <option value="ELECTRICAL">
+                  Electrical
+                </option>
 
-              <option value="TILING">
-                Tiling
-              </option>
+                <option value="WATERPROOFING">
+                  Waterproofing
+                </option>
 
-              <option value="MATERIAL">
-                Material
-              </option>
+                <option value="PAINTING">
+                  Painting
+                </option>
 
-              <option value="ISSUE">
-                Issue
-              </option>
+                <option value="TILING">
+                  Tiling
+                </option>
 
-              <option value="OTHER">
-                Other
-              </option>
-            </select>
+                <option value="MATERIAL">
+                  Material
+                </option>
 
-            <input
-              id="site-photo-file"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={
-                handleFileChange
-              }
-            />
+                <option value="ISSUE">
+                  Issue
+                </option>
+
+                <option value="OTHER">
+                  Other
+                </option>
+              </select>
+            </div>
+
+            <div className="supervisor-field">
+              <label>
+                Photo File *
+              </label>
+
+              <input
+                id="site-photo-file"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={
+                  handleFileChange
+                }
+              />
+            </div>
           </div>
 
-          <div
-            style={{
-              marginTop: "15px",
-            }}
-          >
+          <div className="supervisor-field supervisor-field-full">
             <label>
               Caption
             </label>
@@ -381,125 +494,131 @@ function SupervisorSitePhotos() {
               onChange={
                 handleChange
               }
-              placeholder="Describe this photo..."
+              placeholder="Describe this site photo..."
             />
           </div>
 
-          <button
-            type="submit"
-            className="primary-button"
-            disabled={saving}
-            style={{
-              marginTop: "18px",
-            }}
-          >
-            {saving
-              ? "Uploading..."
-              : "Upload Photo"}
-          </button>
+          <div className="supervisor-form-actions">
+            <button
+              type="submit"
+              className="supervisor-primary-button"
+              disabled={
+                saving ||
+                !selectedProjectId
+              }
+            >
+              {saving
+                ? "Uploading..."
+                : "Upload Site Photo"}
+            </button>
+          </div>
         </form>
-      </div>
+      </section>
 
-      <div className="form-card">
-        <h2>
-          Photo History
-        </h2>
+      <section className="supervisor-form-card">
+        <div className="supervisor-form-card-heading">
+          <div>
+            <h3>
+              Photo History
+            </h3>
+
+            <p>
+              Previously uploaded
+              project site photos.
+            </p>
+          </div>
+
+          {!loading && (
+            <span className="supervisor-count-badge">
+              {photos.length} photos
+            </span>
+          )}
+        </div>
 
         {loading ? (
-          <p>
-            Loading photos...
-          </p>
+          <div className="supervisor-table-loading">
+            Loading site photos...
+          </div>
         ) : photos.length ===
           0 ? (
-          <p>
-            No site photos found.
-          </p>
+          <div className="supervisor-table-empty">
+            <h4>
+              No site photos
+            </h4>
+
+            <p>
+              Uploaded project
+              photos will appear
+              here.
+            </p>
+          </div>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: "18px",
-            }}
-          >
+          <div className="supervisor-photo-grid">
             {photos.map(
               (photo) => (
-                <div
-                  key={
-                    photo.id
-                  }
-                  className="form-card"
-                  style={{
-                    margin: 0,
-                  }}
+                <article
+                  className="supervisor-photo-card"
+                  key={photo.id}
                 >
-                  <img
-                    src={
-                      getPhotoUrl(
-                        photo.id
-                      )
-                    }
-                    alt={
-                      photo.caption ||
-                      "Site progress"
-                    }
-                    style={{
-                      width: "100%",
-                      height: "180px",
-                      objectFit:
-                        "cover",
-                      borderRadius:
-                        "8px",
-                      marginBottom:
-                        "12px",
-                    }}
-                  />
+                  <div className="supervisor-photo-image-wrap">
+                    <img
+                      src={
+                        getPhotoUrl(
+                          photo.id
+                        )
+                      }
+                      alt={
+                        photo.caption ||
+                        "Site progress"
+                      }
+                    />
 
-                  <h3>
-                    {photo.category ||
-                      "Site Photo"}
-                  </h3>
+                    <span className="supervisor-photo-category">
+                      {photo.category ||
+                        "PHOTO"}
+                    </span>
+                  </div>
 
-                  <p>
-                    <strong>
-                      Date:
-                    </strong>{" "}
-                    {formatDate(
-                      photo.photoDate
-                    )}
-                  </p>
+                  <div className="supervisor-photo-card-body">
+                    <div className="supervisor-photo-card-meta">
+                      <span>
+                        {formatDate(
+                          photo.photoDate
+                        )}
+                      </span>
 
-                  <p>
-                    <strong>
-                      Caption:
-                    </strong>{" "}
-                    {photo.caption ||
-                      "-"}
-                  </p>
+                      <span
+                        className={
+                          photo.clientVisible
+                            ? "supervisor-visibility-badge visible"
+                            : "supervisor-visibility-badge internal"
+                        }
+                      >
+                        {photo.clientVisible
+                          ? "Client Visible"
+                          : "Internal"}
+                      </span>
+                    </div>
 
-                  <p>
-                    <strong>
-                      Uploaded By:
-                    </strong>{" "}
-                    {photo.uploadedBy ||
-                      "-"}
-                  </p>
+                    <p>
+                      {photo.caption ||
+                        "No caption provided."}
+                    </p>
 
-                  <p>
-                    <strong>
-                      Client Visible:
-                    </strong>{" "}
-                    {photo.clientVisible
-                      ? "Yes"
-                      : "No"}
-                  </p>
-                </div>
+                    <small>
+                      Uploaded by{" "}
+                      <strong>
+                        {photo.uploadedBy ||
+                          "-"}
+                      </strong>
+                    </small>
+                  </div>
+                </article>
               )
             )}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

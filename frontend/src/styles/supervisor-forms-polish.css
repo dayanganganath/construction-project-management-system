@@ -1,0 +1,588 @@
+/* =========================================================
+   SUPERVISOR FORM / TABLE POLISH
+   ========================================================= */
+
+.supervisor-mini-status {
+  min-width: 110px;
+
+  padding:
+    11px
+    14px;
+
+  border:
+    1px solid #dbeafe;
+
+  border-radius: 11px;
+
+  background: #eff6ff;
+
+  text-align: right;
+}
+
+.supervisor-mini-status span {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #64748b;
+
+  font-size: 8px;
+  font-weight: 800;
+
+  letter-spacing: 0.05em;
+
+  text-transform: uppercase;
+}
+
+.supervisor-mini-status strong {
+  color: #1d4ed8;
+
+  font-size: 18px;
+  font-weight: 850;
+}
+
+/* =========================================================
+   ALERTS
+   ========================================================= */
+
+.supervisor-form-alert {
+  margin-bottom: 18px;
+
+  padding:
+    12px
+    14px;
+
+  border-radius: 9px;
+
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.supervisor-form-alert-error {
+  border:
+    1px solid #fecaca;
+
+  background: #fef2f2;
+
+  color: #b91c1c;
+}
+
+.supervisor-form-alert-success {
+  border:
+    1px solid #bbf7d0;
+
+  background: #f0fdf4;
+
+  color: #15803d;
+}
+
+/* =========================================================
+   FORM CARD
+   ========================================================= */
+
+.supervisor-form-card {
+  margin-bottom: 20px;
+
+  overflow: hidden;
+
+  border:
+    1px solid #e2e8f0;
+
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 4px 18px
+    rgba(
+      15,
+      23,
+      42,
+      0.04
+    );
+}
+
+.supervisor-form-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 18px;
+
+  padding:
+    20px
+    22px;
+
+  border-bottom:
+    1px solid #edf2f7;
+}
+
+.supervisor-form-card-heading h3 {
+  margin: 0;
+
+  color: #0f172a;
+
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.supervisor-form-card-heading p {
+  margin:
+    4px
+    0
+    0;
+
+  color: #94a3b8;
+
+  font-size: 10px;
+}
+
+.supervisor-form-badge,
+.supervisor-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding:
+    5px
+    9px;
+
+  border-radius: 999px;
+
+  background: #eff6ff;
+
+  color: #1d4ed8;
+
+  font-size: 8px;
+  font-weight: 850;
+
+  letter-spacing: 0.05em;
+
+  text-transform: uppercase;
+}
+
+.supervisor-count-badge {
+  background: #f1f5f9;
+
+  color: #475569;
+}
+
+.supervisor-form-card form {
+  padding: 22px;
+}
+
+/* =========================================================
+   FORM GRID
+   ========================================================= */
+
+.supervisor-form-grid {
+  display: grid;
+
+  gap: 15px;
+}
+
+.supervisor-form-grid-two {
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+}
+
+.supervisor-form-grid-three {
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+}
+
+.supervisor-form-grid-four {
+  grid-template-columns:
+    repeat(
+      4,
+      minmax(0, 1fr)
+    );
+}
+
+/* =========================================================
+   FIELDS
+   ========================================================= */
+
+.supervisor-field {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  margin-bottom: 16px;
+}
+
+.supervisor-field-full {
+  width: 100%;
+}
+
+.supervisor-field label {
+  color: #334155;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.02em;
+}
+
+.supervisor-field input,
+.supervisor-field select,
+.supervisor-field textarea {
+  width: 100%;
+
+  box-sizing: border-box;
+
+  border:
+    1px solid #cbd5e1;
+
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #0f172a;
+
+  font-family: inherit;
+  font-size: 11px;
+
+  outline: none;
+
+  transition:
+    border-color 0.17s ease,
+    box-shadow 0.17s ease;
+}
+
+.supervisor-field input,
+.supervisor-field select {
+  min-height: 43px;
+
+  padding:
+    0
+    12px;
+}
+
+.supervisor-field textarea {
+  min-height: 95px;
+
+  padding:
+    11px
+    12px;
+
+  line-height: 1.6;
+
+  resize: vertical;
+}
+
+.supervisor-field input::placeholder,
+.supervisor-field textarea::placeholder {
+  color: #94a3b8;
+}
+
+.supervisor-field input:focus,
+.supervisor-field select:focus,
+.supervisor-field textarea:focus {
+  border-color: #2563eb;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(
+      37,
+      99,
+      235,
+      0.09
+    );
+}
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+
+.supervisor-form-actions {
+  display: flex;
+  justify-content: flex-end;
+
+  padding-top: 3px;
+}
+
+.supervisor-primary-button {
+  min-height: 42px;
+
+  padding:
+    0
+    18px;
+
+  border:
+    1px solid #2563eb;
+
+  border-radius: 9px;
+
+  background: #2563eb;
+
+  color: #ffffff;
+
+  cursor: pointer;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  box-shadow:
+    0 5px 14px
+    rgba(
+      37,
+      99,
+      235,
+      0.15
+    );
+
+  transition:
+    background 0.17s ease,
+    transform 0.17s ease;
+}
+
+.supervisor-primary-button:hover:not(
+  :disabled
+) {
+  transform:
+    translateY(-1px);
+
+  background: #1d4ed8;
+}
+
+.supervisor-primary-button:disabled {
+  cursor: not-allowed;
+
+  opacity: 0.55;
+}
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.supervisor-table-scroll {
+  width: 100%;
+
+  overflow-x: auto;
+}
+
+.supervisor-table {
+  width: 100%;
+
+  min-width: 850px;
+
+  border-collapse: collapse;
+}
+
+.supervisor-table th {
+  padding:
+    12px
+    14px;
+
+  border-bottom:
+    1px solid #e2e8f0;
+
+  background: #f8fafc;
+
+  color: #64748b;
+
+  font-size: 8px;
+  font-weight: 850;
+
+  letter-spacing: 0.06em;
+
+  text-align: left;
+
+  text-transform: uppercase;
+}
+
+.supervisor-table td {
+  padding:
+    13px
+    14px;
+
+  border-bottom:
+    1px solid #f1f5f9;
+
+  color: #475569;
+
+  font-size: 10px;
+  line-height: 1.5;
+
+  vertical-align: middle;
+}
+
+.supervisor-table tbody
+tr:hover td {
+  background: #f8fafc;
+}
+
+.supervisor-table tbody
+tr:last-child td {
+  border-bottom: 0;
+}
+
+.supervisor-table-primary {
+  color: #0f172a;
+
+  font-size: 10px;
+  font-weight: 750;
+}
+
+/* =========================================================
+   PROGRESS CHIP
+   ========================================================= */
+
+.supervisor-progress-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 42px;
+
+  padding:
+    4px
+    7px;
+
+  border-radius: 999px;
+
+  background: #eff6ff;
+
+  color: #1d4ed8;
+
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.supervisor-issue-text {
+  color: #b45309;
+}
+
+/* =========================================================
+   MATERIAL STATUS
+   ========================================================= */
+
+.supervisor-request-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding:
+    4px
+    8px;
+
+  border-radius: 999px;
+
+  font-size: 8px;
+  font-weight: 850;
+
+  letter-spacing: 0.04em;
+
+  text-transform: uppercase;
+}
+
+.supervisor-request-status.pending {
+  background: #fffbeb;
+
+  color: #b45309;
+}
+
+.supervisor-request-status.approved {
+  background: #ecfdf5;
+
+  color: #15803d;
+}
+
+.supervisor-request-status.rejected {
+  background: #fef2f2;
+
+  color: #b91c1c;
+}
+
+/* =========================================================
+   LOADING / EMPTY
+   ========================================================= */
+
+.supervisor-table-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 150px;
+
+  color: #64748b;
+
+  font-size: 11px;
+}
+
+.supervisor-table-empty {
+  padding:
+    38px
+    20px;
+
+  text-align: center;
+}
+
+.supervisor-table-empty h4 {
+  margin:
+    0
+    0
+    6px;
+
+  color: #334155;
+
+  font-size: 13px;
+}
+
+.supervisor-table-empty p {
+  margin: 0;
+
+  color: #94a3b8;
+
+  font-size: 10px;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (
+  max-width: 1050px
+) {
+  .supervisor-form-grid-four,
+  .supervisor-form-grid-three {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+}
+
+@media (
+  max-width: 650px
+) {
+  .supervisor-form-grid-two,
+  .supervisor-form-grid-three,
+  .supervisor-form-grid-four {
+    grid-template-columns:
+      1fr;
+  }
+
+  .supervisor-form-card-heading {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .supervisor-form-actions {
+    justify-content: stretch;
+  }
+
+  .supervisor-primary-button {
+    width: 100%;
+  }
+}
