@@ -140,13 +140,6 @@ public class UserService {
      * =========================================================
      * CLIENT INVITE ACCOUNT
      * =========================================================
-     *
-     * Creates an inactive CLIENT account.
-     *
-     * The generated temporary password is random and never
-     * returned to the admin or client. The client must activate
-     * the account using the activation token before login.
-     * =========================================================
      */
 
     @Transactional
@@ -193,7 +186,10 @@ public class UserService {
             );
         }
 
-        if (fullName.length() > 150) {
+        if (
+                fullName.length() >
+                150
+        ) {
             throw new RuntimeException(
                     "Full name must not exceed 150 characters."
             );
@@ -206,8 +202,11 @@ public class UserService {
         }
 
         if (
-                email.length() > 190 ||
-                !isValidEmail(email)
+                email.length() >
+                190 ||
+                !isValidEmail(
+                        email
+                )
         ) {
             throw new RuntimeException(
                     "Please enter a valid email address."
@@ -216,7 +215,8 @@ public class UserService {
 
         if (
                 phone != null &&
-                phone.length() > 50
+                phone.length() >
+                50
         ) {
             throw new RuntimeException(
                     "Phone number must not exceed 50 characters."
@@ -231,17 +231,21 @@ public class UserService {
         );
 
         /*
-         * User.password is NOT NULL in the current model.
+         * BCrypt accepts a maximum of 72 bytes.
          *
-         * Store an unknown random BCrypt value until the
-         * activation process replaces it with the client's
-         * chosen password.
+         * Use a 32-character random temporary value.
+         * The client never receives this password.
+         *
+         * Activation will replace it with the
+         * client's chosen password.
          */
         String temporarySecret =
                 UUID.randomUUID()
                         .toString()
-                        + "-"
-                        + UUID.randomUUID();
+                        .replace(
+                                "-",
+                                ""
+                        );
 
         user.setPassword(
                 passwordEncoder.encode(
@@ -333,11 +337,6 @@ public class UserService {
                             .toUpperCase();
         }
 
-        /*
-         * If this user is linked to a contractor
-         * and role is changed away from CONTRACTOR,
-         * unlink the contractor account first.
-         */
         if (
                 !"CONTRACTOR"
                         .equalsIgnoreCase(
@@ -371,30 +370,38 @@ public class UserService {
         );
 
         if (
-                updatedUser.getActive() != null
+                updatedUser
+                        .getActive() !=
+                null
         ) {
             user.setActive(
-                    updatedUser.getActive()
+                    updatedUser
+                            .getActive()
             );
         }
 
         if (
-                updatedUser.getPassword() != null &&
+                updatedUser
+                        .getPassword() !=
+                null &&
                 !updatedUser
                         .getPassword()
                         .isBlank()
         ) {
 
             user.setPassword(
-                    passwordEncoder.encode(
-                            updatedUser
-                                    .getPassword()
-                    )
+                    passwordEncoder
+                            .encode(
+                                    updatedUser
+                                            .getPassword()
+                            )
             );
         }
 
         if (
-                updatedUser.getFullName() != null
+                updatedUser
+                        .getFullName() !=
+                null
         ) {
             user.setFullName(
                     trimToNull(
@@ -405,7 +412,9 @@ public class UserService {
         }
 
         if (
-                updatedUser.getEmail() != null
+                updatedUser
+                        .getEmail() !=
+                null
         ) {
 
             String email =
@@ -416,7 +425,9 @@ public class UserService {
 
             if (
                     email != null &&
-                    !isValidEmail(email)
+                    !isValidEmail(
+                            email
+                    )
             ) {
                 throw new RuntimeException(
                         "Please enter a valid email address."
@@ -429,7 +440,9 @@ public class UserService {
         }
 
         if (
-                updatedUser.getPhone() != null
+                updatedUser
+                        .getPhone() !=
+                null
         ) {
             user.setPhone(
                     trimToNull(
@@ -471,7 +484,9 @@ public class UserService {
 
         var assignments =
                 assignmentRepository
-                        .findByUserId(id);
+                        .findByUserId(
+                                id
+                        );
 
         assignmentRepository
                 .deleteAll(
@@ -523,7 +538,8 @@ public class UserService {
                 username.trim();
 
         if (
-                normalized.length() < 3
+                normalized.length() <
+                3
         ) {
             throw new RuntimeException(
                     "Username must contain at least 3 characters."
@@ -531,7 +547,8 @@ public class UserService {
         }
 
         if (
-                normalized.length() > 100
+                normalized.length() >
+                100
         ) {
             throw new RuntimeException(
                     "Username must not exceed 100 characters."
@@ -546,7 +563,8 @@ public class UserService {
                         existingUser -> {
 
                             if (
-                                    currentUserId == null ||
+                                    currentUserId ==
+                                    null ||
                                     !existingUser
                                             .getId()
                                             .equals(
