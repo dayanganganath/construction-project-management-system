@@ -1,34 +1,78 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import api from "../services/api";
 import Alert from "../components/Alert";
 
+import "../styles/client-invite.css";
+
 function Users() {
-  const [users, setUsers] = useState([]);
-  const [projects, setProjects] = useState([]);
+  const [users, setUsers] =
+    useState([]);
 
-  const [editingId, setEditingId] = useState(null);
+  const [projects, setProjects] =
+    useState([]);
 
-  const [selectedUserId, setSelectedUserId] = useState("");
-  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [editingId, setEditingId] =
+    useState(null);
 
-  const [assignments, setAssignments] = useState([]);
+  const [
+    selectedUserId,
+    setSelectedUserId,
+  ] = useState("");
 
-  const [loadingAssignments, setLoadingAssignments] =
-    useState(false);
+  const [
+    selectedProjectId,
+    setSelectedProjectId,
+  ] = useState("");
+
+  const [
+    assignments,
+    setAssignments,
+  ] = useState([]);
+
+  const [
+    loadingAssignments,
+    setLoadingAssignments,
+  ] = useState(false);
 
   const [assigning, setAssigning] =
     useState(false);
 
-  const [alert, setAlert] = useState({
-    type: "",
-    message: "",
-  });
+  const [
+    inviteLoading,
+    setInviteLoading,
+  ] = useState(false);
 
-  const [form, setForm] = useState({
+  const [
+    activationInvite,
+    setActivationInvite,
+  ] = useState(null);
+
+  const [alert, setAlert] =
+    useState({
+      type: "",
+      message: "",
+    });
+
+  const [form, setForm] =
+    useState({
+      username: "",
+      password: "",
+      role: "CLIENT",
+      active: true,
+    });
+
+  const [
+    inviteForm,
+    setInviteForm,
+  ] = useState({
     username: "",
-    password: "",
-    role: "CLIENT",
-    active: true,
+    fullName: "",
+    email: "",
+    phone: "",
   });
 
   useEffect(() => {
@@ -36,7 +80,10 @@ function Users() {
     loadProjects();
   }, []);
 
-  const showAlert = (type, message) => {
+  const showAlert = (
+    type,
+    message
+  ) => {
     setAlert({
       type,
       message,
@@ -50,96 +97,132 @@ function Users() {
     }, 4000);
   };
 
-  const loadUsers = async () => {
-    try {
-      const response = await api.get("/users");
-
-      setUsers(
-        Array.isArray(response.data)
-          ? response.data
-          : []
-      );
-    } catch (error) {
-      console.error(
-        "Error loading users:",
-        error
-      );
-
-      showAlert(
-        "error",
-        "Unable to load users."
-      );
-    }
-  };
-
-  const loadProjects = async () => {
-    try {
-      const response = await api.get(
-        "/projects"
-      );
-
-      setProjects(
-        Array.isArray(response.data)
-          ? response.data
-          : []
-      );
-    } catch (error) {
-      console.error(
-        "Error loading projects:",
-        error
-      );
-
-      showAlert(
-        "error",
-        "Unable to load projects."
-      );
-    }
-  };
-
-  const loadAssignments = async (
-    userId
+  const getErrorMessage = (
+    error,
+    fallback
   ) => {
-    if (!userId) {
-      setAssignments([]);
-      return;
+    if (
+      typeof error.response?.data ===
+      "string"
+    ) {
+      return error.response.data;
     }
 
-    try {
-      setLoadingAssignments(true);
-
-      const response = await api.get(
-        `/user-project-assignments/user/${userId}`
-      );
-
-      setAssignments(
-        Array.isArray(response.data)
-          ? response.data
-          : []
-      );
-    } catch (error) {
-      console.error(
-        "Error loading assignments:",
-        error
-      );
-
-      setAssignments([]);
-
-      showAlert(
-        "error",
-        "Unable to load project assignments."
-      );
-    } finally {
-      setLoadingAssignments(false);
-    }
+    return (
+      error.response?.data
+        ?.message ||
+      fallback
+    );
   };
 
-  const handleChange = (e) => {
+  const loadUsers =
+    async () => {
+      try {
+        const response =
+          await api.get(
+            "/users"
+          );
+
+        setUsers(
+          Array.isArray(
+            response.data
+          )
+            ? response.data
+            : []
+        );
+      } catch (error) {
+        console.error(
+          "Error loading users:",
+          error
+        );
+
+        showAlert(
+          "error",
+          "Unable to load users."
+        );
+      }
+    };
+
+  const loadProjects =
+    async () => {
+      try {
+        const response =
+          await api.get(
+            "/projects"
+          );
+
+        setProjects(
+          Array.isArray(
+            response.data
+          )
+            ? response.data
+            : []
+        );
+      } catch (error) {
+        console.error(
+          "Error loading projects:",
+          error
+        );
+
+        showAlert(
+          "error",
+          "Unable to load projects."
+        );
+      }
+    };
+
+  const loadAssignments =
+    async (userId) => {
+      if (!userId) {
+        setAssignments([]);
+        return;
+      }
+
+      try {
+        setLoadingAssignments(
+          true
+        );
+
+        const response =
+          await api.get(
+            `/user-project-assignments/user/${userId}`
+          );
+
+        setAssignments(
+          Array.isArray(
+            response.data
+          )
+            ? response.data
+            : []
+        );
+      } catch (error) {
+        console.error(
+          "Error loading assignments:",
+          error
+        );
+
+        setAssignments([]);
+
+        showAlert(
+          "error",
+          "Unable to load project assignments."
+        );
+      } finally {
+        setLoadingAssignments(
+          false
+        );
+      }
+    };
+
+  const handleChange = (
+    event
+  ) => {
     const {
       name,
       value,
       type,
       checked,
-    } = e.target;
+    } = event.target;
 
     setForm({
       ...form,
@@ -150,8 +233,24 @@ function Users() {
     });
   };
 
+  const handleInviteChange = (
+    event
+  ) => {
+    setInviteForm({
+      ...inviteForm,
+      [event.target.name]:
+        event.target.value,
+    });
+
+    setActivationInvite(
+      null
+    );
+  };
+
   const validateForm = () => {
-    if (!form.username.trim()) {
+    if (
+      !form.username.trim()
+    ) {
       showAlert(
         "error",
         "Username is required."
@@ -207,69 +306,272 @@ function Users() {
     setEditingId(null);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
-    const userData = {
-      username: form.username.trim(),
-      password: form.password,
-      role: form.role,
-      active: form.active,
+  const resetInviteForm =
+    () => {
+      setInviteForm({
+        username: "",
+        fullName: "",
+        email: "",
+        phone: "",
+      });
     };
 
-    try {
-      if (editingId) {
-        await api.put(
-          `/users/${editingId}`,
-          userData
-        );
+  const handleSubmit =
+    async (event) => {
+      event.preventDefault();
 
-        showAlert(
-          "success",
-          "User updated successfully."
-        );
-      } else {
-        await api.post(
-          "/users",
-          userData
-        );
-
-        showAlert(
-          "success",
-          "User created successfully."
-        );
+      if (!validateForm()) {
+        return;
       }
 
-      resetForm();
+      const userData = {
+        username:
+          form.username.trim(),
 
-      await loadUsers();
-    } catch (error) {
-      console.error(
-        "Error saving user:",
-        error
-      );
+        password:
+          form.password,
 
-      showAlert(
-        "error",
-        error.response?.data?.message ||
-          "Unable to save user."
-      );
-    }
-  };
+        role:
+          form.role,
 
-  const handleEdit = (user) => {
-    setEditingId(user.id);
+        active:
+          form.active,
+      };
+
+      try {
+        if (editingId) {
+          await api.put(
+            `/users/${editingId}`,
+            userData
+          );
+
+          showAlert(
+            "success",
+            "User updated successfully."
+          );
+        } else {
+          await api.post(
+            "/users",
+            userData
+          );
+
+          showAlert(
+            "success",
+            "User created successfully."
+          );
+        }
+
+        resetForm();
+
+        await loadUsers();
+      } catch (error) {
+        console.error(
+          "Error saving user:",
+          error
+        );
+
+        showAlert(
+          "error",
+          getErrorMessage(
+            error,
+            "Unable to save user."
+          )
+        );
+      }
+    };
+
+  const handleCreateInvite =
+    async (event) => {
+      event.preventDefault();
+
+      if (
+        !inviteForm.username.trim()
+      ) {
+        showAlert(
+          "error",
+          "Client username is required."
+        );
+
+        return;
+      }
+
+      if (
+        !inviteForm.fullName.trim()
+      ) {
+        showAlert(
+          "error",
+          "Client full name is required."
+        );
+
+        return;
+      }
+
+      if (
+        !inviteForm.email.trim()
+      ) {
+        showAlert(
+          "error",
+          "Client email is required."
+        );
+
+        return;
+      }
+
+      try {
+        setInviteLoading(true);
+
+        setActivationInvite(
+          null
+        );
+
+        const response =
+          await api.post(
+            "/users/client-invites",
+            {
+              username:
+                inviteForm.username
+                  .trim(),
+
+              fullName:
+                inviteForm.fullName
+                  .trim(),
+
+              email:
+                inviteForm.email
+                  .trim(),
+
+              phone:
+                inviteForm.phone
+                  .trim(),
+            }
+          );
+
+        const invite =
+          response.data;
+
+        const activationUrl =
+          `${window.location.origin}/login?activation=${encodeURIComponent(
+            invite.token
+          )}`;
+
+        setActivationInvite({
+          ...invite,
+          activationUrl,
+        });
+
+        resetInviteForm();
+
+        showAlert(
+          "success",
+          "Client invitation created successfully."
+        );
+
+        await loadUsers();
+      } catch (error) {
+        console.error(
+          "Client invite error:",
+          error
+        );
+
+        showAlert(
+          "error",
+          getErrorMessage(
+            error,
+            "Unable to create client invitation."
+          )
+        );
+      } finally {
+        setInviteLoading(
+          false
+        );
+      }
+    };
+
+  const handleRegenerateInvite =
+    async (user) => {
+      try {
+        const response =
+          await api.post(
+            `/users/${user.id}/activation-invite`
+          );
+
+        const invite =
+          response.data;
+
+        const activationUrl =
+          `${window.location.origin}/login?activation=${encodeURIComponent(
+            invite.token
+          )}`;
+
+        setActivationInvite({
+          ...invite,
+          activationUrl,
+        });
+
+        showAlert(
+          "success",
+          "New activation invitation generated."
+        );
+      } catch (error) {
+        console.error(
+          "Invite regeneration error:",
+          error
+        );
+
+        showAlert(
+          "error",
+          getErrorMessage(
+            error,
+            "Unable to generate activation invitation."
+          )
+        );
+      }
+    };
+
+  const copyActivationLink =
+    async () => {
+      if (
+        !activationInvite
+          ?.activationUrl
+      ) {
+        return;
+      }
+
+      try {
+        await navigator.clipboard
+          .writeText(
+            activationInvite
+              .activationUrl
+          );
+
+        showAlert(
+          "success",
+          "Activation link copied."
+        );
+      } catch {
+        showAlert(
+          "error",
+          "Unable to copy activation link."
+        );
+      }
+    };
+
+  const handleEdit = (
+    user
+  ) => {
+    setEditingId(
+      user.id
+    );
 
     setForm({
       username:
         user.username || "",
+
       password: "",
+
       role:
         user.role || "CLIENT",
+
       active:
         user.active ?? true,
     });
@@ -280,67 +582,80 @@ function Users() {
     });
   };
 
-  const handleDelete = async (id) => {
-    const confirmed =
-      window.confirm(
-        "Are you sure you want to delete this user?"
-      );
+  const handleDelete =
+    async (id) => {
+      const confirmed =
+        window.confirm(
+          "Are you sure you want to delete this user?"
+        );
 
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await api.delete(
-        `/users/${id}`
-      );
-
-      if (
-        String(selectedUserId) ===
-        String(id)
-      ) {
-        setSelectedUserId("");
-        setSelectedProjectId("");
-        setAssignments([]);
+      if (!confirmed) {
+        return;
       }
 
-      if (
-        String(editingId) ===
-        String(id)
-      ) {
-        resetForm();
+      try {
+        await api.delete(
+          `/users/${id}`
+        );
+
+        if (
+          String(
+            selectedUserId
+          ) === String(id)
+        ) {
+          setSelectedUserId(
+            ""
+          );
+
+          setSelectedProjectId(
+            ""
+          );
+
+          setAssignments([]);
+        }
+
+        if (
+          String(
+            editingId
+          ) === String(id)
+        ) {
+          resetForm();
+        }
+
+        showAlert(
+          "success",
+          "User deleted successfully."
+        );
+
+        await loadUsers();
+      } catch (error) {
+        console.error(
+          "Error deleting user:",
+          error
+        );
+
+        showAlert(
+          "error",
+          getErrorMessage(
+            error,
+            "Unable to delete user."
+          )
+        );
       }
-
-      showAlert(
-        "success",
-        "User deleted successfully."
-      );
-
-      await loadUsers();
-    } catch (error) {
-      console.error(
-        "Error deleting user:",
-        error
-      );
-
-      showAlert(
-        "error",
-        error.response?.data?.message ||
-          "Unable to delete user."
-      );
-    }
-  };
+    };
 
   const handleAssignmentUserChange =
-    async (e) => {
+    async (event) => {
       const userId =
-        e.target.value;
+        event.target.value;
 
       setSelectedUserId(
         userId
       );
 
-      setSelectedProjectId("");
+      setSelectedProjectId(
+        ""
+      );
 
       await loadAssignments(
         userId
@@ -358,7 +673,9 @@ function Users() {
         return;
       }
 
-      if (!selectedProjectId) {
+      if (
+        !selectedProjectId
+      ) {
         showAlert(
           "error",
           "Please select a project."
@@ -389,7 +706,9 @@ function Users() {
           "Project assigned successfully."
         );
 
-        setSelectedProjectId("");
+        setSelectedProjectId(
+          ""
+        );
 
         await loadAssignments(
           selectedUserId
@@ -402,8 +721,10 @@ function Users() {
 
         showAlert(
           "error",
-          error.response?.data?.message ||
+          getErrorMessage(
+            error,
             "Unable to assign project."
+          )
         );
       } finally {
         setAssigning(false);
@@ -429,8 +750,7 @@ function Users() {
               userId:
                 selectedUserId,
 
-              projectId:
-                projectId,
+              projectId,
             },
           }
         );
@@ -451,8 +771,10 @@ function Users() {
 
         showAlert(
           "error",
-          error.response?.data?.message ||
+          getErrorMessage(
+            error,
             "Unable to remove project assignment."
+          )
         );
       }
     };
@@ -461,7 +783,9 @@ function Users() {
     users.find(
       (user) =>
         String(user.id) ===
-        String(selectedUserId)
+        String(
+          selectedUserId
+        )
     ) || null;
 
   const assignedProjectIds =
@@ -475,9 +799,12 @@ function Users() {
   const availableProjects =
     projects.filter(
       (project) =>
-        !assignedProjectIds.includes(
-          String(project.id)
-        )
+        !assignedProjectIds
+          .includes(
+            String(
+              project.id
+            )
+          )
     );
 
   const assignableUsers =
@@ -485,8 +812,10 @@ function Users() {
       (user) =>
         user.active !== false &&
         (
-          user.role === "CLIENT" ||
-          user.role === "SUPERVISOR"
+          user.role ===
+            "CLIENT" ||
+          user.role ===
+            "SUPERVISOR"
         )
     );
 
@@ -500,15 +829,17 @@ function Users() {
 
           <p>
             Manage system users,
-            roles and project
-            assignments.
+            secure client invitations
+            and project access.
           </p>
         </div>
       </div>
 
       <Alert
         type={alert.type}
-        message={alert.message}
+        message={
+          alert.message
+        }
         onClose={() =>
           setAlert({
             type: "",
@@ -517,11 +848,197 @@ function Users() {
         }
       />
 
+      <section className="client-invite-card">
+        <div className="client-invite-heading">
+          <div>
+            <span>
+              CLIENT ONBOARDING
+            </span>
+
+            <h2>
+              Invite Client
+            </h2>
+
+            <p>
+              Create an inactive
+              client account and
+              generate a secure
+              one-time activation
+              link.
+            </p>
+          </div>
+
+          <div className="client-invite-security">
+            Secure Activation
+          </div>
+        </div>
+
+        <form
+          className="client-invite-form"
+          onSubmit={
+            handleCreateInvite
+          }
+        >
+          <div>
+            <label>
+              Username *
+            </label>
+
+            <input
+              type="text"
+              name="username"
+              value={
+                inviteForm.username
+              }
+              onChange={
+                handleInviteChange
+              }
+              placeholder="client.username"
+            />
+          </div>
+
+          <div>
+            <label>
+              Full Name *
+            </label>
+
+            <input
+              type="text"
+              name="fullName"
+              value={
+                inviteForm.fullName
+              }
+              onChange={
+                handleInviteChange
+              }
+              placeholder="Client full name"
+            />
+          </div>
+
+          <div>
+            <label>
+              Email *
+            </label>
+
+            <input
+              type="email"
+              name="email"
+              value={
+                inviteForm.email
+              }
+              onChange={
+                handleInviteChange
+              }
+              placeholder="client@example.com"
+            />
+          </div>
+
+          <div>
+            <label>
+              Phone
+            </label>
+
+            <input
+              type="text"
+              name="phone"
+              value={
+                inviteForm.phone
+              }
+              onChange={
+                handleInviteChange
+              }
+              placeholder="0771234567"
+            />
+          </div>
+
+          <div className="client-invite-action">
+            <button
+              type="submit"
+              className="primary-button"
+              disabled={
+                inviteLoading
+              }
+            >
+              {inviteLoading
+                ? "Creating..."
+                : "Create Client Invite"}
+            </button>
+          </div>
+        </form>
+
+        {activationInvite && (
+          <div className="activation-result">
+            <div>
+              <span className="activation-result-label">
+                ACTIVATION LINK
+              </span>
+
+              <h3>
+                Invite Ready
+              </h3>
+
+              <p>
+                Send this link only
+                to{" "}
+                <strong>
+                  {activationInvite.username}
+                </strong>
+                .
+              </p>
+            </div>
+
+            <div className="activation-link-row">
+              <input
+                type="text"
+                readOnly
+                value={
+                  activationInvite.activationUrl
+                }
+              />
+
+              <button
+                type="button"
+                onClick={
+                  copyActivationLink
+                }
+              >
+                Copy Link
+              </button>
+            </div>
+
+            <div className="activation-meta">
+              <span>
+                Email:{" "}
+                {activationInvite.email ||
+                  "-"}
+              </span>
+
+              <span>
+                Expires:{" "}
+                {activationInvite.expiresAt
+                  ? new Date(
+                      activationInvite.expiresAt
+                    ).toLocaleString()
+                  : "-"}
+              </span>
+            </div>
+
+            <p className="activation-warning">
+              This raw activation
+              token is shown only in
+              this response. Create a
+              new invite if the link
+              is lost.
+            </p>
+          </div>
+        )}
+      </section>
+
       <div className="form-card">
         <h2>
           {editingId
             ? "Edit User"
-            : "Create User"}
+            : "Create Regular User"}
         </h2>
 
         <form
@@ -560,9 +1077,7 @@ function Users() {
 
           <select
             name="role"
-            value={
-              form.role
-            }
+            value={form.role}
             onChange={
               handleChange
             }
@@ -636,15 +1151,20 @@ function Users() {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Username</th>
+              <th>
+                Username
+              </th>
               <th>Role</th>
               <th>Status</th>
-              <th>Actions</th>
+              <th>
+                Actions
+              </th>
             </tr>
           </thead>
 
           <tbody>
-            {users.length === 0 ? (
+            {users.length ===
+            0 ? (
               <tr>
                 <td colSpan="5">
                   No users found.
@@ -673,35 +1193,62 @@ function Users() {
                     </td>
 
                     <td>
-                      {user.active
-                        ? "Active"
-                        : "Inactive"}
+                      <span
+                        className={
+                          user.active
+                            ? "user-status active"
+                            : "user-status inactive"
+                        }
+                      >
+                        {user.active
+                          ? "Active"
+                          : "Inactive"}
+                      </span>
                     </td>
 
                     <td>
-                      <button
-                        type="button"
-                        className="edit-button"
-                        onClick={() =>
-                          handleEdit(
-                            user
-                          )
-                        }
-                      >
-                        Edit
-                      </button>
+                      <div className="user-action-row">
+                        <button
+                          type="button"
+                          className="edit-button"
+                          onClick={() =>
+                            handleEdit(
+                              user
+                            )
+                          }
+                        >
+                          Edit
+                        </button>
 
-                      <button
-                        type="button"
-                        className="delete-button"
-                        onClick={() =>
-                          handleDelete(
-                            user.id
-                          )
-                        }
-                      >
-                        Delete
-                      </button>
+                        {user.role ===
+                          "CLIENT" &&
+                          user.active ===
+                            false && (
+                            <button
+                              type="button"
+                              className="invite-button"
+                              onClick={() =>
+                                handleRegenerateInvite(
+                                  user
+                                )
+                              }
+                            >
+                              New Invite
+                            </button>
+                          )}
+
+                        <button
+                          type="button"
+                          className="delete-button"
+                          onClick={() =>
+                            handleDelete(
+                              user.id
+                            )
+                          }
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -719,19 +1266,12 @@ function Users() {
         <p>
           Assign projects/sites to
           Clients and Supervisors.
-          Contractor access is managed
-          from the Contractors page.
+          Contractor access is
+          managed from the
+          Contractors page.
         </p>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "15px",
-            marginTop: "20px",
-          }}
-        >
+        <div className="assignment-grid">
           <select
             value={
               selectedUserId
@@ -747,12 +1287,8 @@ function Users() {
             {assignableUsers.map(
               (user) => (
                 <option
-                  key={
-                    user.id
-                  }
-                  value={
-                    user.id
-                  }
+                  key={user.id}
+                  value={user.id}
                 >
                   {user.username}
                   {" - "}
@@ -766,9 +1302,10 @@ function Users() {
             value={
               selectedProjectId
             }
-            onChange={(e) =>
+            onChange={(event) =>
               setSelectedProjectId(
-                e.target.value
+                event.target
+                  .value
               )
             }
             disabled={
@@ -820,23 +1357,12 @@ function Users() {
         </div>
 
         {selectedUser && (
-          <div
-            style={{
-              marginTop:
-                "20px",
-            }}
-          >
+          <div className="selected-user-note">
             <strong>
               Selected User:
             </strong>{" "}
-            {
-              selectedUser.username
-            }{" "}
-            (
-            {
-              selectedUser.role
-            }
-            )
+            {selectedUser.username} (
+            {selectedUser.role})
           </div>
         )}
       </div>
@@ -859,15 +1385,12 @@ function Users() {
                   <th>
                     Project
                   </th>
-
                   <th>
                     Location
                   </th>
-
                   <th>
                     Status
                   </th>
-
                   <th>
                     Action
                   </th>
@@ -896,19 +1419,22 @@ function Users() {
                       >
                         <td>
                           {assignment.projectName ||
-                            assignment.project?.projectName ||
+                            assignment.project
+                              ?.projectName ||
                             "-"}
                         </td>
 
                         <td>
                           {assignment.location ||
-                            assignment.project?.location ||
+                            assignment.project
+                              ?.location ||
                             "-"}
                         </td>
 
                         <td>
                           {assignment.status ||
-                            assignment.project?.status ||
+                            assignment.project
+                              ?.status ||
                             "-"}
                         </td>
 
@@ -919,7 +1445,8 @@ function Users() {
                             onClick={() =>
                               handleUnassignProject(
                                 assignment.projectId ||
-                                  assignment.project?.id
+                                  assignment.project
+                                    ?.id
                               )
                             }
                           >

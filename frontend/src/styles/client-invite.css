@@ -1,0 +1,309 @@
+.client-invite-card {
+  margin-bottom: 24px;
+  overflow: hidden;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow:
+    0 5px 20px
+    rgba(15, 23, 42, 0.05);
+}
+
+.client-invite-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 21px 22px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fbff;
+}
+
+.client-invite-heading span {
+  color: #2563eb;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+}
+
+.client-invite-heading h2 {
+  margin: 5px 0 0;
+  color: #0f172a;
+  font-size: 18px;
+}
+
+.client-invite-heading p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.client-invite-security {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #15803d;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.client-invite-form {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 15px;
+  padding: 22px;
+}
+
+.client-invite-form > div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.client-invite-form label {
+  color: #334155;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.client-invite-form input {
+  min-height: 42px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #0f172a;
+  outline: none;
+  font-size: 11px;
+}
+
+.client-invite-form input:focus {
+  border-color: #2563eb;
+  box-shadow:
+    0 0 0 3px
+    rgba(37, 99, 235, 0.08);
+}
+
+.client-invite-action {
+  grid-column: 1 / -1;
+  align-items: flex-end;
+}
+
+.activation-result {
+  margin: 0 22px 22px;
+  padding: 18px;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  background: #f0fdf4;
+}
+
+.activation-result-label {
+  color: #15803d;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.activation-result h3 {
+  margin: 5px 0 4px;
+  color: #14532d;
+}
+
+.activation-result p {
+  margin: 0;
+  color: #475569;
+  font-size: 10px;
+}
+
+.activation-link-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.activation-link-row input {
+  flex: 1;
+  min-height: 40px;
+  padding: 0 11px;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 10px;
+}
+
+.activation-link-row button {
+  min-width: 100px;
+  border: 0;
+  border-radius: 8px;
+  background: #16a34a;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.activation-meta {
+  display: flex;
+  gap: 20px;
+  margin-top: 12px;
+  color: #64748b;
+  font-size: 9px;
+}
+
+.activation-warning {
+  margin-top: 10px !important;
+  color: #b45309 !important;
+}
+
+.user-status {
+  display: inline-flex;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.user-status.active {
+  background: #ecfdf5;
+  color: #15803d;
+}
+
+.user-status.inactive {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.user-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.invite-button {
+  padding: 6px 10px;
+  border: 1px solid #bfdbfe;
+  border-radius: 7px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.assignment-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.selected-user-note {
+  margin-top: 20px;
+  color: #475569;
+  font-size: 11px;
+}
+
+.activation-login-heading {
+  margin-bottom: 18px;
+  text-align: center;
+}
+
+.activation-login-heading span {
+  color: #2563eb;
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+}
+
+.activation-login-heading h2 {
+  margin: 7px 0 5px;
+}
+
+.activation-login-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 10px;
+}
+
+.activation-loading {
+  margin-bottom: 15px;
+  padding: 11px;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 10px;
+  text-align: center;
+}
+
+.activation-password-note {
+  margin-top: -4px;
+  color: #94a3b8;
+  font-size: 9px;
+}
+
+.activation-success-box {
+  text-align: center;
+}
+
+.activation-success-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 23px;
+  font-weight: 900;
+}
+
+.activation-success-box h3 {
+  margin: 0 0 7px;
+  color: #14532d;
+}
+
+.activation-success-box p {
+  margin: 0 0 18px;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+@media (max-width: 1050px) {
+  .client-invite-form {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .client-invite-heading {
+    flex-direction: column;
+  }
+
+  .client-invite-form,
+  .assignment-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .activation-link-row {
+    flex-direction: column;
+  }
+
+  .activation-link-row button {
+    min-height: 40px;
+  }
+
+  .activation-meta {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
