@@ -1,25 +1,34 @@
 package com.skyward.projectmanagement.service;
 
+import com.skyward.projectmanagement.dto.CreateClientInviteRequest;
 import com.skyward.projectmanagement.dto.UserResponse;
-import com.skyward.projectmanagement.entity.Contractor;
 import com.skyward.projectmanagement.entity.User;
 import com.skyward.projectmanagement.repository.ContractorRepository;
 import com.skyward.projectmanagement.repository.UserProjectAssignmentRepository;
 import com.skyward.projectmanagement.repository.UserRepository;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final UserProjectAssignmentRepository assignmentRepository;
-    private final ContractorRepository contractorRepository;
+    private final UserRepository
+            userRepository;
+
+    private final PasswordEncoder
+            passwordEncoder;
+
+    private final UserProjectAssignmentRepository
+            assignmentRepository;
+
+    private final ContractorRepository
+            contractorRepository;
 
     public UserService(
             UserRepository userRepository,
@@ -27,13 +36,22 @@ public class UserService {
             UserProjectAssignmentRepository assignmentRepository,
             ContractorRepository contractorRepository
     ) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.assignmentRepository = assignmentRepository;
-        this.contractorRepository = contractorRepository;
+
+        this.userRepository =
+                userRepository;
+
+        this.passwordEncoder =
+                passwordEncoder;
+
+        this.assignmentRepository =
+                assignmentRepository;
+
+        this.contractorRepository =
+                contractorRepository;
     }
 
-    public List<UserResponse> getAllUsers() {
+    public List<UserResponse>
+    getAllUsers() {
 
         return userRepository
                 .findAll()
@@ -49,19 +67,20 @@ public class UserService {
                 .toList();
     }
 
-    public UserResponse createUser(User user) {
+    /*
+     * =========================================================
+     * NORMAL USER CREATION
+     * =========================================================
+     */
 
-        if (
-                userRepository
-                        .findByUsername(
-                                user.getUsername()
-                        )
-                        .isPresent()
-        ) {
-            throw new RuntimeException(
-                    "Username already exists."
-            );
-        }
+    public UserResponse createUser(
+            User user
+    ) {
+
+        validateUsername(
+                user.getUsername(),
+                null
+        );
 
         if (
                 user.getPassword() == null ||
@@ -71,6 +90,10 @@ public class UserService {
                     "Password is required."
             );
         }
+
+        user.setUsername(
+                user.getUsername().trim()
+        );
 
         user.setPassword(
                 passwordEncoder.encode(
@@ -82,23 +105,180 @@ public class UserService {
                 user.getRole() == null ||
                 user.getRole().isBlank()
         ) {
-            user.setRole("CLIENT");
+            user.setRole(
+                    "CLIENT"
+            );
+        } else {
+            user.setRole(
+                    user.getRole()
+                            .trim()
+                            .toUpperCase()
+            );
         }
 
-        if (user.getActive() == null) {
+        if (
+                user.getActive() == null
+        ) {
             user.setActive(true);
         }
 
-        User savedUser =
-                userRepository.save(user);
+        normalizeProfileFields(
+                user
+        );
 
-        return new UserResponse(
-                savedUser.getId(),
-                savedUser.getUsername(),
-                savedUser.getRole(),
-                savedUser.getActive()
+        User savedUser =
+                userRepository.save(
+                        user
+                );
+
+        return toResponse(
+                savedUser
         );
     }
+
+    /*
+     * =========================================================
+     * CLIENT INVITE ACCOUNT
+     * =========================================================
+     *
+     * Creates an inactive CLIENT account.
+     *
+     * The generated temporary password is random and never
+     * returned to the admin or client. The client must activate
+     * the account using the activation token before login.
+     * =========================================================
+     */
+
+    @Transactional
+    public User createInvitedClient(
+            CreateClientInviteRequest request
+    ) {
+
+        if (request == null) {
+            throw new RuntimeException(
+                    "Client details are required."
+            );
+        }
+
+        String username =
+                request.getUsername() == null
+                        ? ""
+                        : request
+                                .getUsername()
+                                .trim();
+
+        validateUsername(
+                username,
+                null
+        );
+
+        String fullName =
+                trimToNull(
+                        request.getFullName()
+                );
+
+        String email =
+                trimToNull(
+                        request.getEmail()
+                );
+
+        String phone =
+                trimToNull(
+                        request.getPhone()
+                );
+
+        if (fullName == null) {
+            throw new RuntimeException(
+                    "Client full name is required."
+            );
+        }
+
+        if (fullName.length() > 150) {
+            throw new RuntimeException(
+                    "Full name must not exceed 150 characters."
+            );
+        }
+
+        if (email == null) {
+            throw new RuntimeException(
+                    "Client email is required."
+            );
+        }
+
+        if (
+                email.length() > 190 ||
+                !isValidEmail(email)
+        ) {
+            throw new RuntimeException(
+                    "Please enter a valid email address."
+            );
+        }
+
+        if (
+                phone != null &&
+                phone.length() > 50
+        ) {
+            throw new RuntimeException(
+                    "Phone number must not exceed 50 characters."
+            );
+        }
+
+        User user =
+                new User();
+
+        user.setUsername(
+                username
+        );
+
+        /*
+         * User.password is NOT NULL in the current model.
+         *
+         * Store an unknown random BCrypt value until the
+         * activation process replaces it with the client's
+         * chosen password.
+         */
+        String temporarySecret =
+                UUID.randomUUID()
+                        .toString()
+                        + "-"
+                        + UUID.randomUUID();
+
+        user.setPassword(
+                passwordEncoder.encode(
+                        temporarySecret
+                )
+        );
+
+        user.setRole(
+                "CLIENT"
+        );
+
+        user.setActive(
+                false
+        );
+
+        user.setFullName(
+                fullName
+        );
+
+        user.setEmail(
+                email
+        );
+
+        user.setPhone(
+                phone
+        );
+
+        return userRepository.save(
+                user
+        );
+    }
+
+    /*
+     * =========================================================
+     * UPDATE USER
+     * =========================================================
+     */
 
     @Transactional
     public UserResponse updateUser(
@@ -117,37 +297,40 @@ public class UserService {
 
         if (
                 updatedUser.getUsername() == null ||
-                updatedUser.getUsername().isBlank()
+                updatedUser
+                        .getUsername()
+                        .isBlank()
         ) {
             throw new RuntimeException(
                     "Username is required."
             );
         }
 
-        if (
-                !user.getUsername()
-                        .equals(
-                                updatedUser.getUsername()
-                        )
-                &&
-                userRepository
-                        .findByUsername(
-                                updatedUser.getUsername()
-                        )
-                        .isPresent()
-        ) {
-            throw new RuntimeException(
-                    "Username already exists."
-            );
-        }
+        String username =
+                updatedUser
+                        .getUsername()
+                        .trim();
 
-        String newRole = user.getRole();
+        validateUsername(
+                username,
+                id
+        );
+
+        String newRole =
+                user.getRole();
 
         if (
                 updatedUser.getRole() != null &&
-                !updatedUser.getRole().isBlank()
+                !updatedUser
+                        .getRole()
+                        .isBlank()
         ) {
-            newRole = updatedUser.getRole();
+
+            newRole =
+                    updatedUser
+                            .getRole()
+                            .trim()
+                            .toUpperCase();
         }
 
         /*
@@ -155,22 +338,32 @@ public class UserService {
          * and role is changed away from CONTRACTOR,
          * unlink the contractor account first.
          */
-        if (!"CONTRACTOR".equalsIgnoreCase(newRole)) {
+        if (
+                !"CONTRACTOR"
+                        .equalsIgnoreCase(
+                                newRole
+                        )
+        ) {
 
             contractorRepository
                     .findByUserId(id)
-                    .ifPresent(contractor -> {
+                    .ifPresent(
+                            contractor -> {
 
-                        contractor.setUser(null);
+                                contractor.setUser(
+                                        null
+                                );
 
-                        contractorRepository.save(
-                                contractor
-                        );
-                    });
+                                contractorRepository
+                                        .save(
+                                                contractor
+                                        );
+                            }
+                    );
         }
 
         user.setUsername(
-                updatedUser.getUsername()
+                username
         );
 
         user.setRole(
@@ -191,26 +384,81 @@ public class UserService {
                         .getPassword()
                         .isBlank()
         ) {
+
             user.setPassword(
                     passwordEncoder.encode(
-                            updatedUser.getPassword()
+                            updatedUser
+                                    .getPassword()
+                    )
+            );
+        }
+
+        if (
+                updatedUser.getFullName() != null
+        ) {
+            user.setFullName(
+                    trimToNull(
+                            updatedUser
+                                    .getFullName()
+                    )
+            );
+        }
+
+        if (
+                updatedUser.getEmail() != null
+        ) {
+
+            String email =
+                    trimToNull(
+                            updatedUser
+                                    .getEmail()
+                    );
+
+            if (
+                    email != null &&
+                    !isValidEmail(email)
+            ) {
+                throw new RuntimeException(
+                        "Please enter a valid email address."
+                );
+            }
+
+            user.setEmail(
+                    email
+            );
+        }
+
+        if (
+                updatedUser.getPhone() != null
+        ) {
+            user.setPhone(
+                    trimToNull(
+                            updatedUser
+                                    .getPhone()
                     )
             );
         }
 
         User savedUser =
-                userRepository.save(user);
+                userRepository.save(
+                        user
+                );
 
-        return new UserResponse(
-                savedUser.getId(),
-                savedUser.getUsername(),
-                savedUser.getRole(),
-                savedUser.getActive()
+        return toResponse(
+                savedUser
         );
     }
 
+    /*
+     * =========================================================
+     * DELETE USER
+     * =========================================================
+     */
+
     @Transactional
-    public void deleteUser(Long id) {
+    public void deleteUser(
+            Long id
+    ) {
 
         User user =
                 userRepository
@@ -221,34 +469,155 @@ public class UserService {
                                 )
                         );
 
-        /*
-         * Remove CLIENT / SUPERVISOR
-         * project assignments.
-         */
         var assignments =
                 assignmentRepository
                         .findByUserId(id);
 
         assignmentRepository
-                .deleteAll(assignments);
+                .deleteAll(
+                        assignments
+                );
 
-        /*
-         * If user is connected to a contractor,
-         * unlink before deleting the user.
-         *
-         * This prevents foreign-key errors.
-         */
         contractorRepository
                 .findByUserId(id)
-                .ifPresent(contractor -> {
+                .ifPresent(
+                        contractor -> {
 
-                    contractor.setUser(null);
+                            contractor.setUser(
+                                    null
+                            );
 
-                    contractorRepository.save(
-                            contractor
-                    );
-                });
+                            contractorRepository
+                                    .save(
+                                            contractor
+                                    );
+                        }
+                );
 
-        userRepository.delete(user);
+        userRepository.delete(
+                user
+        );
+    }
+
+    /*
+     * =========================================================
+     * HELPERS
+     * =========================================================
+     */
+
+    private void validateUsername(
+            String username,
+            Long currentUserId
+    ) {
+
+        if (
+                username == null ||
+                username.isBlank()
+        ) {
+            throw new RuntimeException(
+                    "Username is required."
+            );
+        }
+
+        String normalized =
+                username.trim();
+
+        if (
+                normalized.length() < 3
+        ) {
+            throw new RuntimeException(
+                    "Username must contain at least 3 characters."
+            );
+        }
+
+        if (
+                normalized.length() > 100
+        ) {
+            throw new RuntimeException(
+                    "Username must not exceed 100 characters."
+            );
+        }
+
+        userRepository
+                .findByUsername(
+                        normalized
+                )
+                .ifPresent(
+                        existingUser -> {
+
+                            if (
+                                    currentUserId == null ||
+                                    !existingUser
+                                            .getId()
+                                            .equals(
+                                                    currentUserId
+                                            )
+                            ) {
+                                throw new RuntimeException(
+                                        "Username already exists."
+                                );
+                            }
+                        }
+                );
+    }
+
+    private UserResponse toResponse(
+            User user
+    ) {
+
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getRole(),
+                user.getActive()
+        );
+    }
+
+    private void normalizeProfileFields(
+            User user
+    ) {
+
+        user.setFullName(
+                trimToNull(
+                        user.getFullName()
+                )
+        );
+
+        user.setEmail(
+                trimToNull(
+                        user.getEmail()
+                )
+        );
+
+        user.setPhone(
+                trimToNull(
+                        user.getPhone()
+                )
+        );
+    }
+
+    private String trimToNull(
+            String value
+    ) {
+
+        if (value == null) {
+            return null;
+        }
+
+        String trimmed =
+                value.trim();
+
+        return trimmed.isEmpty()
+                ? null
+                : trimmed;
+    }
+
+    private boolean isValidEmail(
+            String email
+    ) {
+
+        return email.matches(
+                "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+        );
     }
 }

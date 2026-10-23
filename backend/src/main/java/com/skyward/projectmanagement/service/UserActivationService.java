@@ -8,6 +8,7 @@ import com.skyward.projectmanagement.repository.UserActivationTokenRepository;
 import com.skyward.projectmanagement.repository.UserRepository;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +33,8 @@ public class UserActivationService {
     private static final int EXPIRY_HOURS =
             24;
 
-    private final UserRepository userRepository;
+    private final UserRepository
+            userRepository;
 
     private final UserActivationTokenRepository
             activationTokenRepository;
@@ -40,7 +42,8 @@ public class UserActivationService {
     private final PasswordEncoder
             passwordEncoder;
 
-    private final SecureRandom secureRandom =
+    private final SecureRandom
+            secureRandom =
             new SecureRandom();
 
     public UserActivationService(
@@ -48,6 +51,7 @@ public class UserActivationService {
             UserActivationTokenRepository activationTokenRepository,
             PasswordEncoder passwordEncoder
     ) {
+
         this.userRepository =
                 userRepository;
 
@@ -57,6 +61,12 @@ public class UserActivationService {
         this.passwordEncoder =
                 passwordEncoder;
     }
+
+    /*
+     * =========================================================
+     * CREATE INVITE
+     * =========================================================
+     */
 
     @Transactional
     public ActivationInviteResponse
@@ -81,6 +91,20 @@ public class UserActivationService {
         ) {
             throw new RuntimeException(
                     "Activation invitations can only be created for CLIENT users."
+            );
+        }
+
+        /*
+         * Do not accidentally deactivate an already-active
+         * client account.
+         */
+        if (
+                Boolean.TRUE.equals(
+                        user.getActive()
+                )
+        ) {
+            throw new RuntimeException(
+                    "This client account is already active."
             );
         }
 
@@ -120,17 +144,10 @@ public class UserActivationService {
                 createdBy
         );
 
-        activationTokenRepository.save(
-                activationToken
-        );
-
-        /*
-         * Client must activate the account
-         * before normal login is allowed.
-         */
-        user.setActive(false);
-
-        userRepository.save(user);
+        activationTokenRepository
+                .save(
+                        activationToken
+                );
 
         return new ActivationInviteResponse(
                 user.getId(),
@@ -142,7 +159,15 @@ public class UserActivationService {
         );
     }
 
-    @Transactional(readOnly = true)
+    /*
+     * =========================================================
+     * VALIDATE TOKEN
+     * =========================================================
+     */
+
+    @Transactional(
+            readOnly = true
+    )
     public void validateToken(
             String rawToken
     ) {
@@ -151,6 +176,12 @@ public class UserActivationService {
                 rawToken
         );
     }
+
+    /*
+     * =========================================================
+     * ACTIVATE ACCOUNT
+     * =========================================================
+     */
 
     @Transactional
     public void activateAccount(
@@ -168,7 +199,8 @@ public class UserActivationService {
                 );
 
         User user =
-                activationToken.getUser();
+                activationToken
+                        .getUser();
 
         if (
                 !"CLIENT".equalsIgnoreCase(
@@ -180,6 +212,16 @@ public class UserActivationService {
             );
         }
 
+        if (
+                Boolean.TRUE.equals(
+                        user.getActive()
+                )
+        ) {
+            throw new RuntimeException(
+                    "This account has already been activated."
+            );
+        }
+
         user.setPassword(
                 passwordEncoder.encode(
                         request
@@ -187,22 +229,33 @@ public class UserActivationService {
                 )
         );
 
-        user.setActive(true);
+        user.setActive(
+                true
+        );
 
-        userRepository.save(user);
+        userRepository.save(
+                user
+        );
 
         activationToken.setUsedAt(
                 LocalDateTime.now()
         );
 
-        activationTokenRepository.save(
-                activationToken
-        );
+        activationTokenRepository
+                .save(
+                        activationToken
+                );
 
         invalidateExistingTokens(
                 user.getId()
         );
     }
+
+    /*
+     * =========================================================
+     * REQUEST VALIDATION
+     * =========================================================
+     */
 
     private void validateActivationRequest(
             ActivateAccountRequest request
@@ -211,7 +264,8 @@ public class UserActivationService {
         if (
                 request == null ||
                 request.getToken() == null ||
-                request.getToken()
+                request
+                        .getToken()
                         .isBlank()
         ) {
             throw new RuntimeException(
@@ -220,9 +274,9 @@ public class UserActivationService {
         }
 
         if (
-                request.getNewPassword()
-                        == null ||
-                request.getNewPassword()
+                request.getNewPassword() == null ||
+                request
+                        .getNewPassword()
                         .isBlank()
         ) {
             throw new RuntimeException(
@@ -231,7 +285,8 @@ public class UserActivationService {
         }
 
         if (
-                request.getNewPassword()
+                request
+                        .getNewPassword()
                         .length() < 8
         ) {
             throw new RuntimeException(
@@ -240,8 +295,8 @@ public class UserActivationService {
         }
 
         if (
-                request.getConfirmPassword()
-                        == null ||
+                request
+                        .getConfirmPassword() == null ||
                 !request
                         .getNewPassword()
                         .equals(
@@ -254,6 +309,12 @@ public class UserActivationService {
             );
         }
     }
+
+    /*
+     * =========================================================
+     * TOKEN LOOKUP
+     * =========================================================
+     */
 
     private UserActivationToken
     getValidToken(
@@ -285,13 +346,17 @@ public class UserActivationService {
                                 )
                         );
 
-        if (token.isUsed()) {
+        if (
+                token.isUsed()
+        ) {
             throw new RuntimeException(
                     "This activation token has already been used."
             );
         }
 
-        if (token.isExpired()) {
+        if (
+                token.isExpired()
+        ) {
             throw new RuntimeException(
                     "This activation token has expired."
             );
@@ -299,6 +364,12 @@ public class UserActivationService {
 
         return token;
     }
+
+    /*
+     * =========================================================
+     * INVALIDATE OLD TOKENS
+     * =========================================================
+     */
 
     private void invalidateExistingTokens(
             Long userId
@@ -311,6 +382,12 @@ public class UserActivationService {
                                 userId
                         );
 
+        if (
+                existingTokens.isEmpty()
+        ) {
+            return;
+        }
+
         LocalDateTime now =
                 LocalDateTime.now();
 
@@ -319,7 +396,9 @@ public class UserActivationService {
                 : existingTokens
         ) {
 
-            token.setUsedAt(now);
+            token.setUsedAt(
+                    now
+            );
         }
 
         activationTokenRepository
@@ -327,6 +406,12 @@ public class UserActivationService {
                         existingTokens
                 );
     }
+
+    /*
+     * =========================================================
+     * SECURE TOKEN GENERATION
+     * =========================================================
+     */
 
     private String generateSecureToken() {
 
@@ -346,6 +431,12 @@ public class UserActivationService {
                         bytes
                 );
     }
+
+    /*
+     * =========================================================
+     * SHA-256 TOKEN HASH
+     * =========================================================
+     */
 
     private String hashToken(
             String token

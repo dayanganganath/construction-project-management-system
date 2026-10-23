@@ -4,12 +4,15 @@ import com.skyward.projectmanagement.dto.ActivateAccountRequest;
 import com.skyward.projectmanagement.service.UserActivationService;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @RestController
+@RequestMapping(
+        "/api/auth/activation"
+)
 public class UserActivationController {
 
     private final UserActivationService
@@ -18,65 +21,19 @@ public class UserActivationController {
     public UserActivationController(
             UserActivationService userActivationService
     ) {
+
         this.userActivationService =
                 userActivationService;
     }
 
     /*
      * =========================================================
-     * ADMIN
-     * =========================================================
-     *
-     * SecurityConfig already protects /api/users/**
-     * as ADMIN only.
-     */
-    @PostMapping(
-            "/api/users/{userId}/activation-invite"
-    )
-    public ResponseEntity<?>
-    createActivationInvite(
-            @PathVariable Long userId,
-            Authentication authentication
-    ) {
-
-        try {
-
-            String createdBy =
-                    authentication != null
-                            ? authentication
-                                    .getName()
-                            : "SYSTEM";
-
-            return ResponseEntity.ok(
-                    userActivationService
-                            .createActivationInvite(
-                                    userId,
-                                    createdBy
-                            )
-            );
-
-        } catch (RuntimeException e) {
-
-            return ResponseEntity
-                    .badRequest()
-                    .body(
-                            Map.of(
-                                    "message",
-                                    e.getMessage()
-                            )
-                    );
-        }
-    }
-
-    /*
-     * =========================================================
      * PUBLIC TOKEN VALIDATION
      * =========================================================
-     *
-     * /api/auth/** is already permitAll().
      */
+
     @GetMapping(
-            "/api/auth/activation/validate"
+            "/validate"
     )
     public ResponseEntity<?>
     validateActivationToken(
@@ -99,7 +56,9 @@ public class UserActivationController {
                     )
             );
 
-        } catch (RuntimeException e) {
+        } catch (
+                RuntimeException e
+        ) {
 
             return ResponseEntity
                     .badRequest()
@@ -119,9 +78,8 @@ public class UserActivationController {
      * PUBLIC ACCOUNT ACTIVATION
      * =========================================================
      */
-    @PostMapping(
-            "/api/auth/activation"
-    )
+
+    @PostMapping
     public ResponseEntity<?>
     activateAccount(
             @RequestBody
@@ -144,7 +102,9 @@ public class UserActivationController {
                     )
             );
 
-        } catch (RuntimeException e) {
+        } catch (
+                RuntimeException e
+        ) {
 
             return ResponseEntity
                     .badRequest()
