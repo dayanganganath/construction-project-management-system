@@ -73,6 +73,7 @@ function Users() {
     fullName: "",
     email: "",
     phone: "",
+    projectId: "",
   });
 
   useEffect(() => {
@@ -313,6 +314,7 @@ function Users() {
         fullName: "",
         email: "",
         phone: "",
+        projectId: "",
       });
     };
 
@@ -449,21 +451,63 @@ function Users() {
         const invite =
           response.data;
 
+        let projectAssigned =
+          false;
+
+        if (
+          inviteForm.projectId
+        ) {
+          await api.post(
+            "/user-project-assignments",
+            null,
+            {
+              params: {
+                userId:
+                  invite.userId,
+
+                projectId:
+                  inviteForm.projectId,
+              },
+            }
+          );
+
+          projectAssigned =
+            true;
+        }
+
         const activationUrl =
           `${window.location.origin}/login?activation=${encodeURIComponent(
             invite.token
           )}`;
 
+        const assignedProject =
+          projects.find(
+            (project) =>
+              String(
+                project.id
+              ) ===
+              String(
+                inviteForm.projectId
+              )
+          );
+
         setActivationInvite({
           ...invite,
           activationUrl,
+          projectAssigned,
+          projectName:
+            assignedProject
+              ?.projectName ||
+            null,
         });
 
         resetInviteForm();
 
         showAlert(
           "success",
-          "Client invitation created successfully."
+          projectAssigned
+            ? "Client invitation created and project assigned successfully."
+            : "Client invitation created successfully."
         );
 
         await loadUsers();
@@ -506,6 +550,10 @@ function Users() {
         setActivationInvite({
           ...invite,
           activationUrl,
+          projectAssigned:
+            false,
+          projectName:
+            null,
         });
 
         showAlert(
@@ -861,10 +909,11 @@ function Users() {
 
             <p>
               Create an inactive
-              client account and
-              generate a secure
-              one-time activation
-              link.
+              client account,
+              optionally assign a
+              project, and generate
+              a secure one-time
+              activation link.
             </p>
           </div>
 
@@ -951,6 +1000,47 @@ function Users() {
             />
           </div>
 
+          <div>
+            <label>
+              Project / Site
+            </label>
+
+            <select
+              name="projectId"
+              value={
+                inviteForm.projectId
+              }
+              onChange={
+                handleInviteChange
+              }
+            >
+              <option value="">
+                No project assignment
+              </option>
+
+              {projects.map(
+                (project) => (
+                  <option
+                    key={
+                      project.id
+                    }
+                    value={
+                      project.id
+                    }
+                  >
+                    {
+                      project.projectName
+                    }
+
+                    {project.location
+                      ? ` - ${project.location}`
+                      : ""}
+                  </option>
+                )
+              )}
+            </select>
+          </div>
+
           <div className="client-invite-action">
             <button
               type="submit"
@@ -986,6 +1076,18 @@ function Users() {
                 .
               </p>
             </div>
+
+            {activationInvite
+              .projectAssigned && (
+              <div className="activation-project-success">
+                Project assigned:{" "}
+                <strong>
+                  {
+                    activationInvite.projectName
+                  }
+                </strong>
+              </div>
+            )}
 
             <div className="activation-link-row">
               <input
