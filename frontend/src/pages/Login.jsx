@@ -4,6 +4,7 @@ import {
 } from "react";
 
 import {
+  Link,
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
@@ -11,6 +12,7 @@ import {
 import api from "../services/api";
 
 import "../styles/client-invite.css";
+import "../styles/password-reset.css";
 
 function Login() {
   const navigate =
@@ -534,6 +536,15 @@ function Login() {
                 }
                 autoComplete="current-password"
               />
+
+              <div className="login-forgot-row">
+                <Link
+                  to="/forgot-password"
+                  className="login-forgot-link"
+                >
+                  Forgot password?
+                </Link>
+              </div>
 
               <button
                 type="submit"
