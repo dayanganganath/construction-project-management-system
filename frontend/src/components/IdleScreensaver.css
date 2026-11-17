@@ -1,0 +1,240 @@
+.cpms-idle-screensaver {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  padding: 24px;
+
+  background:
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(37, 99, 235, 0.28),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 82% 78%,
+      rgba(14, 165, 233, 0.18),
+      transparent 32%
+    ),
+    linear-gradient(
+      145deg,
+      #020617 0%,
+      #0f172a 46%,
+      #111827 100%
+    );
+
+  color: #ffffff;
+
+  cursor: pointer;
+
+  animation: cpms-idle-fade-in 0.45s ease;
+}
+
+.cpms-idle-screensaver::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  opacity: 0.12;
+
+  background-image:
+    linear-gradient(
+      rgba(255, 255, 255, 0.08) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.08) 1px,
+      transparent 1px
+    );
+
+  background-size: 64px 64px;
+
+  transform: perspective(700px) rotateX(58deg) scale(1.55);
+  transform-origin: center bottom;
+}
+
+.cpms-idle-content {
+  position: relative;
+  z-index: 2;
+
+  width: min(760px, 100%);
+
+  text-align: center;
+}
+
+.cpms-idle-logo {
+  width: 82px;
+  height: 82px;
+
+  margin: 0 auto 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 24px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #0ea5e9
+    );
+
+  box-shadow:
+    0 24px 70px
+    rgba(37, 99, 235, 0.42);
+
+  color: #ffffff;
+
+  font-size: 40px;
+  font-weight: 900;
+}
+
+.cpms-idle-brand {
+  margin-bottom: 12px;
+
+  color: #60a5fa;
+
+  font-size: 15px;
+  font-weight: 800;
+
+  letter-spacing: 0.28em;
+
+  text-transform: uppercase;
+}
+
+.cpms-idle-content h1 {
+  margin: 0;
+
+  color: #ffffff !important;
+
+  font-size: clamp(34px, 5vw, 64px);
+  font-weight: 800;
+
+  line-height: 1.05;
+
+  letter-spacing: -0.04em;
+}
+
+.cpms-idle-content p {
+  margin: 20px 0 0;
+
+  color: #cbd5e1 !important;
+
+  font-size: clamp(15px, 2vw, 19px);
+  font-weight: 600;
+}
+
+.cpms-idle-divider {
+  width: 64px;
+  height: 3px;
+
+  margin: 28px auto;
+
+  border-radius: 999px;
+
+  background: #3b82f6;
+}
+
+.cpms-idle-content span {
+  display: inline-block;
+
+  color: #94a3b8 !important;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  letter-spacing: 0.02em;
+}
+
+.cpms-idle-glow {
+  position: absolute;
+
+  border-radius: 50%;
+
+  filter: blur(90px);
+
+  opacity: 0.35;
+}
+
+.cpms-idle-glow-one {
+  top: -110px;
+  right: 8%;
+
+  width: 360px;
+  height: 360px;
+
+  background: #2563eb;
+}
+
+.cpms-idle-glow-two {
+  bottom: -130px;
+  left: 4%;
+
+  width: 340px;
+  height: 340px;
+
+  background: #0ea5e9;
+}
+
+@keyframes cpms-idle-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .cpms-idle-screensaver {
+    padding: 20px;
+  }
+
+  .cpms-idle-logo {
+    width: 68px;
+    height: 68px;
+
+    margin-bottom: 20px;
+
+    border-radius: 20px;
+
+    font-size: 32px;
+  }
+
+  .cpms-idle-content h1 {
+    font-size: clamp(30px, 10vw, 44px);
+  }
+
+  .cpms-idle-content p {
+    margin-top: 16px;
+  }
+
+  .cpms-idle-divider {
+    margin: 22px auto;
+  }
+
+  .cpms-idle-content span {
+    max-width: 290px;
+
+    font-size: 12px;
+    line-height: 1.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cpms-idle-screensaver {
+    animation: none;
+  }
+}
