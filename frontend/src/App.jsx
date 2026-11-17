@@ -23,6 +23,7 @@ import Payments from "./pages/Payments";
 import DailyProgress from "./pages/DailyProgress";
 import Users from "./pages/Users";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
 
 import Contractors from "./pages/Contractors";
 import ContractorBills from "./pages/ContractorBills";
@@ -801,6 +802,11 @@ function App() {
         <Route
           path="/login"
           element={<Login />}
+        />
+
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
         />
 
         <Route
