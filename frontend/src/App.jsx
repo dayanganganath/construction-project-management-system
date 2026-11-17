@@ -61,6 +61,7 @@ import SupervisorSiteIssues from "./pages/supervisor/SupervisorSiteIssues";
 import SupervisorDocuments from "./pages/supervisor/SupervisorDocuments";
 
 import ProtectedRoute from "./components/ProtectedRoute";
+import IdleScreensaver from "./components/IdleScreensaver";
 
 import "./App.css";
 import "./styles/sidebar-polish.css";
@@ -806,7 +807,9 @@ function App() {
           path="/*"
           element={
             <ProtectedRoute>
-              <RoleBasedProtectedArea />
+              <IdleScreensaver>
+                <RoleBasedProtectedArea />
+              </IdleScreensaver>
             </ProtectedRoute>
           }
         />
